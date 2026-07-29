@@ -120,6 +120,25 @@ git push origin develop
 - OCR: Upstage Document Parse 또는 팀이 확정한 단일 OCR
 - 법령 정보: 법제처 국가법령정보 공동활용 Open API
 
+### 폴더 구성
+
+```text
+backend/   FastAPI, Python 서비스, 백엔드 테스트와 환경변수 예시
+frontend/  실제 서비스 화면의 HTML, CSS, JavaScript
+docs/      API, DB, 역할 분담과 개발 계획
+wireframe/ 화면 흐름을 확인하는 클릭형 시안
+output/    데모용 계약서, 임금명세서와 시나리오
+scripts/   데모 자료 생성 보조 파일
+```
+
+백엔드 명령은 `backend` 폴더에서 실행합니다.
+
+```bash
+cd backend
+python -m uvicorn app.main:app --reload
+python -m pytest
+```
+
 ### 팀 개발 시작
 
 팀원은 [AGENTS.md](./AGENTS.md)와

@@ -75,18 +75,18 @@ Codex는 아래 순서대로 행동한다.
 전용 수정 가능 파일:
 
 ```text
-app/api/routes/records.py
-app/api/routes/comparisons.py
-app/services/storage_service.py
-app/services/ocr_service.py
-app/services/extraction_service.py
-app/services/comparison_service.py
-app/services/law_api_service.py
-app/schemas/records.py
-app/schemas/comparisons.py
-app/db/tables_records.py
-tests/test_records.py
-tests/test_comparisons.py
+backend/app/api/routes/records.py
+backend/app/api/routes/comparisons.py
+backend/app/services/storage_service.py
+backend/app/services/ocr_service.py
+backend/app/services/extraction_service.py
+backend/app/services/comparison_service.py
+backend/app/services/law_api_service.py
+backend/app/schemas/records.py
+backend/app/schemas/comparisons.py
+backend/app/db/tables_records.py
+backend/tests/test_records.py
+backend/tests/test_comparisons.py
 ```
 
 ### ROLE-BE-CONVERSATION: 백엔드 확인 대화 담당
@@ -104,13 +104,13 @@ tests/test_comparisons.py
 전용 수정 가능 파일:
 
 ```text
-app/api/routes/conversations.py
-app/services/conversation_service.py
-app/services/reply_analysis_service.py
-app/schemas/conversations.py
-app/prompts/conversation.py
-app/db/tables_conversations.py
-tests/test_conversations.py
+backend/app/api/routes/conversations.py
+backend/app/services/conversation_service.py
+backend/app/services/reply_analysis_service.py
+backend/app/schemas/conversations.py
+backend/app/prompts/conversation.py
+backend/app/db/tables_conversations.py
+backend/tests/test_conversations.py
 ```
 
 ### ROLE-FE-RECORDS: 프론트 기록·비교 담당
@@ -158,17 +158,17 @@ frontend/features/record_box/
 
 ```text
 AGENTS.md
-app/main.py
-app/api/router.py
-app/core/config.py
-app/db/session.py
-app/db/models.py
+backend/app/main.py
+backend/app/api/router.py
+backend/app/core/config.py
+backend/app/db/session.py
+backend/app/db/models.py
 frontend/index.html
 frontend/shared/
 docs/api-contract.md
 docs/database.md
-pyproject.toml
-.env.example
+backend/pyproject.toml
+backend/.env.example
 ```
 
 공통 파일 수정이 필요하면:
@@ -181,8 +181,8 @@ pyproject.toml
 
 통합 담당자는 최초 기능 개발 전에 다음을 확인한다.
 
-1. `app/api/router.py`가 기록·비교·대화 API만 연결하는지
-2. `pyproject.toml`과 `README.md`에 이전 RAG 설명이 남아 있지 않은지
+1. `backend/app/api/router.py`가 기록·비교·대화 API만 연결하는지
+2. `backend/pyproject.toml`과 `README.md`에 이전 RAG 설명이 남아 있지 않은지
 3. 모든 역할 전용 파일이 실제 폴더 구조와 일치하는지
 4. `develop` 브랜치가 생성되어 팀원들이 가져올 수 있는지
 
