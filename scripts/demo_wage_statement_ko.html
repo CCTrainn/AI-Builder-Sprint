@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시연용 임금명세서</title>
+<style>
+  @page { size: A4; margin: 17mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111; font-family: "Malgun Gothic", sans-serif; font-size: 10pt; line-height: 1.45; }
+  .demo { border: 2px solid #b42318; color: #b42318; text-align: center; font-weight: 700; padding: 6px; margin-bottom: 13px; }
+  h1 { text-align:center; font-size: 22pt; letter-spacing: 4px; margin: 4px 0 16px; }
+  table { width:100%; border-collapse:collapse; table-layout:fixed; margin-bottom:10px; }
+  th, td { border:1px solid #222; padding:7px 8px; vertical-align:middle; }
+  th { background:#ededed; text-align:center; }
+  .right { text-align:right; }
+  .center { text-align:center; }
+  .total { font-weight:700; background:#f7f7f7; }
+  .warn { background:#fff4df; }
+  .note { margin-top:12px; padding:10px 12px; border:1px solid #999; background:#fafafa; font-size:9pt; }
+  .foot { margin-top:14px; font-size:8pt; color:#555; border-top:1px solid #aaa; padding-top:6px; }
+</style>
+</head>
+<body>
+  <div class="demo">해커톤 시연용 가상 문서 · 실제 지급 및 법적 효력 없음</div>
+  <h1>임 금 명 세 서</h1>
+  <table>
+    <tr><th>지급월</th><td>2026년 7월</td><th>지급일</th><td>2026년 8월 10일</td></tr>
+    <tr><th>사업장</th><td>가온식당</td><th>근로자</th><td>NGUYEN MINH ANH</td></tr>
+  </table>
+  <table>
+    <tr><th colspan="2">근로 및 산정 정보</th><th colspan="2">지급 항목</th></tr>
+    <tr><th>근로일수</th><td class="right">20일</td><th>기본급</th><td class="right">861,000원</td></tr>
+    <tr><th>총 근로시간</th><td class="right">82시간</td><th>주휴수당</th><td class="right">0원</td></tr>
+    <tr class="warn"><th>적용 시간급</th><td class="right"><strong>10,500원</strong></td><th>기타수당</th><td class="right">0원</td></tr>
+    <tr><th>연장·야간·휴일근로</th><td class="right">0시간</td><th class="total">지급액 계</th><td class="right total">861,000원</td></tr>
+  </table>
+  <table>
+    <tr><th colspan="2">공제 항목</th><th colspan="2">계산 및 지급 결과</th></tr>
+    <tr><th>소득세</th><td class="right">0원</td><th>기본급 계산</th><td class="right">82시간 × 10,500원</td></tr>
+    <tr><th>지방소득세</th><td class="right">0원</td><th>공제액 계</th><td class="right">0원</td></tr>
+    <tr><th>사회보험료</th><td class="right">0원</td><th class="total">실수령액</th><td class="right total">861,000원</td></tr>
+  </table>
+  <div class="note"><strong>비고:</strong> “수습기간 적용”<br>수습기간의 시작일·종료일, 감액 비율, 계약상 합의 위치 및 12,000원 대신 10,500원을 적용한 구체적 근거는 기재되지 않음.</div>
+  <p class="center" style="margin-top:20px">위와 같이 임금의 구성항목·계산방법·공제내역을 교부합니다.</p>
+  <p class="center"><strong>가온식당　대표 김가온</strong> <span style="color:#777">(서명)</span></p>
+  <div class="foot">형식 기준: 고용노동부 「표준근로계약서 및 임금명세서 서식」의 임금명세서 구성. 모든 금액·인물·사업장은 앱 분석 시연을 위한 가상 정보입니다.</div>
+</body>
+</html>

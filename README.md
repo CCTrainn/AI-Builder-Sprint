@@ -89,3 +89,49 @@ git push origin develop
 
 - 대회 관련 문의: 해커톤 문의 오픈채팅방
 - 주최: 부산대학교 APPTIVE, 정보컴퓨터공학부 동아리연합회 / 후원: Upstage, 부산대 Anchor 사업단, 부산대 AI융합교육원
+
+---
+
+## CCTrainn 프로젝트
+
+외국인 노동자가 채용공고, 근로계약서, 근무기록, 급여명세서, 입금내역과
+고용주 대화를 평소에 모아두면 기록 사이에서 달라진 조건을 찾아주고,
+고용주에게 확인할 문장과 근거를 제공하는 근로자료 관리 서비스입니다.
+
+### 핵심 흐름
+
+```text
+근로자료 수집
+-> OCR 및 조건 추출
+-> 시점별 기록 비교
+-> 관련 공식 법령 조회
+-> 쉬운 설명
+-> 고용주에게 확인할 문장
+-> 답변 분석
+-> 근로 기록함에 보관
+```
+
+### 기술 구성
+
+- 프론트엔드: HTML, CSS, JavaScript
+- 백엔드: Python 3.11+, FastAPI
+- DB: Supabase PostgreSQL
+- 파일 저장: Supabase Storage private bucket
+- OCR: Upstage Document Parse 또는 팀이 확정한 단일 OCR
+- 법령 정보: 법제처 국가법령정보 공동활용 Open API
+
+### 팀 개발 시작
+
+팀원은 [AGENTS.md](./AGENTS.md)와
+[역할별 시작 문서](./docs/role-start.md)를 먼저 읽습니다.
+각자 최신 `develop` 브랜치에서 자신의 `feature/역할-이름` 브랜치를 만든 뒤,
+담당 폴더 안에서만 작업합니다.
+
+```bash
+git switch develop
+git pull origin develop
+git switch -c feature/역할-이름
+```
+
+공동 경험·증거 커뮤니티는 현재 MVP 범위가 아니며, 개인정보 보호와 공유
+방식을 별도로 기획한 뒤에만 추가합니다.

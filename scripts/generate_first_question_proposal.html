@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>일자리 권리 도우미 - 팀 제안서</title>
+  <style>
+    @page { size: A4; margin: 17mm 16mm 16mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #17212B; font-family: "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 10.2pt; line-height: 1.58; }
+    .page { min-height: 257mm; position: relative; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .eyebrow { color: #5972D9; font-weight: 700; font-size: 9pt; letter-spacing: .4px; }
+    h1 { font-size: 33pt; line-height: 1.1; letter-spacing: -1.8px; margin: 14mm 0 6mm; }
+    h2 { font-size: 20pt; letter-spacing: -1px; margin: 2mm 0 5mm; }
+    h3 { font-size: 12.5pt; margin: 0 0 2mm; letter-spacing: -.4px; }
+    p { margin: 0 0 4mm; }
+    .lead { font-size: 15pt; line-height: 1.55; letter-spacing: -.7px; max-width: 155mm; }
+    .subtle { color: #66727F; }
+    .hero { margin-top: 19mm; padding: 11mm 12mm; background: #EEF1FF; border-radius: 6mm; }
+    .hero strong { color: #334FB8; }
+    .quote { border-left: 4px solid #6179E8; padding-left: 5mm; font-size: 13pt; line-height: 1.55; margin: 9mm 0; }
+    .chip { display: inline-block; margin: 1.5mm 2mm 0 0; padding: 1.5mm 3.5mm; background: #F2F4F7; border-radius: 10mm; font-size: 8.7pt; color: #4C5967; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 5mm; }
+    .card { border: 1px solid #DDE3EA; border-radius: 4mm; padding: 5mm; background: #FFF; }
+    .card.blue { background: #F4F6FF; border-color: #D6DEFF; }
+    .card.mint { background: #F2FBF8; border-color: #CDEEE4; }
+    .num { color: #5972D9; font-weight: 800; font-size: 9pt; }
+    .flow { display: flex; align-items: stretch; gap: 2mm; margin: 6mm 0; }
+    .flow-item { flex: 1; padding: 4mm 3mm; border-radius: 3mm; background: #F4F6F8; text-align: center; font-size: 8.9pt; }
+    .flow-arrow { align-self: center; color: #7990AC; font-weight: 700; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 4mm; font-size: 9.1pt; }
+    .table th { background: #202C3B; color: white; padding: 3mm; text-align: left; }
+    .table td { border-bottom: 1px solid #E1E6EC; padding: 3mm; vertical-align: top; }
+    .warn { color: #C84B3E; font-weight: 700; }
+    .ok { color: #18765C; font-weight: 700; }
+    .bubble { max-width: 145mm; margin: 3mm 0; padding: 4mm 5mm; border-radius: 4mm; }
+    .user { margin-left: 16mm; background: #EAF0FF; }
+    .boss { background: #F2F4F7; }
+    .ai { background: #F1FBF7; border: 1px solid #CBEADF; }
+    .label { font-size: 8.5pt; font-weight: 700; margin-bottom: 1mm; color: #52606E; }
+    .timeline { border-left: 2px solid #CCD6FF; margin: 5mm 0 0 3mm; padding-left: 7mm; }
+    .event { position: relative; margin-bottom: 5mm; }
+    .event:before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #6079E9; position: absolute; left: -11mm; top: 5px; }
+    .date { font-size: 8.5pt; color: #637387; font-weight: 700; }
+    .result { padding: 4mm 5mm; border: 1px solid #CBEADF; background: #F1FBF7; border-radius: 3mm; margin-top: 4mm; }
+    .footer { position: absolute; bottom: 0; width: 100%; color: #8794A3; font-size: 8pt; display: flex; justify-content: space-between; }
+    ul { padding-left: 5mm; margin: 2mm 0; }
+    li { margin-bottom: 1.5mm; }
+    .small { font-size: 8.7pt; }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div class="eyebrow">AI BUILDER SPRINT · TEAM PROPOSAL</div>
+    <h1>일자리 권리 도우미</h1>
+    <p class="lead">외국인 유학생 노동자가 <strong>처음 들은 약속과 실제 근무 조건의 차이</strong>를 이해하고, 사장님과의 대화에서 <strong>근거를 갖고 당당하게 확인</strong>하도록 돕는 AI 권리 동행 서비스</p>
+    <div class="hero">
+      <h3>핵심 문제</h3>
+      <p>공고에는 시급 12,000원. 면접에서는 주휴수당을 준다고 들었다. 그런데 계약서에는 수습 기준이 모호하고, 첫 월급은 10,500원이다.</p>
+      <p><strong>공고는 사라지고, 구두 약속은 흐려지며, 사장님에게 무엇을 어떻게 물어봐야 할지 모른다.</strong></p>
+    </div>
+    <div class="quote">“권리를 아는 것만으로는 부족합니다.<br>불리한 사람이 그것을 물어볼 수 있어야 합니다.”</div>
+    <div class="grid">
+      <div class="card blue"><div class="num">MAIN 01</div><h3>AI 근로조건·권리 진단</h3><p>약속, 계약, 실제 급여를 비교하고 노동관계법상 확인이 필요한 위험 신호를 찾는다.</p></div>
+      <div class="card mint"><div class="num">MAIN 02</div><h3>AI 권리 대화 동행자</h3><p>사장님 답변을 계속 분석하고, 근거와 함께 다음에 할 말을 제안한다.</p></div>
+    </div>
+    <p style="margin-top:8mm"><span class="chip">대상: 외국인 유학생 시간제 근로자</span><span class="chip">입력: 공고·메신저·계약서·급여명세서</span><span class="chip">원칙: 법 위반 확정 판정이 아닌 위험 진단·대화 보조</span></p>
+    <div class="footer"><span>일자리 권리 도우미 · 팀 제안서</span><span>1 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">MAIN FUNCTION 01</div>
+    <h2>AI 근로조건·권리 진단</h2>
+    <p class="lead" style="font-size:13pt">문서 하나를 설명하는 기능이 아니다. 시간이 지나며 달라지는 약속, 계약, 실제 지급을 하나의 흐름으로 읽는다.</p>
+    <div class="flow">
+      <div class="flow-item">채용공고<br>구두 약속 메모</div><div class="flow-arrow">→</div>
+      <div class="flow-item">카톡·문자<br>근로계약서</div><div class="flow-arrow">→</div>
+      <div class="flow-item">근무표<br>급여명세서</div><div class="flow-arrow">→</div>
+      <div class="flow-item">권리 진단<br>확인할 질문</div>
+    </div>
+    <div class="grid">
+      <div class="card"><h3>1. 약속과 계약의 차이</h3><p>공고·면접·메신저에서 들은 시급, 근무시간, 수당이 계약서에 어떻게 반영됐는지 비교한다.</p></div>
+      <div class="card"><h3>2. 계약과 실제의 차이</h3><p>계약 조건과 실제 근무표·급여명세서가 다른 지점을 날짜별로 표시한다.</p></div>
+      <div class="card"><h3>3. 권리 위험 신호</h3><p>최저임금, 근로조건 명시, 임금명세 등 관련 기준을 바탕으로 <strong>확인이 필요한 가능성</strong>을 알려준다.</p></div>
+      <div class="card"><h3>4. 증거·확인 공백</h3><p>시급은 확인됐지만 근무시간 기록이 없다는 식으로, 현재 부족한 자료를 구체적으로 제안한다.</p></div>
+    </div>
+    <table class="table">
+      <tr><th>진단 항목</th><th>AI가 보여주는 내용</th></tr>
+      <tr><td>시급</td><td><span class="warn">공고 12,000원 → 실제 10,500원</span><br>처음 안내받은 조건과 실제 지급이 다릅니다.</td></tr>
+      <tr><td>수습기간</td><td>수습 적용 여부는 있으나, 적용 기간·수습 시급이 불명확합니다.</td></tr>
+      <tr><td>주휴수당</td><td>면접 메모에는 있으나 계약서·급여명세서에서는 확인되지 않습니다.</td></tr>
+    </table>
+    <p class="small subtle" style="margin-top:5mm">안전 원칙: 서비스는 “불법이다”라고 확정하지 않는다. 관련 기준, 현재 자료, 추가 확인이 필요한 쟁점을 함께 제시한다.</p>
+    <div class="footer"><span>일자리 권리 도우미 · 팀 제안서</span><span>2 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">MAIN FUNCTION 02</div>
+    <h2>AI 권리 대화 동행자</h2>
+    <p class="lead" style="font-size:13pt">사용자가 사장님에게 한 번 묻고 끝나는 서비스가 아니다. 대화의 흐름을 읽고, 답변의 빈칸을 찾아 다음 발화를 함께 만든다.</p>
+    <div class="flow">
+      <div class="flow-item">불일치 감지</div><div class="flow-arrow">→</div>
+      <div class="flow-item">근거 기반<br>메시지 추천</div><div class="flow-arrow">→</div>
+      <div class="flow-item">사장님 답변<br>캡처·붙여넣기</div><div class="flow-arrow">→</div>
+      <div class="flow-item">답변 분석과<br>다음 주장 제안</div>
+    </div>
+    <div class="card blue" style="margin-top:6mm">
+      <h3>AI가 계속 확인하는 것</h3>
+      <div class="grid" style="margin-top:3mm">
+        <div>• 내가 무엇을 물었는가</div><div>• 사장님이 무엇에 답했는가</div>
+        <div>• 어떤 항목을 피했는가</div><div>• 다음에 어떤 근거로 말할 것인가</div>
+      </div>
+    </div>
+    <div style="margin-top:7mm">
+      <div class="label">사용자에게 제안하는 대화 모드</div>
+      <span class="chip">부드럽게 확인하기</span><span class="chip">명확하게 근거 요청하기</span><span class="chip">답하지 않은 항목 다시 묻기</span><span class="chip">기록 보관·상담 준비하기</span>
+    </div>
+    <div class="grid" style="margin-top:8mm">
+      <div class="card"><h3>사용자에게 주는 힘</h3><p>감정적으로 따지는 대신, “무엇을 확인할지”가 명확한 문장으로 대화할 수 있다.</p></div>
+      <div class="card mint"><h3>서비스의 역할</h3><p>법률 대리나 자동 신고가 아니다. 사용자가 안전하게 자기 권리를 확인하도록 돕는 대화 동행자다.</p></div>
+    </div>
+    <div class="quote" style="margin-top:10mm">“AI가 내 대신 싸우는 것이 아니라,<br>내가 혼자가 아니게 대화의 근거를 만들어 준다.”</div>
+    <div class="footer"><span>일자리 권리 도우미 · 팀 제안서</span><span>3 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">USER SCENARIO · STEP 01</div>
+    <h2>시뮬레이션 1. 근로조건·권리 진단</h2>
+    <p><strong>사용자: 베트남 유학생 린</strong> · 부산 카페 아르바이트</p>
+    <div class="timeline">
+      <div class="event"><div class="date">6월 1일 · 채용공고</div><strong>“시급 12,000원 / 주 5일 / 주휴수당 별도”</strong></div>
+      <div class="event"><div class="date">6월 4일 · 면접 후 카톡</div><strong>사장님: “처음 3개월은 수습이에요.”</strong></div>
+      <div class="event"><div class="date">6월 7일 · 근로계약서</div><strong>수습 기간은 적혀 있지만 수습 시급은 명확하지 않음</strong></div>
+      <div class="event"><div class="date">7월 5일 · 급여명세서</div><strong>실제 시급 10,500원 / 주휴수당 항목 없음</strong></div>
+    </div>
+    <table class="table" style="margin-top:5mm">
+      <tr><th>AI가 정리한 조건</th><th>확인된 사실</th><th>진단</th></tr>
+      <tr><td>시급</td><td>공고 12,000원 / 실제 10,500원</td><td><span class="warn">약속과 실제 지급 불일치</span></td></tr>
+      <tr><td>수습</td><td>카톡·계약서에는 언급, 시급 기준은 없음</td><td><span class="warn">핵심 근로조건 불명확</span></td></tr>
+      <tr><td>주휴수당</td><td>공고·면접 메모에는 언급, 급여명세서에는 없음</td><td><span class="warn">지급 여부 확인 필요</span></td></tr>
+    </table>
+    <div class="grid" style="margin-top:5mm">
+      <div class="card blue"><h3>법·권리 기준 연결</h3><p>임금·근로시간 등 핵심 근로조건이 명확히 남았는지, 실제 지급액이 법령 DB의 최저임금 기준과 어떤 관계인지 점검한다.</p></div>
+      <div class="card mint"><h3>AI의 다음 안내</h3><p>현재 자료만으로 확정 판정하지 않는다. 수습 시급·기간과 주휴수당을 <strong>서면으로 확인할 필요</strong>가 있다고 알려준다.</p></div>
+    </div>
+    <div class="result"><strong>린의 진단 요약</strong><br>3개의 설명되지 않은 조건이 발견됐습니다. 다음 단계는 ‘사장님과의 대화에서 이 세 항목의 답을 남기는 것’입니다.</div>
+    <div class="footer"><span>일자리 권리 도우미 · 팀 제안서</span><span>4 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">USER SCENARIO · STEP 02</div>
+    <h2>시뮬레이션 2. AI 권리 대화 동행</h2>
+    <p>진단 결과를 바탕으로 린은 감정적인 항의가 아니라, 확인되지 않은 세 가지 조건을 정확히 묻는다.</p>
+    <div class="bubble user"><div class="label">AI가 린에게 추천한 메시지</div>안녕하세요. 입사 전 안내받은 시급 12,000원과 이번 급여명세서의 시급 10,500원이 달라 확인 부탁드립니다. 수습 적용 기간, 수습 시급, 주휴수당 지급 여부를 문자로 알려주실 수 있을까요?</div>
+    <div class="bubble boss"><div class="label">사장님 답변</div>수습이라 원래 그렇게 하는 거예요.</div>
+    <div class="bubble ai"><div class="label">AI 대화 분석</div><strong>일부 답변됨:</strong> 수습 적용 여부<br><strong>아직 답변 없음:</strong> 수습 기간, 정확한 수습 시급, 주휴수당 지급 여부<br><br><strong>근거:</strong> 기능 1 진단에서 해당 세 항목은 공고·계약·급여명세서 사이에 설명되지 않은 차이로 확인되었습니다.</div>
+    <div class="card blue" style="margin-top:5mm"><h3>다음 멘트 추천</h3><p>“안내 감사합니다. 정확히 이해하기 위해 수습 기간이 언제부터 언제까지인지와 수습 기간 중 시급, 주휴수당 지급 여부를 문자로 확인 부탁드립니다.”</p></div>
+    <div class="grid" style="margin-top:6mm">
+      <div class="card"><h3>사장님이 명확히 답하면</h3><p>답변을 타임라인에 연결하고, 처음 약속·계약·실제 지급과 다시 비교한다.</p></div>
+      <div class="card mint"><h3>계속 답하지 않으면</h3><p>사용자는 기록 보관, 추가 확인, 상담 준비 중 다음 행동을 선택한다.</p></div>
+    </div>
+    <p class="small subtle" style="margin-top:9mm">MVP: 문서 4종 업로드 → 핵심 조건 5개 추출 → 권리 위험 진단 → 질문·답변 분석 → 타임라인·요약 PDF</p>
+    <div class="footer"><span>일자리 권리 도우미 · 팀 제안서</span><span>5 / 5</span></div>
+  </section>
+</body>
+</html>

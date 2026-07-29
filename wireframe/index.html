@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Work Rights Companion - Interactive Wireframe</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="brand" data-go="home"><span class="brand-mark">✓</span><span><b>근로권리 동반자</b><small>WORK RIGHTS COMPANION</small></span></button>
+      <div class="top-actions">
+        <span class="privacy">● <span data-i18n="private">Private case</span></span>
+        <div class="language">
+          <button id="languageButton" class="ghost">◎ <span id="currentLanguage">한국어</span>⌄</button>
+          <div id="languageMenu" class="language-menu hidden"></div>
+        </div>
+        <button class="avatar">NA</button>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <nav>
+        <button class="nav active" data-go="home"><span>⌂</span><b data-i18n="home">홈</b></button>
+        <button class="nav" data-go="records"><span>▤</span><b data-i18n="records">내 기록</b></button>
+        <button class="nav" data-go="check"><span>◇</span><b data-i18n="check">기록 비교</b></button>
+        <button class="nav" data-go="conversation"><span>◌</span><b data-i18n="conversation">확인 대화</b></button>
+        <button class="nav" data-go="wallet"><span>▣</span><b data-i18n="wallet">기록함</b></button>
+        <button class="nav" data-go="cases"><span>♧</span><b data-i18n="cases">비슷한 경험</b></button>
+      </nav>
+      <div class="help-card"><b data-i18n="needHelp">도움이 필요한가요?</b><p data-i18n="helpText">위험하거나 급한 상황이라면 직접 대화하지 않아도 됩니다.</p><button data-go="help" data-i18n="help">도움받기</button></div>
+    </aside>
+
+    <main>
+      <section id="home" class="screen active">
+        <div class="mobile-summary">
+          <div class="summary-title">
+            <div><span class="eyebrow">MY WORKPLACE</span><h2>해운대 초밥집 근무 기록</h2><p>2026년 7월부터 · 기록 중</p></div>
+            <span class="status-badge">진행 중</span>
+          </div>
+          <div class="summary-metrics">
+            <div><strong>1</strong><span>달라진 조건</span></div>
+            <div><strong>2</strong><span>확인 필요</span></div>
+            <div><strong>5</strong><span>보관 기록</span></div>
+          </div>
+          <div class="progress-track">
+            <span class="done">✓ 문제 발견</span><i></i><span class="done">✓ 질문 전송</span><i></i><span class="current">답변 받음</span><i></i><span>후속 확인</span>
+          </div>
+        </div>
+        <div class="home-actions">
+          <button data-go="records"><span>＋</span><b>기록 추가하기</b><small>계약서, 급여명세서, 대화</small></button>
+          <button class="featured" id="loadDemo"><span>⌁</span><b>기록 비교하기</b><small>모아둔 자료의 조건 비교</small></button>
+          <button data-go="conversation"><span>□</span><b>확인 대화</b><small>궁금한 점을 물어볼 문장</small></button>
+          <button data-go="wallet"><span>▣</span><b>근로 기록함</b><small>문서와 대화 내역 보관</small></button>
+        </div>
+        <div class="how-panel">
+          <h3>이용 흐름</h3>
+          <div><span>1</span><p><b>근로 기록을 모아요</b><small>채용공고, 계약서, 급여, 대화를 추가합니다.</small></p></div>
+          <div><span>2</span><p><b>기록 사이의 변화를 찾아요</b><small>공고, 계약, 근무, 급여에서 달라진 점을 확인합니다.</small></p></div>
+          <div><span>3</span><p><b>근거를 가지고 물어봐요</b><small>한국어 문장과 고용주 답변 분석을 제공합니다.</small></p></div>
+        </div>
+      </section>
+
+      <section id="records" class="screen">
+        <div class="page-head"><div><span class="eyebrow">STEP 1</span><h2 data-i18n="recordTitle">근로 기록 모으기</h2><p data-i18n="recordText">같은 일자리에서 생긴 자료를 한곳에 모을 수 있어요.</p></div><button class="primary" id="analyzeButton" disabled data-i18n="analyze">기록 비교하기</button></div>
+        <div class="record-layout">
+          <div class="upload-panel">
+            <input id="fileInput" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.txt" hidden>
+            <button class="dropzone" id="uploadButton"><span>＋</span><b data-i18n="upload">파일 또는 사진 추가</b><small>PDF, JPG, PNG, TXT</small></button>
+            <div class="type-grid">
+              <button>📣<span data-i18n="jobPost">채용공고</span></button><button>📄<span data-i18n="contract">근로계약서</span></button>
+              <button>💬<span data-i18n="employerChat">고용주 대화</span></button><button>🕐<span data-i18n="attendance">근무기록</span></button>
+              <button>₩<span data-i18n="payslip">급여명세서</span></button><button>🏦<span data-i18n="deposit">입금내역</span></button>
+            </div>
+          </div>
+          <div class="timeline-panel"><div class="panel-head"><b data-i18n="timeline">근무 기록 타임라인</b><span id="recordCount">0개 기록</span></div><div id="recordList" class="record-list"><div class="empty"><span>▤</span><b data-i18n="emptyRecords">아직 추가한 기록이 없습니다</b><p data-i18n="emptyText">예시를 불러오거나 직접 파일을 추가하세요.</p></div></div></div>
+        </div>
+      </section>
+
+      <section id="check" class="screen">
+        <div class="page-head"><div><span class="eyebrow">STEP 2</span><h2 data-i18n="checkTitle">근로 기록 비교</h2><p data-i18n="checkText">서로 다른 시점의 자료에서 같거나 달라진 조건을 보여줍니다.</p></div><span class="case-status">● 비교 완료</span></div>
+        <div class="tabs"><button class="active" data-tab="difference">달라진 조건 <em>2</em></button><button data-tab="risk">확인할 내용 <em>2</em></button><button data-tab="missing">더 필요한 기록 <em>3</em></button></div>
+        <div id="difference" class="tab-content active">
+          <div class="comparison">
+            <div class="compare-head"><b>근로조건 비교</b><span>근거 기록 4개</span></div>
+            <div class="compare-row labels"><span>조건</span><span>약속</span><span>계약</span><span>실제</span><span>상태</span></div>
+            <div class="compare-row problem"><b>시간급</b><span>12,000원<small>채용공고</small></span><span>12,000원<small>계약서</small></span><span>10,500원<small>급여명세서</small></span><mark>다름</mark></div>
+            <div class="compare-row"><b>주 근로시간</b><span>20시간</span><span>20.5시간</span><span>20.5시간</span><mark class="ok">확인</mark></div>
+            <div class="compare-row problem"><b>수습기간</b><span>언급 없음</span><span>기간·금액 불명확</span><span>적용됨</span><mark>확인 필요</mark></div>
+            <div class="compare-row"><b>급여일</b><span>매월 10일</span><span>매월 10일</span><span>8월 10일</span><mark class="ok">일치</mark></div>
+          </div>
+          <div class="finding-card"><div class="risk-icon">!</div><div><span>기록에서 발견한 변화</span><h3>계약 시급과 급여 계산 시급이 1,500원 달라요</h3><p>계약서에는 12,000원, 급여명세서에는 10,500원으로 기록되어 있습니다. 왜 달라졌는지 확인할 수 있어요.</p><div class="source-chips"><span>📄 근로계약서</span><span>₩ 급여명세서</span><span>ⓘ 관련 정보 보기</span></div></div><button class="primary" data-go="action">확인 방법 보기</button></div>
+        </div>
+        <div id="risk" class="tab-content"><div class="risk-grid"><article><span class="severity medium">확인 필요</span><h3>수습기간 임금 조건이 불명확해요</h3><p>기간, 적용 시급, 합의 시점이 계약서에 구체적으로 적혀 있지 않습니다.</p><small>AI 해석 · 최종 법률 판단 아님</small></article><article><span class="severity medium">추가 확인</span><h3>주휴수당이 0원으로 표시됐어요</h3><p>소정근로일 출근 여부 등 실제 지급요건을 추가로 확인해야 합니다.</p><small>공식 정보와 출근기록 비교 필요</small></article></div></div>
+        <div id="missing" class="tab-content"><div class="checklist"><label><input type="checkbox"> 7월 전체 출퇴근 기록 추가하기</label><label><input type="checkbox"> 면접 당시 시급 약속 메모 작성하기</label><label><input type="checkbox"> 수습기간 설명을 고용주에게 서면으로 묻기</label></div></div>
+      </section>
+
+      <section id="action" class="screen">
+        <div class="decision"><span class="eyebrow">STEP 3</span><h2>어떻게 진행할까요?</h2><p>바로 따질 필요는 없습니다. 현재 상황에 맞는 안전한 방법을 선택하세요.</p>
+          <div class="decision-grid">
+            <button data-go="conversation"><span>💬</span><b>근거를 가지고 정중하게 묻기</b><small>추천 문장과 근거를 준비합니다.</small></button>
+            <button data-go="wallet"><span>🔒</span><b>지금은 기록만 보관하기</b><small>고용주에게 연락하지 않습니다.</small></button>
+            <button data-go="help"><span>☎</span><b>다른 도움 알아보기</b><small>필요할 때 이용할 수 있는 곳을 확인합니다.</small></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="conversation" class="screen">
+        <div class="page-head"><div><span class="eyebrow">STEP 3</span><h2 data-i18n="conversationTitle">권리 대화 도우미</h2><p>대화는 카카오톡 등에서 직접 보내고, 답변을 다시 가져오세요.</p></div><span class="case-status">질문 준비</span></div>
+        <div class="conversation-layout">
+          <div class="issue-summary"><span>현재 쟁점</span><h3>시급 1,500원 차이</h3><p>계약 12,000원 → 실제 10,500원</p><div class="evidence-mini">📄 계약서　₩ 급여명세서</div></div>
+          <div class="message-builder">
+            <div class="tone"><span>말투 선택</span><button class="active" data-tone="polite">정중하게</button><button data-tone="clear">명확하게</button><button data-tone="firm">단호하게</button></div>
+            <div class="message-card"><small>고용주에게 보낼 한국어</small><p id="suggestedMessage"></p><button id="copyMessage">문장 복사</button></div>
+            <div class="translation"><small>Tiếng Việt · 의미</small><p id="translatedMessage"></p></div>
+            <button class="primary full" id="markSent">보냈다고 표시하기</button>
+          </div>
+          <div class="reply-panel">
+            <b>고용주의 답변 가져오기</b><p>텍스트를 붙여넣거나 대화 내용을 직접 입력하세요.</p>
+            <textarea id="employerReply" placeholder="예: 수습기간이라 원래 그렇게 계산해요"></textarea>
+            <button class="primary full" id="analyzeReply">답변 분석하기</button>
+            <div id="replyResult" class="reply-result hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="wallet" class="screen">
+        <div class="page-head"><div><span class="eyebrow">STEP 4</span><h2 data-i18n="walletTitle">근로 기록함</h2><p>문서와 대화, 확인한 내용을 날짜별로 보관합니다.</p></div><button class="primary" id="exportPdf">근로 기록 PDF 미리보기</button></div>
+        <div class="wallet-summary"><div><small>보관 기록</small><strong>6</strong></div><div><small>발견된 차이</small><strong>2</strong></div><div><small>미답변 질문</small><strong id="unansweredCount">0</strong></div><div><small>진행 상태</small><strong class="teal">확인 중</strong></div></div>
+        <div class="evidence-flow"><article class="done"><span>2026.06.25</span><b>채용공고 저장</b><p>시급 12,000원</p></article><article class="done"><span>2026.06.28</span><b>근로계약 체결</b><p>수습 조건 불명확</p></article><article class="warning"><span>2026.08.10</span><b>급여 차이 발견</b><p>10,500원으로 계산</p></article><article id="walletReply"><span>대기 중</span><b>고용주 확인</b><p>답변을 추가하면 자동 저장됩니다.</p></article></div>
+      </section>
+
+      <section id="cases" class="screen">
+        <div class="page-head"><div><span class="eyebrow">COLLECTIVE KNOWLEDGE</span><h2>비슷한 근로 경험</h2><p>개인정보가 제거된 해결 패턴만 보여줍니다.</p></div></div>
+        <div class="case-note">공식 법률 정보와 익명 경험은 서로 다른 정보입니다. 원본 문서와 대화는 공유되지 않습니다.</div>
+        <article class="similar-case"><div><span class="severity low">익명 경험 · 시연 데이터</span><h3>수습을 이유로 계약 시급보다 적게 지급된 사례</h3><p>부산 · 음식점 · 유학생 시간제 근로</p></div><div class="case-path"><span>유용했던 기록<br><b>계약서·급여명세서</b></span><span>사용한 질문<br><b>수습 합의 근거 요청</b></span><span>결과<br><b>차액 재계산</b></span></div></article>
+        <div class="consent"><div><b>내 경험도 익명으로 기여할까요?</b><p>공유는 기본적으로 꺼져 있으며, 근무 기록을 정리한 뒤 공유 내용을 먼저 확인합니다.</p></div><label class="switch"><input type="checkbox"><span></span></label></div>
+      </section>
+
+      <section id="help" class="screen"><div class="decision"><span class="eyebrow">MORE HELP</span><h2>필요할 때 도움을 받을 수 있어요</h2><p>기록을 먼저 정리한 뒤 궁금한 점이 남으면 학교나 공식 지원기관에 문의할 수 있습니다.</p><div class="decision-grid"><button><span>🏫</span><b>학교 국제처</b><small>재학·취업 관련 지원</small></button><button><span>☎</span><b>고용노동 상담</b><small>국번 없이 1350</small></button><button data-go="wallet"><span>📑</span><b>근로 기록 정리</b><small>기록함에서 내용 확인</small></button></div></div></section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="pdfModal" class="modal hidden"><div class="modal-card"><button id="closeModal" class="modal-close">×</button><span class="eyebrow">WORK RECORD SUMMARY</span><h2>나의 근로 기록 요약</h2><p>응우옌 민 안 · 가온식당 · 2026.07</p><hr><h3>달라진 조건</h3><p>계약 시급 12,000원과 실제 적용 시급 10,500원의 차이, 확인되지 않은 수습기간 조건</p><h3>모아둔 기록</h3><p>채용공고, 근로계약서, 급여명세서, 입금내역, 고용주 답변</p><h3>추가로 확인할 내용</h3><p>수습기간과 적용 시급, 주휴수당 지급요건, 임금 계산 방식</p><small>이 문서는 내가 모은 근로자료를 쉽게 확인하기 위한 요약입니다.</small></div></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+:root {
+  --color-navy: #1d2a44;
+  --color-teal: #0b948b;
+  --color-bg: #f6f5f2;
+  --color-surface: #ffffff;
+  --color-text: #182238;
+  --color-muted: #7a8497;
+  --color-line: #e2e5e9;
+  --radius-card: 16px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+}
+
