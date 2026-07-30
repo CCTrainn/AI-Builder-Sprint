@@ -81,6 +81,7 @@ async def _process_uploaded_record(
     file_bytes: bytes,
     filename: str,
     content_type: str,
+    record_type: str,
 ) -> None:
     """업로드 응답 후 OCR과 조건 추출 결과를 DB에 저장한다."""
 
@@ -94,7 +95,7 @@ async def _process_uploaded_record(
             filename=filename,
             content_type=content_type,
         )
-        conditions = extract_conditions(ocr_result.text)
+        conditions = extract_conditions(ocr_result.text, document_type=record_type)
         condition_rows = []
         for condition in conditions:
             value_number = (
@@ -234,6 +235,7 @@ async def upload_record(
         file_bytes=file_bytes,
         filename=original_file_name,
         content_type=content_type,
+        record_type=record_type.value,
     )
 
     return RecordUploadResponse(

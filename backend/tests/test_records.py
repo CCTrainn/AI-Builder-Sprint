@@ -247,6 +247,7 @@ def test_background_processing_saves_text_and_conditions(monkeypatch) -> None:
             file_bytes=b"%PDF-demo",
             filename="contract.pdf",
             content_type="application/pdf",
+            record_type="employment_contract",
         )
     )
 
@@ -279,6 +280,46 @@ def test_extract_core_work_conditions() -> None:
     assert result["pay_date"].value == 25
     assert result["probation"].value == 3
     assert result["weekly_holiday_pay"].value == "별도지급"
+
+
+def test_contract_distinguishes_work_and_break_time() -> None:
+    text = """
+    근로일 시업 종업 휴게시간 일 근로시간
+    월요일 18:00 22:00 없음 4시간
+    토요일 17:00 22:00 19:00~19:30 4.5시간
+    합계 주 5일 주 20.5시간
+    """
+
+    result = {
+        item.type: item
+        for item in extract_conditions(text, document_type="employment_contract")
+    }
+
+    assert result["working_hours"].value == "18:00-22:00"
+    assert result["break_time"].value == "19:00-19:30"
+    assert result["weekly_working_hours"].value == 20.5
+
+
+def test_payslip_extracts_hours_and_payment_breakdown() -> None:
+    text = """
+    기본급 861,000원 총 근로시간 82시간 주휴수당 0원
+    적용 시간급 10,500원 기타수당 0원
+    연장·야간·휴일근로 0시간 지급액 계 861,000원
+    공제액 계 0원 사회보험료 0원 실수령액 861,000원
+    비고: 수습기간 적용
+    """
+
+    result = {item.type: item for item in extract_conditions(text, document_type="payslip")}
+
+    assert result["hourly_wage"].value == 10500
+    assert result["total_working_hours"].value == 82
+    assert result["overtime_hours"].value == 0
+    assert result["basic_pay"].value == 861000
+    assert result["gross_pay"].value == 861000
+    assert result["deductions"].value == 0
+    assert result["net_pay"].value == 861000
+    assert result["weekly_holiday_pay"].value == 0
+    assert result["probation"].value == "applied_without_details"
 
 
 def test_parse_document_reads_upstage_html(monkeypatch) -> None:
