@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import get_settings
 from app.db.tables_records import (
     RecordDatabaseError,
+    delete_record,
     find_extracted_conditions,
     find_record,
     insert_record,
@@ -24,6 +25,8 @@ from app.db.tables_records import (
 from app.schemas.records import (
     ApiError,
     ProcessingStatus,
+    RecordDeleteData,
+    RecordDeleteResponse,
     RecordDetailData,
     RecordDetailResponse,
     RecordType,
@@ -294,5 +297,66 @@ async def get_record(record_id: str) -> RecordDetailResponse | JSONResponse:
                 for item in condition_rows
             ],
         ),
+        error=None,
+    )
+
+
+@router.delete("/{record_id}", response_model=RecordDeleteResponse)
+async def remove_record(record_id: str) -> RecordDeleteResponse | JSONResponse:
+    """원본 파일과 연결된 DB 기록을 함께 삭제한다."""
+
+    try:
+        row = await find_record(record_id)
+    except RecordDatabaseError:
+        response = RecordDeleteResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="RECORD_LOOKUP_FAILED",
+                message="삭제할 근로자료를 조회하지 못했습니다.",
+            ),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+
+    if row is None:
+        response = RecordDeleteResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="RECORD_NOT_FOUND",
+                message="삭제할 근로자료를 찾을 수 없습니다.",
+            ),
+        )
+        return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
+
+    try:
+        await delete_object(storage_path=row["storage_path"])
+    except StorageUploadError:
+        response = RecordDeleteResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="STORAGE_DELETE_FAILED",
+                message="원본 파일을 삭제하지 못해 기록 삭제를 중단했습니다.",
+            ),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+
+    try:
+        await delete_record(record_id)
+    except RecordDatabaseError:
+        response = RecordDeleteResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="RECORD_DELETE_FAILED",
+                message="원본 파일은 삭제됐지만 DB 기록을 삭제하지 못했습니다.",
+            ),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+
+    return RecordDeleteResponse(
+        success=True,
+        data=RecordDeleteData(record_id=record_id, deleted=True),
         error=None,
     )

@@ -92,7 +92,8 @@ async def delete_object(*, storage_path: str) -> None:
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.delete(
+            response = await client.request(
+                "DELETE",
                 endpoint,
                 headers=headers,
                 json={"prefixes": [storage_path]},

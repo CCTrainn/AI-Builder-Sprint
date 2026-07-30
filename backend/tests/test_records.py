@@ -182,6 +182,47 @@ def test_get_record_success(monkeypatch) -> None:
     }
 
 
+def test_delete_record_removes_storage_then_database(monkeypatch) -> None:
+    calls: list[tuple[str, str]] = []
+
+    async def fake_find_record(_record_id: str):
+        return {
+            "id": "rec_001",
+            "storage_path": "demo-user/work_001/rec_001/original.pdf",
+        }
+
+    async def fake_delete_object(*, storage_path: str) -> None:
+        calls.append(("storage", storage_path))
+
+    async def fake_delete_record(record_id: str) -> None:
+        calls.append(("database", record_id))
+
+    monkeypatch.setattr(records, "find_record", fake_find_record)
+    monkeypatch.setattr(records, "delete_object", fake_delete_object)
+    monkeypatch.setattr(records, "delete_record", fake_delete_record)
+
+    response = client.delete("/api/v1/records/rec_001")
+
+    assert response.status_code == 200
+    assert response.json()["data"] == {"record_id": "rec_001", "deleted": True}
+    assert calls == [
+        ("storage", "demo-user/work_001/rec_001/original.pdf"),
+        ("database", "rec_001"),
+    ]
+
+
+def test_delete_record_returns_not_found(monkeypatch) -> None:
+    async def fake_find_record(_record_id: str):
+        return None
+
+    monkeypatch.setattr(records, "find_record", fake_find_record)
+
+    response = client.delete("/api/v1/records/missing")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "RECORD_NOT_FOUND"
+
+
 def test_background_processing_saves_text_and_conditions(monkeypatch) -> None:
     updates: list[dict[str, object]] = []
     saved: dict[str, object] = {}

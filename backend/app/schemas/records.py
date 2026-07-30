@@ -67,3 +67,14 @@ class RecordDetailResponse(BaseModel):
     success: bool
     data: RecordDetailData | None
     error: ApiError | None
+
+
+class RecordDeleteData(BaseModel):
+    record_id: str
+    deleted: bool
+
+
+class RecordDeleteResponse(BaseModel):
+    success: bool
+    data: RecordDeleteData | None
+    error: ApiError | None

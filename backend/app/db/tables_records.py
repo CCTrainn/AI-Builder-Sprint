@@ -87,6 +87,26 @@ async def find_record(record_id: str) -> dict[str, Any] | None:
     return rows[0] if rows else None
 
 
+async def delete_record(record_id: str) -> None:
+    """records 행을 삭제한다. 연결 조건은 DB cascade로 함께 삭제된다."""
+
+    url, _ = _rest_credentials()
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.delete(
+                f"{url}/rest/v1/records",
+                headers=_headers(),
+                params={"id": f"eq.{record_id}"},
+            )
+    except httpx.HTTPError as exc:
+        raise RecordDatabaseError("근로자료를 삭제하지 못했습니다.") from exc
+
+    if response.status_code not in {200, 204}:
+        raise RecordDatabaseError(
+            f"records 삭제에 실패했습니다. status={response.status_code}"
+        )
+
+
 async def update_record_processing(
     record_id: str,
     *,
