@@ -1,10 +1,15 @@
 """ROLE-BE-RECORDS 비교 기능 테스트."""
 
+import asyncio
+from types import SimpleNamespace
+
+import httpx
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routes import comparisons
 from app.services.comparison_service import compare_record_conditions
+from app.services.law_api_service import get_law_reference
 
 
 def _row(
@@ -60,7 +65,15 @@ def test_compare_api_returns_envelope(monkeypatch) -> None:
             _row("rec_pay", "payslip", 10500, "2026-07-30"),
         ]
 
+    async def fake_law_reference(_condition: str):
+        return {
+            "title": "최저임금법 제6조",
+            "article": None,
+            "source_url": "https://www.law.go.kr/",
+        }
+
     monkeypatch.setattr(comparisons, "find_workplace_condition_rows", fake_rows)
+    monkeypatch.setattr(comparisons, "get_law_reference", fake_law_reference)
 
     app = FastAPI()
     app.include_router(comparisons.router, prefix="/api/v1/workplaces")
@@ -69,3 +82,39 @@ def test_compare_api_returns_envelope(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json()["success"] is True
     assert response.json()["data"]["comparisons"][0]["status"] == "different"
+
+
+def test_law_reference_falls_back_to_official_article_link(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.services.law_api_service.get_settings",
+        lambda: SimpleNamespace(law_api_oc=""),
+    )
+
+    result = asyncio.run(get_law_reference("hourly_wage"))
+
+    assert result["title"].startswith("최저임금법 제6조")
+    assert result["article"] is None
+    assert result["source_url"].startswith("https://www.law.go.kr/")
+
+
+def test_law_reference_reads_article_from_api(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.services.law_api_service.get_settings",
+        lambda: SimpleNamespace(law_api_oc="test-oc"),
+    )
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("lawSearch.do"):
+            return httpx.Response(200, json={"법령": [{"법령ID": "001872"}]})
+        return httpx.Response(
+            200,
+            json={"법령": {"조문": {"조문내용": "사용자는 최저임금액 이상을 지급해야 한다."}}},
+        )
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await get_law_reference("hourly_wage", client=client)
+
+    result = asyncio.run(run())
+
+    assert result["article"] == "사용자는 최저임금액 이상을 지급해야 한다."

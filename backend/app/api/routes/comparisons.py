@@ -6,9 +6,10 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from app.db.tables_records import RecordDatabaseError, find_workplace_condition_rows
-from app.schemas.comparisons import ComparisonData, ComparisonResponse
+from app.schemas.comparisons import ComparisonData, ComparisonResponse, LegalReference
 from app.schemas.records import ApiError
 from app.services.comparison_service import compare_record_conditions
+from app.services.law_api_service import get_law_reference
 
 router = APIRouter()
 WORKPLACE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,100}$")
@@ -40,11 +41,17 @@ async def compare_workplace(workplace_id: str) -> ComparisonResponse | JSONRespo
         )
         return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
 
+    comparison_items = compare_record_conditions(rows)
+    for item in comparison_items:
+        item.legal_reference = LegalReference(
+            **await get_law_reference(item.condition)
+        )
+
     return ComparisonResponse(
         success=True,
         data=ComparisonData(
             workplace_id=workplace_id,
-            comparisons=compare_record_conditions(rows),
+            comparisons=comparison_items,
         ),
         error=None,
     )
