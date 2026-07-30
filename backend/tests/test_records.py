@@ -1,12 +1,17 @@
 """ROLE-BE-RECORDS 전용 테스트."""
 
+import asyncio
 from types import SimpleNamespace
 
+import httpx
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routes import records
 from app.db.tables_records import RecordDatabaseError
+from app.services.extraction_service import extract_conditions
+from app.services.ocr_service import OCRConfigurationError, html_to_text, parse_document
 
 app = FastAPI()
 app.include_router(records.router, prefix="/api/v1/records")
@@ -155,3 +160,81 @@ def test_get_record_success(monkeypatch) -> None:
         },
         "error": None,
     }
+
+
+def test_html_to_text_preserves_document_rows() -> None:
+    result = html_to_text("<table><tr><th>시급</th><td>10,500원</td></tr></table>")
+
+    assert "시급" in result
+    assert "10,500원" in result
+
+
+def test_extract_core_work_conditions() -> None:
+    text = """
+    시간급: 10,500원
+    근로시간 09:00 ~ 18:00
+    임금 지급일: 매월 25일
+    수습기간 3개월
+    주휴수당 별도 지급
+    """
+
+    result = {item.type: item for item in extract_conditions(text)}
+
+    assert result["hourly_wage"].value == 10500
+    assert result["working_hours"].value == "09:00-18:00"
+    assert result["pay_date"].value == 25
+    assert result["probation_period"].value == 3
+    assert result["weekly_holiday_pay"].value == "별도지급"
+
+
+def test_parse_document_reads_upstage_html(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.services.ocr_service.get_settings",
+        lambda: SimpleNamespace(upstage_api_key="test-key"),
+    )
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        assert request.headers["authorization"] == "Bearer test-key"
+        return httpx.Response(
+            200,
+            json={
+                "model": "document-parse",
+                "content": {"html": "<p>시간급 10,500원</p>"},
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+
+    async def run():
+        async with httpx.AsyncClient(transport=transport) as mock_client:
+            return await parse_document(
+                file_bytes=b"%PDF-demo",
+                filename="근로계약서.pdf",
+                content_type="application/pdf",
+                client=mock_client,
+            )
+
+    result = asyncio.run(run())
+    assert result.text == "시간급 10,500원"
+
+
+def test_parse_document_rejects_invalid_key(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.services.ocr_service.get_settings",
+        lambda: SimpleNamespace(upstage_api_key="invalid-key"),
+    )
+
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(401, json={"error": {"message": "invalid"}})
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as mock_client:
+            return await parse_document(
+                file_bytes=b"%PDF-demo",
+                filename="contract.pdf",
+                content_type="application/pdf",
+                client=mock_client,
+            )
+
+    with pytest.raises(OCRConfigurationError, match="유효하지 않습니다"):
+        asyncio.run(run())
