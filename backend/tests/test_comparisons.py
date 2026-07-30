@@ -72,8 +72,12 @@ def test_compare_api_returns_envelope(monkeypatch) -> None:
             "source_url": "https://www.law.go.kr/",
         }
 
+    async def fake_save(_workplace_id: str, rows):
+        return {row["condition_type"]: "cmp_stable" for row in rows}
+
     monkeypatch.setattr(comparisons, "find_workplace_condition_rows", fake_rows)
     monkeypatch.setattr(comparisons, "get_law_reference", fake_law_reference)
+    monkeypatch.setattr(comparisons, "save_comparisons", fake_save)
 
     app = FastAPI()
     app.include_router(comparisons.router, prefix="/api/v1/workplaces")
@@ -82,6 +86,7 @@ def test_compare_api_returns_envelope(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json()["success"] is True
     assert response.json()["data"]["comparisons"][0]["status"] == "different"
+    assert response.json()["data"]["comparisons"][0]["comparison_id"] == "cmp_stable"
 
 
 def test_law_reference_falls_back_to_official_article_link(monkeypatch) -> None:
@@ -108,7 +113,16 @@ def test_law_reference_reads_article_from_api(monkeypatch) -> None:
             return httpx.Response(200, json={"법령": [{"법령ID": "001872"}]})
         return httpx.Response(
             200,
-            json={"법령": {"조문": {"조문내용": "사용자는 최저임금액 이상을 지급해야 한다."}}},
+            json={
+                "법령": {
+                    "조문": {
+                        "조문내용": "제6조(최저임금의 효력)",
+                        "항": [
+                            {"항내용": "사용자는 최저임금액 이상을 지급해야 한다."}
+                        ],
+                    }
+                }
+            },
         )
 
     async def run():
@@ -117,4 +131,7 @@ def test_law_reference_reads_article_from_api(monkeypatch) -> None:
 
     result = asyncio.run(run())
 
-    assert result["article"] == "사용자는 최저임금액 이상을 지급해야 한다."
+    assert result["article"] == (
+        "제6조(최저임금의 효력)\n"
+        "사용자는 최저임금액 이상을 지급해야 한다."
+    )

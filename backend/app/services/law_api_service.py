@@ -35,6 +35,8 @@ LAW_TOPICS = {
     "probation": LawTopic("최저임금법", 5, "최저임금액"),
 }
 
+_LAW_REFERENCE_CACHE: dict[LawTopic, dict[str, str | None]] = {}
+
 
 class LawAPIError(RuntimeError):
     """법령 API가 요청을 처리하지 못했을 때 발생한다."""
@@ -61,6 +63,28 @@ def _find_value(value: Any, key: str) -> Any | None:
             if result is not None:
                 return result
     return None
+
+
+def _find_text_values(value: Any, keys: set[str]) -> list[str]:
+    values: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key in keys and isinstance(child, str) and child.strip():
+                values.append(child.strip())
+            values.extend(_find_text_values(child, keys))
+    elif isinstance(value, list):
+        for child in value:
+            values.extend(_find_text_values(child, keys))
+    return values
+
+
+def _article_text(payload: Any) -> str | None:
+    parts = _find_text_values(
+        payload,
+        {"조문내용", "항내용", "호내용", "목내용"},
+    )
+    unique_parts = list(dict.fromkeys(parts))
+    return "\n".join(unique_parts) if unique_parts else None
 
 
 def _article_code(article_number: int) -> str:
@@ -90,6 +114,8 @@ async def get_law_reference(
     oc = get_settings().law_api_oc.strip()
     if not oc:
         return fallback
+    if topic in _LAW_REFERENCE_CACHE:
+        return dict(_LAW_REFERENCE_CACHE[topic])
 
     owns_client = client is None
     request_client = client or httpx.AsyncClient(timeout=20.0)
@@ -120,14 +146,17 @@ async def get_law_reference(
             },
         )
         detail.raise_for_status()
-        article_text = _find_value(detail.json(), "조문내용")
+        article_text = _article_text(detail.json())
     except (httpx.HTTPError, ValueError, TypeError):
         return fallback
     finally:
         if owns_client:
             await request_client.aclose()
 
-    return {
+    result = {
         **fallback,
         "article": str(article_text).strip() if article_text else None,
     }
+    if result["article"]:
+        _LAW_REFERENCE_CACHE[topic] = result
+    return dict(result)

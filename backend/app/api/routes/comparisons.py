@@ -1,11 +1,16 @@
 """시점별 근로자료 비교 API."""
 
+import asyncio
 import re
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.db.tables_records import RecordDatabaseError, find_workplace_condition_rows
+from app.db.tables_records import (
+    RecordDatabaseError,
+    find_workplace_condition_rows,
+    save_comparisons,
+)
 from app.schemas.comparisons import ComparisonData, ComparisonResponse, LegalReference
 from app.schemas.records import ApiError
 from app.services.comparison_service import compare_record_conditions
@@ -42,10 +47,47 @@ async def compare_workplace(workplace_id: str) -> ComparisonResponse | JSONRespo
         return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
 
     comparison_items = compare_record_conditions(rows)
-    for item in comparison_items:
+    references = await asyncio.gather(
+        *(get_law_reference(item.condition) for item in comparison_items)
+    )
+    for item, reference in zip(comparison_items, references, strict=True):
         item.legal_reference = LegalReference(
-            **await get_law_reference(item.condition)
+            **reference
         )
+
+    comparison_rows = [
+        {
+            "id": item.comparison_id,
+            "condition_type": item.condition,
+            "promised_record_id": (
+                item.promised.record_id if item.promised else None
+            ),
+            "contracted_record_id": (
+                item.contracted.record_id if item.contracted else None
+            ),
+            "actual_record_id": item.actual.record_id if item.actual else None,
+            "status": item.status.value,
+            "summary": item.summary,
+            "confirmation_items": item.confirmation_items,
+            "legal_reference": item.legal_reference.model_dump(mode="json"),
+        }
+        for item in comparison_items
+    ]
+    try:
+        saved_ids = await save_comparisons(workplace_id, comparison_rows)
+    except RecordDatabaseError:
+        response = ComparisonResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="COMPARISON_SAVE_FAILED",
+                message="비교 결과를 저장하지 못했습니다.",
+            ),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+
+    for item in comparison_items:
+        item.comparison_id = saved_ids.get(item.condition, item.comparison_id)
 
     return ComparisonResponse(
         success=True,

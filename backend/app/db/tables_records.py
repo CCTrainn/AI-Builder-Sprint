@@ -256,3 +256,77 @@ async def find_workplace_condition_rows(workplace_id: str) -> list[dict[str, Any
         {**condition, **records_by_id[condition["record_id"]]}
         for condition in conditions_response.json()
     ]
+
+
+async def save_comparisons(
+    workplace_id: str,
+    comparison_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    """조건별 비교 결과를 갱신하고 condition_type별 고정 ID를 반환한다."""
+
+    url, _ = _rest_credentials()
+    headers = _headers(return_representation=True)
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            existing_response = await client.get(
+                f"{url}/rest/v1/comparisons",
+                headers=_headers(),
+                params={
+                    "workplace_id": f"eq.{workplace_id}",
+                    "select": "id,condition_type",
+                },
+            )
+            if existing_response.status_code != 200:
+                raise RecordDatabaseError(
+                    f"기존 비교 결과 조회에 실패했습니다. status={existing_response.status_code}"
+                )
+
+            existing = {
+                row["condition_type"]: row["id"] for row in existing_response.json()
+            }
+            rows = [
+                {
+                    **row,
+                    "id": existing.get(row["condition_type"], row["id"]),
+                    "workplace_id": workplace_id,
+                }
+                for row in comparison_rows
+            ]
+
+            if rows:
+                saved_response = await client.post(
+                    f"{url}/rest/v1/comparisons",
+                    headers={
+                        **headers,
+                        "Prefer": "resolution=merge-duplicates,return=representation",
+                    },
+                    params={"on_conflict": "workplace_id,condition_type"},
+                    json=rows,
+                )
+                if saved_response.status_code not in {200, 201}:
+                    raise RecordDatabaseError(
+                        f"비교 결과 저장에 실패했습니다. status={saved_response.status_code}"
+                    )
+                saved_rows = saved_response.json()
+            else:
+                saved_rows = []
+
+            current_types = {row["condition_type"] for row in rows}
+            obsolete_types = set(existing) - current_types
+            for condition_type in obsolete_types:
+                deleted = await client.delete(
+                    f"{url}/rest/v1/comparisons",
+                    headers=_headers(),
+                    params={
+                        "workplace_id": f"eq.{workplace_id}",
+                        "condition_type": f"eq.{condition_type}",
+                    },
+                )
+                if deleted.status_code not in {200, 204}:
+                    raise RecordDatabaseError(
+                        f"이전 비교 결과 정리에 실패했습니다. status={deleted.status_code}"
+                    )
+    except httpx.HTTPError as exc:
+        raise RecordDatabaseError("비교 결과를 DB에 저장하지 못했습니다.") from exc
+
+    return {row["condition_type"]: row["id"] for row in saved_rows}
