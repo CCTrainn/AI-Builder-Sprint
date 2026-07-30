@@ -186,3 +186,53 @@ async def find_extracted_conditions(record_id: str) -> list[dict[str, Any]]:
             f"추출 조건 조회에 실패했습니다. status={response.status_code}"
         )
     return response.json()
+
+
+async def find_workplace_condition_rows(workplace_id: str) -> list[dict[str, Any]]:
+    """사업장 기록과 추출 조건을 비교 서비스가 쓰기 쉬운 행으로 합친다."""
+
+    url, _ = _rest_credentials()
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            records_response = await client.get(
+                f"{url}/rest/v1/records",
+                headers=_headers(),
+                params={
+                    "workplace_id": f"eq.{workplace_id}",
+                    "processing_status": "eq.completed",
+                    "select": "id,record_type,recorded_at",
+                },
+            )
+            if records_response.status_code != 200:
+                raise RecordDatabaseError(
+                    f"비교할 records 조회에 실패했습니다. status={records_response.status_code}"
+                )
+            record_rows = records_response.json()
+            if not record_rows:
+                return []
+
+            ids = ",".join(row["id"] for row in record_rows)
+            conditions_response = await client.get(
+                f"{url}/rest/v1/extracted_conditions",
+                headers=_headers(),
+                params={
+                    "record_id": f"in.({ids})",
+                    "select": (
+                        "record_id,condition_type,value_text,value_number,unit,"
+                        "confidence,source_text"
+                    ),
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise RecordDatabaseError("비교할 근로조건을 조회하지 못했습니다.") from exc
+
+    if conditions_response.status_code != 200:
+        raise RecordDatabaseError(
+            f"비교할 조건 조회에 실패했습니다. status={conditions_response.status_code}"
+        )
+
+    records_by_id = {row["id"]: row for row in record_rows}
+    return [
+        {**condition, **records_by_id[condition["record_id"]]}
+        for condition in conditions_response.json()
+    ]
