@@ -107,6 +107,20 @@ def test_law_reference_reads_article_from_api(monkeypatch) -> None:
         "app.services.law_api_service.get_settings",
         lambda: SimpleNamespace(law_api_oc="test-oc"),
     )
+    async def fake_cached(*_args):
+        return None
+
+    async def fake_upsert(_reference):
+        return None
+
+    monkeypatch.setattr(
+        "app.services.law_api_service.find_cached_law_reference",
+        fake_cached,
+    )
+    monkeypatch.setattr(
+        "app.services.law_api_service.upsert_law_reference",
+        fake_upsert,
+    )
 
     async def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("lawSearch.do"):
@@ -135,3 +149,59 @@ def test_law_reference_reads_article_from_api(monkeypatch) -> None:
         "제6조(최저임금의 효력)\n"
         "사용자는 최저임금액 이상을 지급해야 한다."
     )
+
+
+def test_comparison_detail_returns_values_for_conversation(monkeypatch) -> None:
+    async def fake_detail(_comparison_id: str):
+        return {
+            "id": "cmp_stable",
+            "workplace_id": "demo-e2e",
+            "condition_type": "hourly_wage",
+            "status": "different",
+            "summary": "시급 조건이 기록 사이에서 다릅니다.",
+            "confirmation_items": ["시급 계산 기준"],
+            "legal_reference": {
+                "title": "최저임금법 제6조",
+                "article": "공식 조문",
+                "source_url": "https://www.law.go.kr/",
+            },
+            "values": {
+                "contracted": {
+                    "value": 12000,
+                    "unit": "KRW",
+                    "record_id": "rec_contract",
+                },
+                "actual": {
+                    "value": 10500,
+                    "unit": "KRW",
+                    "record_id": "rec_pay",
+                },
+            },
+        }
+
+    monkeypatch.setattr(comparisons, "find_comparison_detail", fake_detail)
+
+    app = FastAPI()
+    app.include_router(comparisons.detail_router, prefix="/api/v1/comparisons")
+    response = TestClient(app).get("/api/v1/comparisons/cmp_stable")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["data"]["workplace_id"] == "demo-e2e"
+    assert body["data"]["comparison"]["contracted"]["value"] == 12000
+    assert body["data"]["comparison"]["actual"]["value"] == 10500
+    assert body["data"]["comparison"]["legal_reference"]["article"] == "공식 조문"
+
+
+def test_comparison_detail_returns_not_found(monkeypatch) -> None:
+    async def fake_detail(_comparison_id: str):
+        return None
+
+    monkeypatch.setattr(comparisons, "find_comparison_detail", fake_detail)
+
+    app = FastAPI()
+    app.include_router(comparisons.detail_router, prefix="/api/v1/comparisons")
+    response = TestClient(app).get("/api/v1/comparisons/missing")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "COMPARISON_NOT_FOUND"

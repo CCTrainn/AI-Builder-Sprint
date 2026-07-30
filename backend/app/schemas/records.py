@@ -78,3 +78,25 @@ class RecordDeleteResponse(BaseModel):
     success: bool
     data: RecordDeleteData | None
     error: ApiError | None
+
+
+class RecordListItem(BaseModel):
+    record_id: str
+    record_type: RecordType
+    file_name: str
+    recorded_at: str
+    processing_status: ProcessingStatus
+    condition_count: int = 0
+    created_at: str
+
+
+class RecordListData(BaseModel):
+    workplace_id: str
+    total: int
+    records: list[RecordListItem] = Field(default_factory=list)
+
+
+class RecordListResponse(BaseModel):
+    success: bool
+    data: RecordListData | None
+    error: ApiError | None

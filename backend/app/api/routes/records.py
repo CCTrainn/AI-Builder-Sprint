@@ -19,6 +19,7 @@ from app.db.tables_records import (
     find_extracted_conditions,
     find_record,
     insert_record,
+    list_workplace_records,
     replace_extracted_conditions,
     update_record_processing,
 )
@@ -29,6 +30,9 @@ from app.schemas.records import (
     RecordDeleteResponse,
     RecordDetailData,
     RecordDetailResponse,
+    RecordListData,
+    RecordListItem,
+    RecordListResponse,
     RecordType,
     RecordUploadData,
     RecordUploadResponse,
@@ -246,6 +250,59 @@ async def upload_record(
             record_type=record_type,
             file_name=original_file_name,
             processing_status=ProcessingStatus.UPLOADED,
+        ),
+        error=None,
+    )
+
+
+@router.get("", response_model=RecordListResponse)
+async def get_record_list(
+    workplace_id: str,
+) -> RecordListResponse | JSONResponse:
+    """사업장의 근로자료 목록과 처리 상태를 최신순으로 반환한다."""
+
+    if not WORKPLACE_ID_PATTERN.fullmatch(workplace_id):
+        response = RecordListResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="INVALID_WORKPLACE_ID",
+                message="workplace_id 형식이 올바르지 않습니다.",
+            ),
+        )
+        return JSONResponse(status_code=422, content=response.model_dump(mode="json"))
+
+    try:
+        rows = await list_workplace_records(workplace_id)
+    except RecordDatabaseError:
+        response = RecordListResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="RECORD_LIST_FAILED",
+                message="근로자료 목록을 조회하지 못했습니다.",
+            ),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+
+    items = [
+        RecordListItem(
+            record_id=row["id"],
+            record_type=row["record_type"],
+            file_name=row["original_file_name"],
+            recorded_at=row["recorded_at"],
+            processing_status=row["processing_status"],
+            condition_count=row.get("condition_count", 0),
+            created_at=row["created_at"],
+        )
+        for row in rows
+    ]
+    return RecordListResponse(
+        success=True,
+        data=RecordListData(
+            workplace_id=workplace_id,
+            total=len(items),
+            records=items,
         ),
         error=None,
     )

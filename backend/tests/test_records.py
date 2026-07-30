@@ -182,6 +182,48 @@ def test_get_record_success(monkeypatch) -> None:
     }
 
 
+def test_list_records_returns_latest_workplace_records(monkeypatch) -> None:
+    async def fake_list(_workplace_id: str):
+        return [
+            {
+                "id": "rec_pay",
+                "record_type": "payslip",
+                "original_file_name": "payslip.pdf",
+                "recorded_at": "2026-07-30",
+                "processing_status": "completed",
+                "condition_count": 9,
+                "created_at": "2026-07-30T01:25:43+00:00",
+            },
+            {
+                "id": "rec_contract",
+                "record_type": "employment_contract",
+                "original_file_name": "contract.pdf",
+                "recorded_at": "2026-07-01",
+                "processing_status": "completed",
+                "condition_count": 6,
+                "created_at": "2026-07-30T01:25:24+00:00",
+            },
+        ]
+
+    monkeypatch.setattr(records, "list_workplace_records", fake_list)
+
+    response = client.get("/api/v1/records", params={"workplace_id": "demo-e2e"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["total"] == 2
+    assert body["data"]["records"][0]["record_id"] == "rec_pay"
+    assert body["data"]["records"][0]["condition_count"] == 9
+
+
+def test_list_records_rejects_invalid_workplace_id() -> None:
+    response = client.get("/api/v1/records", params={"workplace_id": "bad id!"})
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_WORKPLACE_ID"
+
+
 def test_delete_record_removes_storage_then_database(monkeypatch) -> None:
     calls: list[tuple[str, str]] = []
 

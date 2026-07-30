@@ -7,6 +7,11 @@ from urllib.parse import quote
 import httpx
 
 from app.core.config import get_settings
+from app.db.tables_records import (
+    RecordDatabaseError,
+    find_cached_law_reference,
+    upsert_law_reference,
+)
 
 LAW_SEARCH_URL = "https://www.law.go.kr/DRF/lawSearch.do"
 LAW_SERVICE_URL = "https://www.law.go.kr/DRF/lawService.do"
@@ -117,6 +122,22 @@ async def get_law_reference(
     if topic in _LAW_REFERENCE_CACHE:
         return dict(_LAW_REFERENCE_CACHE[topic])
 
+    try:
+        cached = await find_cached_law_reference(
+            topic.law_name,
+            topic.article_number,
+        )
+    except RecordDatabaseError:
+        cached = None
+    if cached and cached.get("article_text"):
+        result = {
+            **fallback,
+            "article": cached["article_text"],
+            "source_url": cached.get("source_url") or fallback["source_url"],
+        }
+        _LAW_REFERENCE_CACHE[topic] = result
+        return dict(result)
+
     owns_client = client is None
     request_client = client or httpx.AsyncClient(timeout=20.0)
     try:
@@ -159,4 +180,17 @@ async def get_law_reference(
     }
     if result["article"]:
         _LAW_REFERENCE_CACHE[topic] = result
+        try:
+            await upsert_law_reference(
+                {
+                    "topic": condition_type,
+                    "law_name": topic.law_name,
+                    "article_number": topic.article_number,
+                    "article_title": topic.article_title,
+                    "article_text": result["article"],
+                    "source_url": result["source_url"],
+                }
+            )
+        except RecordDatabaseError:
+            pass
     return dict(result)

@@ -47,3 +47,14 @@ class ComparisonResponse(BaseModel):
     success: bool
     data: ComparisonData | None
     error: ApiError | None
+
+
+class ComparisonDetailData(BaseModel):
+    workplace_id: str
+    comparison: ComparisonItem
+
+
+class ComparisonDetailResponse(BaseModel):
+    success: bool
+    data: ComparisonDetailData | None
+    error: ApiError | None
