@@ -57,7 +57,7 @@ def extract_conditions(text: str) -> list[ExtractedCondition]:
     if probation:
         unit = "month" if probation.group(2) == "개월" else "week"
         conditions.append(
-            _condition("probation_period", probation, int(probation.group(1)), unit, 0.92)
+            _condition("probation", probation, int(probation.group(1)), unit, 0.92)
         )
 
     weekly = re.search(

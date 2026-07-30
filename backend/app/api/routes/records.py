@@ -9,11 +9,18 @@ from datetime import date
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
-from app.db.tables_records import RecordDatabaseError, find_record, insert_record
+from app.db.tables_records import (
+    RecordDatabaseError,
+    find_extracted_conditions,
+    find_record,
+    insert_record,
+    replace_extracted_conditions,
+    update_record_processing,
+)
 from app.schemas.records import (
     ApiError,
     ProcessingStatus,
@@ -23,6 +30,8 @@ from app.schemas.records import (
     RecordUploadData,
     RecordUploadResponse,
 )
+from app.services.extraction_service import extract_conditions
+from app.services.ocr_service import OCRServiceError, parse_document
 from app.services.storage_service import (
     StorageConfigurationError,
     StorageUploadError,
@@ -63,8 +72,65 @@ async def _read_upload(file: UploadFile, max_bytes: int) -> bytes:
     return b"".join(chunks)
 
 
+async def _process_uploaded_record(
+    *,
+    record_id: str,
+    file_bytes: bytes,
+    filename: str,
+    content_type: str,
+) -> None:
+    """업로드 응답 후 OCR과 조건 추출 결과를 DB에 저장한다."""
+
+    try:
+        await update_record_processing(
+            record_id,
+            processing_status=ProcessingStatus.PROCESSING.value,
+        )
+        ocr_result = await parse_document(
+            file_bytes=file_bytes,
+            filename=filename,
+            content_type=content_type,
+        )
+        conditions = extract_conditions(ocr_result.text)
+        condition_rows = []
+        for condition in conditions:
+            value_number = (
+                float(condition.value)
+                if isinstance(condition.value, (int, float))
+                else None
+            )
+            value_text = (
+                condition.value if isinstance(condition.value, str) else None
+            )
+            condition_rows.append(
+                {
+                    "condition_type": condition.type,
+                    "value_text": value_text,
+                    "value_number": value_number,
+                    "unit": condition.unit,
+                    "confidence": condition.confidence,
+                    "source_text": condition.source_text,
+                }
+            )
+        await replace_extracted_conditions(record_id, condition_rows)
+        await update_record_processing(
+            record_id,
+            processing_status=ProcessingStatus.COMPLETED.value,
+            original_text=ocr_result.text,
+        )
+    except (OCRServiceError, RecordDatabaseError):
+        try:
+            await update_record_processing(
+                record_id,
+                processing_status=ProcessingStatus.FAILED.value,
+            )
+        except RecordDatabaseError:
+            pass
+
+
 @router.post("/upload", response_model=RecordUploadResponse)
 async def upload_record(
+    background_tasks: BackgroundTasks,
     workplace_id: Annotated[str, Form()],
     record_type: Annotated[RecordType, Form()],
     recorded_at: Annotated[date, Form()],
@@ -159,6 +225,14 @@ async def upload_record(
             message="파일 정보 저장에 실패했습니다. 업로드를 다시 시도해 주세요.",
         )
 
+    background_tasks.add_task(
+        _process_uploaded_record,
+        record_id=record_id,
+        file_bytes=file_bytes,
+        filename=original_file_name,
+        content_type=content_type,
+    )
+
     return RecordUploadResponse(
         success=True,
         data=RecordUploadData(
@@ -178,6 +252,7 @@ async def get_record(record_id: str) -> RecordDetailResponse | JSONResponse:
 
     try:
         row = await find_record(record_id)
+        condition_rows = await find_extracted_conditions(record_id)
     except RecordDatabaseError:
         response = RecordDetailResponse(
             success=False,
@@ -204,7 +279,20 @@ async def get_record(record_id: str) -> RecordDetailResponse | JSONResponse:
             record_type=row["record_type"],
             processing_status=row["processing_status"],
             original_text=row.get("original_text"),
-            conditions=[],
+            conditions=[
+                {
+                    "type": item["condition_type"],
+                    "value": (
+                        item["value_number"]
+                        if item.get("value_number") is not None
+                        else item.get("value_text")
+                    ),
+                    "unit": item.get("unit"),
+                    "confidence": item.get("confidence"),
+                    "source_text": item.get("source_text"),
+                }
+                for item in condition_rows
+            ],
         ),
         error=None,
     )

@@ -5,6 +5,7 @@
 """
 
 from typing import Any
+from uuid import uuid4
 
 import httpx
 
@@ -84,3 +85,104 @@ async def find_record(record_id: str) -> dict[str, Any] | None:
 
     rows = response.json()
     return rows[0] if rows else None
+
+
+async def update_record_processing(
+    record_id: str,
+    *,
+    processing_status: str,
+    original_text: str | None = None,
+) -> None:
+    """OCR 처리 상태와 추출 원문을 갱신한다."""
+
+    url, _ = _rest_credentials()
+    body: dict[str, Any] = {"processing_status": processing_status}
+    if original_text is not None:
+        body["original_text"] = original_text
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.patch(
+                f"{url}/rest/v1/records",
+                headers=_headers(),
+                params={"id": f"eq.{record_id}"},
+                json=body,
+            )
+    except httpx.HTTPError as exc:
+        raise RecordDatabaseError("records 처리 상태를 저장하지 못했습니다.") from exc
+
+    if response.status_code not in {200, 204}:
+        raise RecordDatabaseError(
+            f"records 처리 상태 저장에 실패했습니다. status={response.status_code}"
+        )
+
+
+async def replace_extracted_conditions(
+    record_id: str,
+    conditions: list[dict[str, Any]],
+) -> None:
+    """한 기록의 기존 추출 조건을 새 OCR 결과로 교체한다."""
+
+    url, _ = _rest_credentials()
+    headers = _headers()
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            deleted = await client.delete(
+                f"{url}/rest/v1/extracted_conditions",
+                headers=headers,
+                params={"record_id": f"eq.{record_id}"},
+            )
+            if deleted.status_code not in {200, 204}:
+                raise RecordDatabaseError(
+                    f"기존 추출 조건 정리에 실패했습니다. status={deleted.status_code}"
+                )
+
+            if not conditions:
+                return
+
+            rows = [
+                {
+                    "id": f"cond_{uuid4().hex}",
+                    "record_id": record_id,
+                    **condition,
+                }
+                for condition in conditions
+            ]
+            inserted = await client.post(
+                f"{url}/rest/v1/extracted_conditions",
+                headers=headers,
+                json=rows,
+            )
+    except httpx.HTTPError as exc:
+        raise RecordDatabaseError("추출 조건을 저장하지 못했습니다.") from exc
+
+    if inserted.status_code not in {200, 201}:
+        raise RecordDatabaseError(
+            f"추출 조건 저장에 실패했습니다. status={inserted.status_code}"
+        )
+
+
+async def find_extracted_conditions(record_id: str) -> list[dict[str, Any]]:
+    """record_id에 연결된 근로조건을 조회한다."""
+
+    url, _ = _rest_credentials()
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                f"{url}/rest/v1/extracted_conditions",
+                headers=_headers(),
+                params={
+                    "record_id": f"eq.{record_id}",
+                    "select": (
+                        "condition_type,value_text,value_number,unit,confidence,source_text"
+                    ),
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise RecordDatabaseError("추출 조건을 조회하지 못했습니다.") from exc
+
+    if response.status_code != 200:
+        raise RecordDatabaseError(
+            f"추출 조건 조회에 실패했습니다. status={response.status_code}"
+        )
+    return response.json()

@@ -11,11 +11,27 @@ from fastapi.testclient import TestClient
 from app.api.routes import records
 from app.db.tables_records import RecordDatabaseError
 from app.services.extraction_service import extract_conditions
-from app.services.ocr_service import OCRConfigurationError, html_to_text, parse_document
+from app.services.ocr_service import OCRConfigurationError, OCRResult, html_to_text, parse_document
 
 app = FastAPI()
 app.include_router(records.router, prefix="/api/v1/records")
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def disable_upload_background_processing(monkeypatch):
+    async def fake_update_record_processing(*_args, **_kwargs) -> None:
+        return None
+
+    async def fake_parse_document(**_kwargs):
+        return OCRResult(text="테스트 문서", html="")
+
+    async def fake_replace_extracted_conditions(*_args, **_kwargs) -> None:
+        return None
+
+    monkeypatch.setattr(records, "update_record_processing", fake_update_record_processing)
+    monkeypatch.setattr(records, "parse_document", fake_parse_document)
+    monkeypatch.setattr(records, "replace_extracted_conditions", fake_replace_extracted_conditions)
 
 
 def _form_data() -> dict[str, str]:
@@ -144,7 +160,11 @@ def test_get_record_success(monkeypatch) -> None:
             "original_text": None,
         }
 
+    async def fake_find_conditions(_record_id: str):
+        return []
+
     monkeypatch.setattr(records, "find_record", fake_find_record)
+    monkeypatch.setattr(records, "find_extracted_conditions", fake_find_conditions)
 
     response = client.get("/api/v1/records/rec_001")
 
@@ -160,6 +180,39 @@ def test_get_record_success(monkeypatch) -> None:
         },
         "error": None,
     }
+
+
+def test_background_processing_saves_text_and_conditions(monkeypatch) -> None:
+    updates: list[dict[str, object]] = []
+    saved: dict[str, object] = {}
+
+    async def fake_update(record_id: str, **kwargs) -> None:
+        updates.append({"record_id": record_id, **kwargs})
+
+    async def fake_parse_document(**_kwargs):
+        return OCRResult(text="시간급 10,500원", html="")
+
+    async def fake_replace(record_id: str, conditions) -> None:
+        saved["record_id"] = record_id
+        saved["conditions"] = conditions
+
+    monkeypatch.setattr(records, "update_record_processing", fake_update)
+    monkeypatch.setattr(records, "parse_document", fake_parse_document)
+    monkeypatch.setattr(records, "replace_extracted_conditions", fake_replace)
+
+    asyncio.run(
+        records._process_uploaded_record(
+            record_id="rec_001",
+            file_bytes=b"%PDF-demo",
+            filename="contract.pdf",
+            content_type="application/pdf",
+        )
+    )
+
+    assert [item["processing_status"] for item in updates] == ["processing", "completed"]
+    assert updates[-1]["original_text"] == "시간급 10,500원"
+    assert saved["conditions"][0]["condition_type"] == "hourly_wage"
+    assert saved["conditions"][0]["value_number"] == 10500.0
 
 
 def test_html_to_text_preserves_document_rows() -> None:
@@ -183,7 +236,7 @@ def test_extract_core_work_conditions() -> None:
     assert result["hourly_wage"].value == 10500
     assert result["working_hours"].value == "09:00-18:00"
     assert result["pay_date"].value == 25
-    assert result["probation_period"].value == 3
+    assert result["probation"].value == 3
     assert result["weekly_holiday_pay"].value == "별도지급"
 
 
