@@ -1,0 +1,28 @@
+# 변경 요청
+
+- 요청 역할: `ROLE-FE-RECORDS`
+- 변경할 공통 파일: `frontend/index.html`, `frontend/shared/`의 사이드바 또는 공통 라우팅 코드
+- 필요한 이유: 기록·비교 담당 화면이 완성되어 공통 사이드바와 앱 진입점에서 각 화면으로 이동할 연결이 필요함
+- 원하는 변경:
+  - 홈 메뉴를 `frontend/features/home/home.html`에 연결
+  - 자료 모으기 메뉴를 `frontend/features/records/records.html`에 연결
+  - 조건 비교하기 메뉴를 `frontend/features/comparison/comparison.html`에 연결
+  - 현재 페이지에 맞춰 사이드바의 `active` 상태와 `aria-current="page"` 적용
+  - 데스크톱에서는 공통 레이아웃이 사이드바 너비를 담당하고, 기능별 화면에 별도 `margin-left`를 추가하지 않음
+  - 모바일에서는 공통 사이드바를 하단 메뉴 또는 접이식 메뉴로 전환
+  - `frontend/sidebar-example.html`에 있는 임시 사이드바를 공통 코드로 정리할지 통합 담당자가 결정
+- 연결되는 API 또는 화면:
+  - `GET /api/v1/records?workplace_id={workplace_id}`
+  - `POST /api/v1/records/upload`
+  - `GET /api/v1/records/{record_id}`
+  - `DELETE /api/v1/records/{record_id}`
+  - `POST /api/v1/workplaces/{workplace_id}/compare`
+  - `frontend/features/home/home.html`
+  - `frontend/features/records/records.html`
+  - `frontend/features/comparison/comparison.html`
+- 확인 방법:
+  - 사이드바의 홈, 자료 모으기, 조건 비교하기 메뉴가 각각 해당 화면으로 이동하는지 확인
+  - 각 화면에서 현재 메뉴만 활성 상태인지 확인
+  - 1024px 이상에서 사이드바와 본문이 겹치지 않는지 확인
+  - 720px 이하에서 본문이 가로로 넘치지 않고 모바일 메뉴로 이동할 수 있는지 확인
+  - 기능별 CSS가 공통 사이드바 너비를 가정한 왼쪽 여백을 만들지 않는지 확인
