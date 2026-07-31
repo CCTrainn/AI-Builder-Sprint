@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="확인 문장과 고용주 답변 분석 결과를 다시 확인합니다.">
+  <title>근로 기록함 | 근로권리 동반자</title>
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/common.css">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="../../shared/sidebar.css">
+</head>
+<body class="has-app-sidebar" data-page="record_box">
+  <div id="appSidebar" class="app-sidebar-root"></div>
+
+  <main class="record-box-page">
+    <header class="page-header">
+      <div>
+        <p class="step-label">STEP 4 · 근로 기록함</p>
+        <h1>확인한 내용을 한곳에서 다시 봐요</h1>
+        <p>추천 문장, 고용주 답변과 아직 확인할 내용을 시간순으로 보관해요.</p>
+      </div>
+      <a class="back-link" href="../conversation/conversation.html">확인 대화로 돌아가기</a>
+    </header>
+
+    <section class="summary-grid" aria-label="기록함 요약">
+      <article>
+        <span>보관된 대화</span>
+        <strong id="conversation-count">1</strong>
+      </article>
+      <article>
+        <span>발견된 기록 차이</span>
+        <strong>1</strong>
+      </article>
+      <article>
+        <span>답변되지 않은 내용</span>
+        <strong id="unanswered-count">4</strong>
+      </article>
+      <article>
+        <span>현재 상태</span>
+        <strong class="status-text">확인 중</strong>
+      </article>
+    </section>
+
+    <div id="record-empty" class="record-empty" hidden>
+      <span aria-hidden="true">□</span>
+      <h2>아직 보관된 대화가 없어요</h2>
+      <p>확인 대화에서 고용주 답변을 분석하면 이곳에서 다시 볼 수 있어요.</p>
+      <a href="../conversation/conversation.html">확인 대화 시작하기</a>
+    </div>
+
+    <section id="record-content" class="record-content">
+      <div class="record-heading">
+        <div>
+          <p>가온식당 · 시급 확인</p>
+          <h2>계약서와 급여명세서의 시급 기록이 달라요</h2>
+        </div>
+        <span>부분 답변 · 확인 필요</span>
+      </div>
+
+      <div class="evidence-strip" aria-label="관련 근로자료">
+        <div>
+          <span>근로계약서</span>
+          <strong>시급 12,000원</strong>
+        </div>
+        <span class="difference-arrow" aria-hidden="true">→</span>
+        <div>
+          <span>급여명세서</span>
+          <strong>계산 시급 10,500원</strong>
+        </div>
+        <mark>1,500원 다름</mark>
+      </div>
+
+      <ol class="conversation-timeline">
+        <li class="timeline-item question-item">
+          <div class="timeline-marker" aria-hidden="true">1</div>
+          <article>
+            <header>
+              <div><span>내가 준비한 확인 문장</span><time id="question-time">오늘</time></div>
+              <button class="copy-record-button" data-copy-target="saved-korean-message" type="button">복사</button>
+            </header>
+            <p id="saved-korean-message"></p>
+            <div class="translation-box">
+              <span>Tiếng Việt · 문장의 의미</span>
+              <p id="saved-translated-message" lang="vi"></p>
+            </div>
+            <ul id="saved-basis" class="basis-list"></ul>
+          </article>
+        </li>
+
+        <li class="timeline-item reply-item">
+          <div class="timeline-marker" aria-hidden="true">2</div>
+          <article>
+            <header><div><span>고용주 답변</span><time id="reply-time">오늘</time></div></header>
+            <blockquote id="saved-employer-reply"></blockquote>
+          </article>
+        </li>
+
+        <li class="timeline-item analysis-item">
+          <div class="timeline-marker" aria-hidden="true">3</div>
+          <article>
+            <header>
+              <div><span>답변 분석</span><time id="analysis-time">오늘</time></div>
+              <mark>부분 답변</mark>
+            </header>
+            <div class="analysis-columns">
+              <section>
+                <h3>답변된 내용</h3>
+                <ul id="saved-answered-list"></ul>
+              </section>
+              <section class="needs-check">
+                <h3>아직 답변되지 않은 내용</h3>
+                <ul id="saved-unanswered-list"></ul>
+              </section>
+            </div>
+          </article>
+        </li>
+
+        <li class="timeline-item follow-up-item">
+          <div class="timeline-marker" aria-hidden="true">4</div>
+          <article>
+            <header>
+              <div><span>다음에 확인할 문장</span><time>준비됨</time></div>
+              <button class="copy-record-button" data-copy-target="saved-follow-up" type="button">복사</button>
+            </header>
+            <p id="saved-follow-up"></p>
+            <div class="translation-box">
+              <span>Tiếng Việt · 문장의 의미</span>
+              <p id="saved-translated-follow-up" lang="vi"></p>
+            </div>
+          </article>
+        </li>
+      </ol>
+
+      <div class="record-actions">
+        <p id="record-feedback" role="status" aria-live="polite"></p>
+        <a href="../conversation/conversation.html">답변을 다시 분석하기</a>
+      </div>
+    </section>
+
+    <p class="disclaimer">이 기록함은 사용자가 모은 자료와 대화를 정리해 보여주며, 위법 여부를 확정하지 않습니다.</p>
+  </main>
+
+  <script type="module" src="../../shared/app.js"></script>
+  <script type="module" src="./record-box.js"></script>
+</body>
+</html>
