@@ -1,8 +1,14 @@
-const API_BASE = "/api/v1";
 const params = new URLSearchParams(window.location.search);
-const workplaceId = params.get("workplace_id") || "work_001";
-const useMockData = params.get("mode") !== "api";
+const requestedWorkplaceId = params.get("workplace_id");
+const storedWorkplaceId = readSessionValue("workplace_id");
+const workplaceId = requestedWorkplaceId || storedWorkplaceId || "demo-e2e";
+const useMockData = params.get("mode") === "mock";
 const forcedState = params.get("state");
+const API_BASE = resolveApiBase();
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLL_ATTEMPTS = 40;
+
+writeSessionValue("workplace_id", workplaceId);
 
 const RECORD_TYPES = {
   job_posting: "채용공고",
@@ -136,8 +142,70 @@ const state = {
   records: [],
   selectedFile: null,
   selectedRecordId: null,
+  pollingRecordIds: new Set(),
   toastTimer: null,
 };
+
+class ApiRequestError extends Error {
+  constructor(code, message, status = 0) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
+const FRIENDLY_ERROR_MESSAGES = {
+  NETWORK_ERROR: "백엔드에 연결하지 못했어요. API 서버와 CORS 설정을 확인해 주세요.",
+  INVALID_WORKPLACE_ID: "사업장 정보 형식이 올바르지 않아요.",
+  UNSUPPORTED_FILE_TYPE: "PDF, JPG, PNG 파일로 다시 추가해 주세요.",
+  FILE_TOO_LARGE: "파일 크기는 10MB 이하여야 해요.",
+  EMPTY_FILE: "내용이 있는 파일을 선택해 주세요.",
+  STORAGE_NOT_CONFIGURED: "파일 저장 공간이 아직 연결되지 않았어요.",
+  STORAGE_UPLOAD_FAILED: "원본 파일을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  RECORD_SAVE_FAILED: "파일 정보 저장에 실패했어요. 업로드를 다시 시도해 주세요.",
+  RECORD_LIST_FAILED: "근무자료 목록을 불러오지 못했어요.",
+  RECORD_LOOKUP_FAILED: "근무자료 상세 내용을 불러오지 못했어요.",
+  RECORD_NOT_FOUND: "해당 근무자료를 찾을 수 없어요.",
+  STORAGE_DELETE_FAILED: "원본 파일을 삭제하지 못해 기록 삭제를 중단했어요.",
+  RECORD_DELETE_FAILED: "기록을 삭제하지 못했어요.",
+};
+
+function resolveApiBase() {
+  const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocal) {
+    return `${window.location.protocol}//${window.location.hostname}:8000/api/v1`;
+  }
+  return `${window.location.origin}/api/v1`;
+}
+
+function readSessionValue(key) {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionValue(key, value) {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // 저장소가 제한된 환경에서는 URL의 workplace_id만 사용한다.
+  }
+}
+
+function preserveRuntimeContext() {
+  document.querySelectorAll("a[href]").forEach((anchor) => {
+    const url = new URL(anchor.href, window.location.href);
+    if (url.origin !== window.location.origin) return;
+    if (!url.pathname.includes("/frontend/features/")) return;
+
+    url.searchParams.set("workplace_id", workplaceId);
+    if (useMockData) url.searchParams.set("mode", "mock");
+    anchor.href = url.href;
+  });
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -291,13 +359,26 @@ function showState(type, message = "") {
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options);
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch {
+    throw new ApiRequestError("NETWORK_ERROR", FRIENDLY_ERROR_MESSAGES.NETWORK_ERROR);
+  }
   const result = await response.json().catch(() => null);
 
   if (!response.ok || !result?.success) {
-    throw new Error(result?.error?.message || "요청을 처리하지 못했습니다.");
+    throw new ApiRequestError(
+      result?.error?.code || "UNKNOWN_ERROR",
+      result?.error?.message || "요청을 처리하지 못했습니다.",
+      response.status,
+    );
   }
   return result.data;
+}
+
+function getFriendlyError(error, fallback) {
+  return FRIENDLY_ERROR_MESSAGES[error?.code] || error?.message || fallback;
 }
 
 async function loadRecords() {
@@ -318,11 +399,16 @@ async function loadRecords() {
     }
 
     renderRecords();
+    if (!useMockData) {
+      state.records
+        .filter((record) => ["uploaded", "processing"].includes(record.processing_status))
+        .forEach((record) => pollRecordProcessing(record.record_id));
+    }
   } catch (error) {
     state.records = [];
     renderSummary();
     elements.recordsList.replaceChildren();
-    showState("error", error.message);
+    showState("error", getFriendlyError(error, "근무자료를 불러오지 못했어요."));
   }
 }
 
@@ -400,16 +486,30 @@ async function uploadRecord(event) {
       formData.append("record_type", elements.recordType.value);
       formData.append("recorded_at", elements.recordedAt.value);
       formData.append("file", file);
-      await fetchJson(`${API_BASE}/records/upload`, { method: "POST", body: formData });
+      const uploaded = await fetchJson(`${API_BASE}/records/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      state.records = [
+        {
+          ...uploaded,
+          recorded_at: elements.recordedAt.value,
+          condition_count: 0,
+          created_at: new Date().toISOString(),
+          conditions: [],
+        },
+        ...state.records.filter((record) => record.record_id !== uploaded.record_id),
+      ];
+      renderRecords();
       showToast("자료를 추가했습니다. 내용을 분석하고 있어요.");
-      await loadRecords();
+      pollRecordProcessing(uploaded.record_id);
     }
 
     elements.uploadForm.reset();
     setDefaultDate();
     updateSelectedFile(null);
   } catch (error) {
-    elements.uploadError.textContent = error.message;
+    elements.uploadError.textContent = getFriendlyError(error, "자료를 추가하지 못했어요.");
     elements.uploadError.hidden = false;
   } finally {
     setUploadBusy(false);
@@ -422,6 +522,42 @@ function updateMockStatus(recordId, processingStatus, conditionCount = 0) {
   record.processing_status = processingStatus;
   record.condition_count = conditionCount;
   renderRecords();
+}
+
+async function pollRecordProcessing(recordId) {
+  if (state.pollingRecordIds.has(recordId)) return;
+  state.pollingRecordIds.add(recordId);
+
+  try {
+    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
+      const detail = await fetchJson(`${API_BASE}/records/${encodeURIComponent(recordId)}`);
+      const record = state.records.find((item) => item.record_id === recordId);
+      if (!record) return;
+
+      record.processing_status = detail.processing_status;
+      record.record_type = detail.record_type;
+      record.condition_count = Array.isArray(detail.conditions) ? detail.conditions.length : 0;
+      record.conditions = Array.isArray(detail.conditions) ? detail.conditions : [];
+      renderRecords();
+
+      if (detail.processing_status === "completed") {
+        showToast("자료 분석을 완료했습니다.");
+        return;
+      }
+      if (detail.processing_status === "failed") {
+        showToast("자료 내용을 읽지 못했어요. 파일을 확인해 주세요.");
+        return;
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, POLL_INTERVAL_MS));
+    }
+
+    showToast("분석이 계속 진행 중이에요. 잠시 후 다시 확인해 주세요.");
+  } catch (error) {
+    showToast(getFriendlyError(error, "분석 상태 자동 확인을 중단했어요."));
+  } finally {
+    state.pollingRecordIds.delete(recordId);
+  }
 }
 
 async function openRecord(recordId) {
@@ -438,13 +574,13 @@ async function openRecord(recordId) {
     const detail = useMockData
       ? summary
       : await fetchJson(`${API_BASE}/records/${encodeURIComponent(recordId)}`);
-    renderRecordDetail(detail);
+    renderRecordDetail({ ...summary, ...detail });
   } catch (error) {
     elements.dialogContent.innerHTML = `
       <div class="state-content">
         <span class="state-icon" aria-hidden="true">!</span>
         <strong>자료 내용을 불러오지 못했어요</strong>
-        <p>${escapeHtml(error.message)}</p>
+        <p>${escapeHtml(getFriendlyError(error, "자료 내용을 불러오지 못했어요."))}</p>
       </div>
     `;
   }
@@ -503,7 +639,7 @@ async function deleteRecord(recordId) {
     closeDialog();
     showToast("자료를 삭제했습니다.");
   } catch (error) {
-    showToast(error.message);
+    showToast(getFriendlyError(error, "자료를 삭제하지 못했어요."));
   }
 }
 
@@ -571,5 +707,6 @@ elements.dialog.addEventListener("click", (event) => {
   if (event.target === elements.dialog) closeDialog();
 });
 
+preserveRuntimeContext();
 setDefaultDate();
 loadRecords();

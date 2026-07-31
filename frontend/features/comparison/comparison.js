@@ -1,8 +1,12 @@
-const API_BASE = "/api/v1";
 const params = new URLSearchParams(window.location.search);
-const workplaceId = params.get("workplace_id") || "work_001";
-const useMockData = params.get("mode") !== "api";
+const requestedWorkplaceId = params.get("workplace_id");
+const storedWorkplaceId = readSessionValue("workplace_id");
+const workplaceId = requestedWorkplaceId || storedWorkplaceId || "demo-e2e";
+const useMockData = params.get("mode") === "mock";
 const forcedState = params.get("state");
+const API_BASE = resolveApiBase();
+
+writeSessionValue("workplace_id", workplaceId);
 
 const CONDITION_META = {
   hourly_wage: { label: "시간급", description: "약속·계약·급여 계산 기준" },
@@ -124,6 +128,59 @@ const state = {
   toastTimer: null,
 };
 
+class ApiRequestError extends Error {
+  constructor(code, message, status = 0) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
+const FRIENDLY_ERROR_MESSAGES = {
+  NETWORK_ERROR: "백엔드에 연결하지 못했어요. API 서버와 CORS 설정을 확인해 주세요.",
+  INVALID_WORKPLACE_ID: "사업장 정보 형식이 올바르지 않아요.",
+  COMPARISON_LOOKUP_FAILED: "비교할 근무자료를 불러오지 못했어요.",
+  COMPARISON_SAVE_FAILED: "비교 결과를 저장하지 못했어요.",
+  COMPARISON_NOT_FOUND: "해당 비교 결과를 찾을 수 없어요.",
+};
+
+function resolveApiBase() {
+  const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocal) {
+    return `${window.location.protocol}//${window.location.hostname}:8000/api/v1`;
+  }
+  return `${window.location.origin}/api/v1`;
+}
+
+function readSessionValue(key) {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionValue(key, value) {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // 저장소가 제한된 환경에서는 URL의 workplace_id만 사용한다.
+  }
+}
+
+function preserveRuntimeContext() {
+  document.querySelectorAll("a[href]").forEach((anchor) => {
+    const url = new URL(anchor.href, window.location.href);
+    if (url.origin !== window.location.origin) return;
+    if (!url.pathname.includes("/frontend/features/")) return;
+
+    url.searchParams.set("workplace_id", workplaceId);
+    if (useMockData) url.searchParams.set("mode", "mock");
+    anchor.href = url.href;
+  });
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -183,6 +240,7 @@ function renderComparisons() {
   }
 
   elements.list.innerHTML = comparisons.map(renderComparisonCard).join("");
+  preserveRuntimeContext();
 }
 
 function renderComparisonCard(comparison) {
@@ -308,15 +366,29 @@ function showState(type, message = "") {
       ${item.action === "records" ? '<a class="retry-button" href="../records/records.html">자료 추가하기</a>' : ""}
     </div>
   `;
+  preserveRuntimeContext();
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options);
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch {
+    throw new ApiRequestError("NETWORK_ERROR", FRIENDLY_ERROR_MESSAGES.NETWORK_ERROR);
+  }
   const result = await response.json().catch(() => null);
   if (!response.ok || !result?.success) {
-    throw new Error(result?.error?.message || "요청을 처리하지 못했습니다.");
+    throw new ApiRequestError(
+      result?.error?.code || "UNKNOWN_ERROR",
+      result?.error?.message || "요청을 처리하지 못했습니다.",
+      response.status,
+    );
   }
   return result.data;
+}
+
+function getFriendlyError(error, fallback) {
+  return FRIENDLY_ERROR_MESSAGES[error?.code] || error?.message || fallback;
 }
 
 async function loadComparisons(showCompletionToast = false) {
@@ -347,7 +419,7 @@ async function loadComparisons(showCompletionToast = false) {
     state.comparisons = [];
     renderMetrics();
     elements.list.replaceChildren();
-    showState("error", error.message);
+    showState("error", getFriendlyError(error, "비교 결과를 불러오지 못했어요."));
   } finally {
     elements.runButton.disabled = false;
     elements.runButton.removeAttribute("aria-busy");
@@ -382,4 +454,5 @@ elements.statePanel.addEventListener("click", (event) => {
   if (event.target.closest("[data-retry]")) loadComparisons();
 });
 
+preserveRuntimeContext();
 loadComparisons();
