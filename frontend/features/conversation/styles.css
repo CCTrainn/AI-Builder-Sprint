@@ -717,6 +717,41 @@ button {
   margin-top: 4px;
 }
 
+.analysis-context {
+  margin: 0 0 14px;
+  border: 1px solid #dbe6ef;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.analysis-context h4 {
+  margin: 0 0 8px;
+  color: var(--conversation-navy);
+  font-size: 0.8rem;
+}
+
+.analysis-context p {
+  margin: 0;
+  color: #48566a;
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.analysis-context ul {
+  margin: 9px 0 0;
+  padding-left: 17px;
+  color: #48566a;
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.analysis-context .safety-note {
+  margin-top: 10px;
+  color: #9a3412;
+  font-weight: 800;
+}
+
 .follow-up-card {
   border: 1px solid #dbe6ef;
   border-radius: 13px;

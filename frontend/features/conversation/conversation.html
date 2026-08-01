@@ -141,7 +141,7 @@
           <button id="analyze-reply" class="primary-button analyze-button" type="button">
             답변 분석하기
           </button>
-          <p class="privacy-note">입력한 답변은 데모 화면 안에서만 사용됩니다.</p>
+          <p class="privacy-note">입력한 답변은 다음 확인 문장을 만들기 위해 대화 기록에 저장됩니다.</p>
         </div>
 
         <div class="analysis-panel">
@@ -183,6 +183,13 @@
               </section>
             </div>
 
+            <section id="analysis-context" class="analysis-context" hidden>
+              <h4>답변을 이렇게 확인했어요</h4>
+              <p id="evidence-check"></p>
+              <ul id="tactic-list"></ul>
+              <p id="safety-note" class="safety-note" hidden></p>
+            </section>
+
             <section class="follow-up-card" aria-labelledby="follow-up-title">
               <div class="message-label-row">
                 <h4 id="follow-up-title">다음에 확인할 문장</h4>
@@ -195,7 +202,7 @@
               </div>
             </section>
             <div class="record-box-link-row">
-              <span>분석 결과는 이 브라우저의 데모 기록에 보관돼요.</span>
+              <span id="conversation-history-status">대화 기록에 안전하게 보관돼요.</span>
               <a href="../record_box/record-box.html">근로 기록함에서 보기</a>
             </div>
             <p id="analysis-feedback" class="action-feedback" role="status" aria-live="polite"></p>
