@@ -138,7 +138,8 @@ Storage의 원본 파일과 DB 기록, 연결된 추출 조건을 함께 삭제�
           "record_id": "rec_contract"
         },
         "actual": {
-          "value": 10500,
+          "value": 10000,
+          "recorded_at": "2026-07-30",
           "record_id": "rec_payslip"
         },
         "status": "different",
@@ -151,7 +152,16 @@ Storage의 원본 파일과 DB 기록, 연결된 추출 조건을 함께 삭제�
         "legal_reference": {
           "title": "관련 공식 정보",
           "article": null,
-          "source_url": "https://www.law.go.kr/"
+          "source_url": "https://www.law.go.kr/",
+          "rights_check": {
+            "status": "standard_mismatch",
+            "rule_code": "minimum_wage_2026",
+            "title": "2026년 최저임금 기준과 기록이 다름",
+            "explanation": "기록된 시급이 2026년 최저임금보다 낮습니다. 수습 감액 등 적용 조건을 추가로 확인해야 합니다.",
+            "basis": ["기록된 시급: 10,000원", "2026년 적용 최저임금: 10,320원"],
+            "missing_information": ["계약기간", "수습 여부와 기간", "업무 종류"],
+            "calculation": null
+          }
         }
       }
     ]
@@ -171,6 +181,22 @@ different
 missing
 needs_confirmation
 ```
+
+`legal_reference.rights_check.status` 허용값:
+
+```text
+standard_mismatch
+needs_confirmation
+insufficient_information
+no_mismatch_detected
+```
+
+이 값은 Python 규칙이 정한다. LLM은 이를 쉬운 말로 설명하거나 번역할 수 있지만
+상태, 수치 기준, 공식 법령 근거를 변경하거나 위법 여부를 확정하지 않는다.
+
+`rights_check.calculation`은 계산 가능한 자료가 있을 때만 반환한다. `expected_amount`는
+추출된 시급·근로시간으로 만든 단순 예상액이며 주휴수당, 별도 수당, 공제와 법적 예외가
+모두 반영된 최종 급여 확정값이 아니다.
 
 ## 6. 비교 결과 상세 조회
 
@@ -206,7 +232,15 @@ needs_confirmation
       "legal_reference": {
         "title": "최저임금법 제6조 (최저임금의 효력)",
         "article": "공식 조문 본문",
-        "source_url": "https://www.law.go.kr/"
+        "source_url": "https://www.law.go.kr/",
+        "rights_check": {
+          "status": "no_mismatch_detected",
+          "rule_code": "minimum_wage_2026",
+          "title": "최저임금 수치 차이 발견 안 됨",
+          "explanation": "기록된 시급은 2026년 최저임금 이상입니다.",
+          "basis": ["기록된 시급: 10,500원", "2026년 적용 최저임금: 10,320원"],
+          "missing_information": []
+        }
       }
     }
   },

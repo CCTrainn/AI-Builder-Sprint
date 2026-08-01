@@ -14,6 +14,14 @@ const CONDITION_META = {
   pay_date: { label: "급여일", description: "급여 지급 예정일과 실제 기록" },
   probation: { label: "수습기간", description: "수습 적용 여부와 기간" },
   weekly_holiday_pay: { label: "주휴수당", description: "기록에 표시된 주휴수당 조건" },
+  weekly_working_hours: { label: "주 근로시간", description: "주 40시간과 연장근로 확인" },
+  total_working_hours: { label: "월 총 근로시간", description: "급여 계산에 사용된 시간" },
+  overtime_hours: { label: "가산 근로시간", description: "연장·야간·휴일근로 기록" },
+  break_time: { label: "휴게시간", description: "근로시간에 필요한 최소 휴게" },
+  basic_pay: { label: "기본급", description: "급여명세서 기본급" },
+  gross_pay: { label: "지급액 합계", description: "근로시간으로 계산한 예상액과 비교" },
+  deductions: { label: "공제액", description: "급여에서 빠진 금액" },
+  net_pay: { label: "실수령액", description: "명세서와 실제 입금액" },
 };
 
 const STATUS_META = {
@@ -21,6 +29,13 @@ const STATUS_META = {
   needs_confirmation: { label: "확인 필요", className: "needs_confirmation" },
   missing: { label: "자료 부족", className: "missing" },
   same: { label: "기록이 같음", className: "same" },
+};
+
+const RIGHTS_STATUS_META = {
+  standard_mismatch: { label: "기준과 기록이 다름", className: "standard_mismatch" },
+  needs_confirmation: { label: "추가 확인 필요", className: "needs_confirmation" },
+  insufficient_information: { label: "판단 자료 부족", className: "insufficient_information" },
+  no_mismatch_detected: { label: "수치 차이 없음", className: "no_mismatch_detected" },
 };
 
 const SOURCE_NAMES = {
@@ -45,6 +60,15 @@ const MOCK_COMPARISONS = [
       title: "최저임금법 제6조 (최저임금의 효력)",
       article: "공식 조문 본문",
       source_url: "https://www.law.go.kr/",
+      rights_check: {
+        status: "no_mismatch_detected",
+        rule_code: "minimum_wage_2026",
+        title: "최저임금 수치 차이 발견 안 됨",
+        explanation: "기록된 시급은 2026년 최저임금 이상입니다.",
+        basis: ["기록된 시급: 10,500원", "2026년 적용 최저임금: 10,320원"],
+        missing_information: [],
+        calculation: null,
+      },
     },
   },
   {
@@ -253,6 +277,7 @@ function renderComparisonCard(comparison) {
     ? comparison.confirmation_items
     : [];
   const action = renderAction(comparison);
+  const rightsCheck = comparison.legal_reference?.rights_check;
 
   return `
     <article class="comparison-card">
@@ -269,12 +294,14 @@ function renderComparisonCard(comparison) {
 
       <div class="value-track">
         ${renderValueCell("약속", "promised", comparison.promised)}
-        ${renderValueCell("계약", "contracted", comparison.contracted)}
+        ${renderValueCell(comparison.condition === "net_pay" ? "명세" : "계약", "contracted", comparison.contracted)}
         ${renderValueCell("실제", "actual", comparison.actual)}
       </div>
 
       <div class="comparison-card__body">
         <p class="comparison-summary-text">${escapeHtml(comparison.summary)}</p>
+
+        ${rightsCheck ? renderRightsCheck(rightsCheck, comparison.legal_reference) : ""}
 
         ${confirmationItems.length > 0 ? `
           <div class="confirmation-block">
@@ -288,6 +315,36 @@ function renderComparisonCard(comparison) {
         ${action ? `<footer class="comparison-card__footer">${action}</footer>` : ""}
       </div>
     </article>
+  `;
+}
+
+function renderRightsCheck(check, legalReference) {
+  const meta = RIGHTS_STATUS_META[check.status] || RIGHTS_STATUS_META.insufficient_information;
+  const basis = Array.isArray(check.basis) ? check.basis : [];
+  const missing = Array.isArray(check.missing_information) ? check.missing_information : [];
+  const calculation = check.calculation;
+  return `
+    <section class="rights-check rights-check--${escapeHtml(meta.className)}">
+      <div class="rights-check__heading">
+        <strong>${escapeHtml(check.title)}</strong>
+        <span>${escapeHtml(meta.label)}</span>
+      </div>
+      <p>${escapeHtml(check.explanation)}</p>
+      ${calculation ? `
+        <div class="pay-calculation">
+          <strong>${escapeHtml(calculation.label)}</strong>
+          <span>${escapeHtml(calculation.formula)}</span>
+          <b>${Number(calculation.expected_amount).toLocaleString("ko-KR")}원</b>
+          ${calculation.recorded_amount !== null && calculation.recorded_amount !== undefined
+            ? `<small>기록된 금액 ${Number(calculation.recorded_amount).toLocaleString("ko-KR")}원</small>`
+            : ""}
+          ${(calculation.caveats || []).map((item) => `<small>※ ${escapeHtml(item)}</small>`).join("")}
+        </div>
+      ` : ""}
+      ${basis.length ? `<ul class="rights-basis">${basis.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+      ${missing.length ? `<p class="rights-missing">추가 확인: ${escapeHtml(missing.join(" · "))}</p>` : ""}
+      ${legalReference?.source_url ? `<a class="law-link" href="${escapeHtml(legalReference.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(legalReference.title || "공식 법령 확인")}</a>` : ""}
+    </section>
   `;
 }
 
@@ -310,7 +367,12 @@ function renderAction(comparison) {
   if (comparison.status === "missing") {
     return '<a class="conversation-link" href="../records/records.html">자료 추가하기</a>';
   }
-  if (comparison.status === "different" || comparison.status === "needs_confirmation") {
+  const rightsStatus = comparison.legal_reference?.rights_check?.status;
+  if (
+    comparison.status === "different"
+    || comparison.status === "needs_confirmation"
+    || ["standard_mismatch", "needs_confirmation"].includes(rightsStatus)
+  ) {
     const id = encodeURIComponent(comparison.comparison_id);
     return `<a class="conversation-link" href="../conversation/conversation.html?comparison_id=${id}">대화 도우미</a>`;
   }
