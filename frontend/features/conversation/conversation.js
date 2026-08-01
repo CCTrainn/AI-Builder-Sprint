@@ -91,6 +91,9 @@ const analysisResult = document.querySelector("#analysis-result");
 const analysisBadge = document.querySelector(".analysis-badge");
 const analysisFeedback = document.querySelector("#analysis-feedback");
 const historyStatus = document.querySelector("#conversation-history-status");
+const historyList = document.querySelector("#history-list");
+const historyEmpty = document.querySelector("#history-empty");
+const historyCount = document.querySelector("#history-count");
 
 let selectedTone = MESSAGE_REQUEST.tone;
 let currentMessage = null;
@@ -199,6 +202,44 @@ function renderReplyAnalysis(analysis) {
   safety.textContent = analysis.safety_note || "";
 }
 
+function formatHistoryTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function renderHistory(messages) {
+  historyCount.textContent = `${messages.length.toLocaleString()}개`;
+  historyEmpty.hidden = messages.length > 0;
+  historyList.replaceChildren(
+    ...messages.map((message) => {
+      const item = document.createElement("li");
+      const sender = message.sender === "employer" ? "employer" : "assistant";
+      item.className = `history-message history-message--${sender}`;
+
+      const meta = document.createElement("div");
+      meta.className = "history-message__meta";
+      const label = document.createElement("span");
+      label.textContent = sender === "employer" ? "고용주 답변" : "AI 확인 문장";
+      const time = document.createElement("time");
+      time.dateTime = message.created_at || "";
+      time.textContent = formatHistoryTime(message.created_at);
+      meta.append(label, time);
+
+      const text = document.createElement("p");
+      text.textContent = message.original_text;
+      item.append(meta, text);
+      return item;
+    }),
+  );
+}
+
 async function loadMessage(tone) {
   const currentRequest = ++requestSequence;
   selectedTone = tone;
@@ -217,7 +258,10 @@ async function loadMessage(tone) {
     if (currentRequest !== requestSequence) return;
     currentMessage = message;
     renderMessage(message);
-    if (message.conversation_id) historyStatus.textContent = "대화 기록에 저장됐어요. 다음 답변도 이어서 확인합니다.";
+    if (message.conversation_id) {
+      historyStatus.textContent = "대화 기록에 저장됐어요. 다음 답변도 이어서 확인합니다.";
+      await loadHistory();
+    }
   } catch (error) {
     if (currentRequest !== requestSequence) return;
     currentMessage = null;
@@ -230,7 +274,10 @@ async function loadMessage(tone) {
 }
 
 async function loadHistory() {
-  if (useMockData) return;
+  if (useMockData) {
+    renderHistory([]);
+    return;
+  }
   try {
     const history = await fetchJson(
       `/conversations/${encodeURIComponent(comparisonId)}/history?workplace_id=${encodeURIComponent(workplaceId)}`,
@@ -238,8 +285,13 @@ async function loadHistory() {
     if (history.messages.length > 0) {
       historyStatus.textContent = `이전 대화 ${history.messages.length}개를 불러왔어요. 남은 질문부터 이어서 확인합니다.`;
     }
+    renderHistory(history.messages);
   } catch (error) {
-    if (error.code !== "CONVERSATION_NOT_FOUND") historyStatus.textContent = "대화 기록을 불러오지 못했어요.";
+    if (error.code === "CONVERSATION_NOT_FOUND") {
+      renderHistory([]);
+      return;
+    }
+    historyStatus.textContent = "대화 기록을 불러오지 못했어요.";
   }
 }
 
@@ -296,6 +348,7 @@ async function analyzeEmployerReply() {
     analysisBadge.textContent = analysis.safety_mode ? "안전 확인" : "확인 완료";
     analysisBadge.classList.add("complete");
     historyStatus.textContent = "답변 분석과 다음 확인 문장을 대화 기록에 저장했어요.";
+    await loadHistory();
   } catch (error) {
     currentReplyAnalysis = null;
     document.querySelector("#analysis-error-message").textContent = error.message;
@@ -327,5 +380,4 @@ document.querySelector("#copy-follow-up").addEventListener("click", async () => 
   }
 });
 
-loadHistory();
 loadMessage(selectedTone);

@@ -738,6 +738,13 @@ button {
   line-height: 1.6;
 }
 
+.analysis-context .analysis-disclaimer {
+  margin-bottom: 10px;
+  border-left: 3px solid var(--conversation-teal);
+  padding-left: 9px;
+  color: #5e6b7a;
+}
+
 .analysis-context ul {
   margin: 9px 0 0;
   padding-left: 17px;
@@ -807,6 +814,84 @@ button {
   color: var(--conversation-teal-dark);
   font-weight: 800;
   text-underline-offset: 3px;
+}
+
+.conversation-history {
+  margin-top: 24px;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  background: #fff;
+  padding: 22px;
+}
+
+.history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.history-heading h2 {
+  margin: 4px 0 0;
+  color: var(--conversation-navy);
+  font-size: 1.15rem;
+}
+
+.history-heading > span {
+  border-radius: 999px;
+  background: var(--conversation-teal-soft);
+  padding: 6px 10px;
+  color: var(--conversation-teal-dark);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.history-empty {
+  margin: 18px 0 0;
+  color: #778293;
+  font-size: 0.82rem;
+}
+
+.history-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-message {
+  max-width: 82%;
+  border-radius: 13px;
+  padding: 12px 14px;
+}
+
+.history-message--employer {
+  justify-self: start;
+  background: #f1f3f6;
+}
+
+.history-message--assistant {
+  justify-self: end;
+  background: var(--conversation-teal-soft);
+}
+
+.history-message__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 5px;
+  color: #778293;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.history-message p {
+  margin: 0;
+  color: #344357;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
 }
 
 .sr-only {
