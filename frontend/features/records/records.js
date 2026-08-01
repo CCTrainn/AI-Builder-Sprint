@@ -36,6 +36,16 @@ const CONDITION_LABELS = {
   pay_date: "급여일",
   probation: "수습기간",
   weekly_holiday_pay: "주휴수당",
+  weekly_working_hours: "주 근무시간",
+  employment_period: "근무기간",
+  work_days: "근무요일",
+  job_duties: "담당 업무",
+  attendance_date: "근무 날짜",
+  scheduled_working_hours: "예정 근무시간",
+  actual_working_minutes: "실제 근무시간",
+  deposit_date: "입금 일시",
+  deposit_sender: "보낸 사람",
+  deposit_amount: "입금액",
 };
 
 const MOCK_RECORDS = [

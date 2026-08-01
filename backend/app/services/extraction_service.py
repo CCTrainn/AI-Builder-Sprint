@@ -182,4 +182,173 @@ def extract_conditions(
                     )
                 )
 
+    if document_type == "job_posting":
+        posting_patterns = (
+            (
+                "employment_period",
+                r"근무기간\s*\n?\s*(\d{4}[./-]\d{1,2}[./-]\d{1,2}\s*(?:~|\-|–|—)\s*\d{4}[./-]\d{1,2}[./-]\d{1,2})",
+                None,
+                0.95,
+            ),
+            (
+                "work_days",
+                r"근무요일\s*\n?\s*([^\n]+)",
+                None,
+                0.92,
+            ),
+            (
+                "working_hours",
+                r"근무시간\s*\n?\s*(?:평일\s*)?((?:[01]?\d|2[0-3]):\d{2}\s*(?:~|\-|–|—)\s*(?:[01]?\d|2[0-3]):\d{2})",
+                None,
+                0.94,
+            ),
+            (
+                "break_time",
+                r"휴게시간\s*\n?\s*(?:[^\d\n]*\s*)?((?:[01]?\d|2[0-3]):\d{2}\s*(?:~|\-|–|—)\s*(?:[01]?\d|2[0-3]):\d{2})",
+                None,
+                0.93,
+            ),
+            (
+                "job_duties",
+                r"업무\s*\n?\s*([^\n]+)",
+                None,
+                0.9,
+            ),
+        )
+        existing_types = {condition.type for condition in conditions}
+        for condition_type, pattern, unit, confidence in posting_patterns:
+            if condition_type in existing_types:
+                continue
+            match = re.search(pattern, normalized)
+            if match:
+                value = re.sub(r"\s+", " ", match.group(1)).strip().replace("~", "-")
+                conditions.append(_condition(condition_type, match, value, unit, confidence))
+
+        if "pay_date" not in existing_types:
+            posting_pay_date = re.search(r"(?:급여[^\n]*\n?)?[^\n]{0,60}?매월\s*(\d{1,2})일", normalized)
+            if posting_pay_date:
+                conditions.append(
+                    _condition("pay_date", posting_pay_date, int(posting_pay_date.group(1)), "day", 0.92)
+                )
+
+    if document_type in {"work_schedule", "attendance"}:
+        table_rows = re.finditer(
+            r"(?P<date>\d{1,2}/\d{1,2}\s*\([월화수목금토일]\))\s*\n"
+            r"(?P<scheduled>(?:[01]?\d|2[0-3]):\d{2}\s*(?:~|\-|–|—)\s*"
+            r"(?:[01]?\d|2[0-3]):\d{2}|휴무)\s*\n"
+            r"(?P<actual>(?:(?:[01]?\d|2[0-3]):\d{2}\s*(?:~|\-|–|—)\s*"
+            r"(?:[01]?\d|2[0-3]):\d{2})|-)\s*\n"
+            r"(?P<break>(?:(?:[01]?\d|2[0-3]):\d{2}\s*(?:~|\-|–|—)\s*"
+            r"(?:[01]?\d|2[0-3]):\d{2})|없음|-)\s*\n"
+            r"(?P<duration>(?:\d+\s*시간(?:\s*\d+\s*분)?)|-)\s*\n"
+            r"(?P<status>[^\n]+)",
+            normalized,
+        )
+        for row in table_rows:
+            if row.group("actual") == "-":
+                continue
+            source = " ".join(row.group(0).split())
+            conditions.append(
+                ExtractedCondition(
+                    type="attendance_date",
+                    value=row.group("date"),
+                    confidence=0.96,
+                    source_text=source,
+                )
+            )
+            if row.group("scheduled") != "휴무":
+                conditions.append(
+                    ExtractedCondition(
+                        type="scheduled_working_hours",
+                        value=re.sub(r"\s+", "", row.group("scheduled")).replace("~", "-"),
+                        confidence=0.93,
+                        source_text=source,
+                    )
+                )
+            conditions.append(
+                ExtractedCondition(
+                    type="working_hours",
+                    value=re.sub(r"\s+", "", row.group("actual")).replace("~", "-"),
+                    confidence=0.95,
+                    source_text=source,
+                )
+            )
+            duration = re.search(r"(\d+)\s*시간(?:\s*(\d+)\s*분)?", row.group("duration"))
+            if duration:
+                minutes = int(duration.group(1)) * 60 + int(duration.group(2) or 0)
+                conditions.append(
+                    ExtractedCondition(
+                        type="actual_working_minutes",
+                        value=minutes,
+                        unit="minutes",
+                        confidence=0.95,
+                        source_text=source,
+                    )
+                )
+
+        actual_time = re.search(
+            r"(?:실제\s*)?(?:출퇴근|근무)\s*[:：]?\s*"
+            r"([01]?\d|2[0-3])\s*[:시]\s*(\d{2})\s*"
+            r"(?:~|\-|–|—)\s*"
+            r"([01]?\d|2[0-3])\s*[:시]\s*(\d{2})",
+            normalized,
+        )
+        if actual_time:
+            start = f"{int(actual_time.group(1)):02d}:{actual_time.group(2)}"
+            end = f"{int(actual_time.group(3)):02d}:{actual_time.group(4)}"
+            conditions.append(
+                _condition("working_hours", actual_time, f"{start}-{end}", None, 0.92)
+            )
+
+        actual_weekly_hours = re.search(
+            r"(?:이번\s*주\s*)?(?:실제\s*)?근무\s*합계\s*[:：]?\s*"
+            r"(\d+(?:\.\d+)?)\s*시간(?:\s*(\d+)\s*분)?",
+            normalized,
+        )
+        if actual_weekly_hours:
+            hours = float(actual_weekly_hours.group(1))
+            minutes = int(actual_weekly_hours.group(2) or 0)
+            conditions.append(
+                _condition(
+                    "weekly_working_hours",
+                    actual_weekly_hours,
+                    round(hours + minutes / 60, 2),
+                    "hours_per_week",
+                    0.94,
+                )
+            )
+
+    if document_type == "bank_deposit":
+        transactions = re.finditer(
+            r"(?P<date>\d{1,4}[./-]\d{1,2}(?:[./-]\d{1,2})?\s+\d{1,2}:\d{2})\s*"
+            r"입금\s+(?P<sender>[가-힣A-Za-z0-9()\s]{1,40}?)\s*"
+            r"(?:\+|＋)\s*(?P<amount>\d{1,3}(?:,\d{3})+|\d+)\s*원",
+            normalized,
+        )
+        for transaction in transactions:
+            source = " ".join(transaction.group(0).split())
+            conditions.extend(
+                [
+                    ExtractedCondition(
+                        type="deposit_date",
+                        value=transaction.group("date"),
+                        confidence=0.95,
+                        source_text=source,
+                    ),
+                    ExtractedCondition(
+                        type="deposit_sender",
+                        value=transaction.group("sender").strip(),
+                        confidence=0.9,
+                        source_text=source,
+                    ),
+                    ExtractedCondition(
+                        type="deposit_amount",
+                        value=int(transaction.group("amount").replace(",", "")),
+                        unit="KRW",
+                        confidence=0.96,
+                        source_text=source,
+                    ),
+                ]
+            )
+
     return conditions
