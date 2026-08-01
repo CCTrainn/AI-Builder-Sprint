@@ -54,9 +54,7 @@ async def insert_record(record: dict[str, Any]) -> dict[str, Any]:
         raise RecordDatabaseError("Supabase DB에 연결하지 못했습니다.") from exc
 
     if response.status_code != 201:
-        raise RecordDatabaseError(
-            f"records 저장에 실패했습니다. status={response.status_code}"
-        )
+        raise RecordDatabaseError(f"records 저장에 실패했습니다. status={response.status_code}")
 
     rows = response.json()
     if not rows:
@@ -79,9 +77,7 @@ async def find_record(record_id: str) -> dict[str, Any] | None:
         raise RecordDatabaseError("Supabase DB에 연결하지 못했습니다.") from exc
 
     if response.status_code != 200:
-        raise RecordDatabaseError(
-            f"records 조회에 실패했습니다. status={response.status_code}"
-        )
+        raise RecordDatabaseError(f"records 조회에 실패했습니다. status={response.status_code}")
 
     rows = response.json()
     return rows[0] if rows else None
@@ -99,8 +95,7 @@ async def list_workplace_records(workplace_id: str) -> list[dict[str, Any]]:
                 params={
                     "workplace_id": f"eq.{workplace_id}",
                     "select": (
-                        "id,record_type,original_file_name,recorded_at,"
-                        "processing_status,created_at"
+                        "id,record_type,original_file_name,recorded_at,processing_status,created_at"
                     ),
                     "order": "recorded_at.desc,created_at.desc",
                 },
@@ -135,10 +130,7 @@ async def list_workplace_records(workplace_id: str) -> list[dict[str, Any]]:
         record_id = condition["record_id"]
         counts[record_id] = counts.get(record_id, 0) + 1
 
-    return [
-        {**row, "condition_count": counts.get(row["id"], 0)}
-        for row in record_rows
-    ]
+    return [{**row, "condition_count": counts.get(row["id"], 0)} for row in record_rows]
 
 
 async def delete_record(record_id: str) -> None:
@@ -156,9 +148,7 @@ async def delete_record(record_id: str) -> None:
         raise RecordDatabaseError("근로자료를 삭제하지 못했습니다.") from exc
 
     if response.status_code not in {200, 204}:
-        raise RecordDatabaseError(
-            f"records 삭제에 실패했습니다. status={response.status_code}"
-        )
+        raise RecordDatabaseError(f"records 삭제에 실패했습니다. status={response.status_code}")
 
 
 async def update_record_processing(
@@ -231,9 +221,7 @@ async def replace_extracted_conditions(
         raise RecordDatabaseError("추출 조건을 저장하지 못했습니다.") from exc
 
     if inserted.status_code not in {200, 201}:
-        raise RecordDatabaseError(
-            f"추출 조건 저장에 실패했습니다. status={inserted.status_code}"
-        )
+        raise RecordDatabaseError(f"추출 조건 저장에 실패했습니다. status={inserted.status_code}")
 
 
 async def find_extracted_conditions(record_id: str) -> list[dict[str, Any]]:
@@ -256,9 +244,7 @@ async def find_extracted_conditions(record_id: str) -> list[dict[str, Any]]:
         raise RecordDatabaseError("추출 조건을 조회하지 못했습니다.") from exc
 
     if response.status_code != 200:
-        raise RecordDatabaseError(
-            f"추출 조건 조회에 실패했습니다. status={response.status_code}"
-        )
+        raise RecordDatabaseError(f"추출 조건 조회에 실패했습니다. status={response.status_code}")
     return response.json()
 
 
@@ -335,9 +321,7 @@ async def save_comparisons(
                     f"기존 비교 결과 조회에 실패했습니다. status={existing_response.status_code}"
                 )
 
-            existing = {
-                row["condition_type"]: row["id"] for row in existing_response.json()
-            }
+            existing = {row["condition_type"]: row["id"] for row in existing_response.json()}
             rows = [
                 {
                     **row,
@@ -420,13 +404,22 @@ async def find_comparison_detail(comparison_id: str) -> dict[str, Any] | None:
                 return {**comparison, "values": {}}
 
             ids = ",".join(record_ids)
+            comparison_condition = comparison["condition_type"]
+            detail_condition_aliases = {
+                "pay_date": ("pay_date", "deposit_date"),
+                "net_pay": ("net_pay", "deposit_amount"),
+            }
+            condition_types = detail_condition_aliases.get(
+                comparison_condition,
+                (comparison_condition,),
+            )
             conditions_response = await client.get(
                 f"{url}/rest/v1/extracted_conditions",
                 headers=_headers(),
                 params={
                     "record_id": f"in.({ids})",
-                    "condition_type": f"eq.{comparison['condition_type']}",
-                    "select": "record_id,value_text,value_number,unit",
+                    "condition_type": f"in.({','.join(condition_types)})",
+                    "select": "record_id,condition_type,value_text,value_number,unit",
                 },
             )
     except httpx.HTTPError as exc:
@@ -437,9 +430,7 @@ async def find_comparison_detail(comparison_id: str) -> dict[str, Any] | None:
             f"비교 조건 값 조회에 실패했습니다. status={conditions_response.status_code}"
         )
 
-    conditions_by_record = {
-        row["record_id"]: row for row in conditions_response.json()
-    }
+    conditions_by_record = {row["record_id"]: row for row in conditions_response.json()}
     values: dict[str, dict[str, Any]] = {}
     for role, record_id in role_record_ids.items():
         if not record_id:
@@ -482,9 +473,7 @@ async def find_cached_law_reference(
         raise RecordDatabaseError("법령 캐시를 조회하지 못했습니다.") from exc
 
     if response.status_code != 200:
-        raise RecordDatabaseError(
-            f"법령 캐시 조회에 실패했습니다. status={response.status_code}"
-        )
+        raise RecordDatabaseError(f"법령 캐시 조회에 실패했습니다. status={response.status_code}")
     rows = response.json()
     return rows[0] if rows else None
 
@@ -508,6 +497,4 @@ async def upsert_law_reference(reference: dict[str, Any]) -> None:
         raise RecordDatabaseError("법령 캐시를 저장하지 못했습니다.") from exc
 
     if response.status_code not in {200, 201}:
-        raise RecordDatabaseError(
-            f"법령 캐시 저장에 실패했습니다. status={response.status_code}"
-        )
+        raise RecordDatabaseError(f"법령 캐시 저장에 실패했습니다. status={response.status_code}")

@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routes import comparisons
-from app.services.comparison_service import compare_record_conditions
+from app.services.comparison_service import compare_record_conditions, evaluate_rights_check
 from app.services.law_api_service import get_law_reference
 
 
@@ -26,6 +26,25 @@ def _row(
         "value_number": value,
         "value_text": None,
         "unit": "KRW",
+    }
+
+
+def _condition_row(
+    record_id: str,
+    record_type: str,
+    condition_type: str,
+    value: float | str,
+    recorded_at: str = "2026-07-30",
+    unit: str | None = None,
+) -> dict:
+    return {
+        "record_id": record_id,
+        "record_type": record_type,
+        "recorded_at": recorded_at,
+        "condition_type": condition_type,
+        "value_number": value if isinstance(value, (int, float)) else None,
+        "value_text": value if isinstance(value, str) else None,
+        "unit": unit,
     }
 
 
@@ -58,6 +77,144 @@ def test_compare_reports_missing_actual_record() -> None:
     assert result[0].actual is None
 
 
+def test_rights_check_detects_2026_minimum_wage_mismatch() -> None:
+    item = compare_record_conditions([_row("rec_pay", "payslip", 10000, "2026-07-30")])[0]
+
+    check = evaluate_rights_check(item)
+
+    assert check.status == "standard_mismatch"
+    assert check.rule_code == "minimum_wage_2026"
+    assert "10,320" in check.basis[1]
+    assert "수습" in check.missing_information[1]
+
+
+def test_rights_check_does_not_call_above_minimum_wage_a_violation() -> None:
+    item = compare_record_conditions([_row("rec_pay", "payslip", 12000, "2026-07-30")])[0]
+
+    check = evaluate_rights_check(item)
+
+    assert check.status == "no_mismatch_detected"
+    assert "위법" not in check.explanation
+
+
+def test_rights_check_uses_record_year_minimum_wage() -> None:
+    item = compare_record_conditions([_row("rec_pay", "payslip", 10000, "2025-06-30")])[0]
+
+    check = evaluate_rights_check(item)
+
+    assert check.status == "standard_mismatch"
+    assert check.rule_code == "minimum_wage_2025"
+    assert "10,030" in check.basis[1]
+
+
+def test_bank_deposit_is_compared_with_pay_date_and_net_pay() -> None:
+    items = compare_record_conditions(
+        [
+            _condition_row("rec_contract", "employment_contract", "pay_date", 10, unit="day"),
+            _condition_row("rec_payslip", "payslip", "net_pay", 900000, unit="KRW"),
+            _condition_row("rec_bank", "bank_deposit", "deposit_date", "2026-08-10 14:00"),
+            _condition_row("rec_bank", "bank_deposit", "deposit_amount", 900000, unit="KRW"),
+        ]
+    )
+    by_condition = {item.condition: item for item in items}
+
+    assert by_condition["pay_date"].status == "same"
+    assert by_condition["pay_date"].actual.record_id == "rec_bank"
+    assert by_condition["net_pay"].status == "same"
+
+
+def test_equivalent_units_and_time_separators_are_normalized() -> None:
+    items = compare_record_conditions(
+        [
+            _condition_row("rec_job", "job_posting", "weekly_working_hours", 20, unit="hour"),
+            _condition_row(
+                "rec_contract",
+                "employment_contract",
+                "weekly_working_hours",
+                20,
+                unit="hours_per_week",
+            ),
+            _condition_row("rec_job", "job_posting", "working_hours", "09:00~14:00"),
+            _condition_row("rec_contract", "employment_contract", "working_hours", "09:00-14:00"),
+        ]
+    )
+    by_condition = {item.condition: item for item in items}
+
+    assert by_condition["weekly_working_hours"].status == "same"
+    assert by_condition["working_hours"].status == "same"
+
+
+def test_break_time_rule_uses_working_time_without_break() -> None:
+    items = compare_record_conditions(
+        [
+            _condition_row("rec_att", "attendance", "working_hours", "09:00-18:00"),
+            _condition_row("rec_att", "attendance", "break_time", "12:00-12:30"),
+        ]
+    )
+    by_condition = {item.condition: item for item in items}
+
+    check = evaluate_rights_check(by_condition["break_time"], items)
+
+    assert check.status == "standard_mismatch"
+    assert check.rule_code == "minimum_break_time"
+    assert "60분" in check.explanation
+
+
+def test_weekly_holiday_pay_requests_eligibility_facts() -> None:
+    items = compare_record_conditions(
+        [
+            _condition_row(
+                "rec_att", "attendance", "weekly_working_hours", 20, unit="hours_per_week"
+            ),
+            _condition_row("rec_pay", "payslip", "weekly_holiday_pay", "미포함"),
+        ]
+    )
+    by_condition = {item.condition: item for item in items}
+
+    check = evaluate_rights_check(by_condition["weekly_holiday_pay"], items)
+
+    assert check.status == "needs_confirmation"
+    assert check.rule_code == "weekly_holiday_eligibility"
+    assert "개근" in check.missing_information[1]
+
+
+def test_expected_gross_pay_calculation_flags_lower_record() -> None:
+    items = compare_record_conditions(
+        [
+            _condition_row("rec_contract", "employment_contract", "hourly_wage", 12000, unit="KRW"),
+            _condition_row("rec_pay", "payslip", "total_working_hours", 80, unit="hours_per_month"),
+            _condition_row("rec_pay", "payslip", "overtime_hours", 4, unit="hours_per_month"),
+            _condition_row("rec_pay", "payslip", "gross_pay", 900000, unit="KRW"),
+        ]
+    )
+    by_condition = {item.condition: item for item in items}
+
+    check = evaluate_rights_check(by_condition["gross_pay"], items)
+
+    assert check.status == "needs_confirmation"
+    assert check.rule_code == "estimated_gross_pay_shortfall"
+    assert check.calculation.expected_amount == 984000
+    assert check.calculation.recorded_amount == 900000
+
+
+def test_net_pay_formula_is_checked_against_deposit() -> None:
+    items = compare_record_conditions(
+        [
+            _condition_row("rec_pay", "payslip", "gross_pay", 1000000, unit="KRW"),
+            _condition_row("rec_pay", "payslip", "deductions", 80000, unit="KRW"),
+            _condition_row("rec_bank", "bank_deposit", "deposit_amount", 900000, unit="KRW"),
+        ]
+    )
+    by_condition = {item.condition: item for item in items}
+
+    check = evaluate_rights_check(by_condition["net_pay"], items)
+
+    assert check.status == "needs_confirmation"
+    assert check.rule_code == "net_pay_calculation_difference"
+    assert check.calculation.expected_amount == 920000
+    assert check.calculation.difference == -20000
+
+
 def test_compare_api_returns_envelope(monkeypatch) -> None:
     async def fake_rows(_workplace_id: str):
         return [
@@ -87,6 +244,8 @@ def test_compare_api_returns_envelope(monkeypatch) -> None:
     assert response.json()["success"] is True
     assert response.json()["data"]["comparisons"][0]["status"] == "different"
     assert response.json()["data"]["comparisons"][0]["comparison_id"] == "cmp_stable"
+    rights_check = response.json()["data"]["comparisons"][0]["legal_reference"]["rights_check"]
+    assert rights_check["status"] == "no_mismatch_detected"
 
 
 def test_law_reference_falls_back_to_official_article_link(monkeypatch) -> None:
@@ -107,6 +266,7 @@ def test_law_reference_reads_article_from_api(monkeypatch) -> None:
         "app.services.law_api_service.get_settings",
         lambda: SimpleNamespace(law_api_oc="test-oc"),
     )
+
     async def fake_cached(*_args):
         return None
 
@@ -131,9 +291,7 @@ def test_law_reference_reads_article_from_api(monkeypatch) -> None:
                 "법령": {
                     "조문": {
                         "조문내용": "제6조(최저임금의 효력)",
-                        "항": [
-                            {"항내용": "사용자는 최저임금액 이상을 지급해야 한다."}
-                        ],
+                        "항": [{"항내용": "사용자는 최저임금액 이상을 지급해야 한다."}],
                     }
                 }
             },
@@ -146,8 +304,7 @@ def test_law_reference_reads_article_from_api(monkeypatch) -> None:
     result = asyncio.run(run())
 
     assert result["article"] == (
-        "제6조(최저임금의 효력)\n"
-        "사용자는 최저임금액 이상을 지급해야 한다."
+        "제6조(최저임금의 효력)\n사용자는 최저임금액 이상을 지급해야 한다."
     )
 
 

@@ -364,6 +364,80 @@ def test_payslip_extracts_hours_and_payment_breakdown() -> None:
     assert result["probation"].value == "applied_without_details"
 
 
+def test_attendance_extracts_actual_time_and_weekly_total() -> None:
+    result = {
+        item.type: item
+        for item in extract_conditions(
+            "실제 출퇴근 17:59 - 22:30\n이번 주 실제 근무 합계: 21시간 22분",
+            document_type="attendance",
+        )
+    }
+
+    assert result["working_hours"].value == "17:59-22:30"
+    assert result["weekly_working_hours"].value == 21.37
+
+
+def test_bank_deposit_extracts_transaction_fields() -> None:
+    conditions = extract_conditions(
+        "07.10 10:02 입금 가온식당 + 877,000원",
+        document_type="bank_deposit",
+    )
+    values = {(item.type, item.value) for item in conditions}
+
+    assert ("deposit_date", "07.10 10:02") in values
+    assert ("deposit_sender", "가온식당") in values
+    assert ("deposit_amount", 877000) in values
+
+
+def test_attendance_extracts_mobile_timecard_rows() -> None:
+    text = """7/6 (월)
+18:00 - 22:00
+17:58 - 22:04
+없음
+4시간 06분
+출근 완료
+7/8 (수)
+휴무
+-
+-
+-
+휴무"""
+
+    conditions = extract_conditions(text, document_type="attendance")
+    values = {(item.type, item.value) for item in conditions}
+
+    assert ("attendance_date", "7/6 (월)") in values
+    assert ("scheduled_working_hours", "18:00-22:00") in values
+    assert ("working_hours", "17:58-22:04") in values
+    assert ("actual_working_minutes", 246) in values
+
+
+def test_job_posting_extracts_mobile_listing_fields() -> None:
+    text = """시급 12,000원
+근무기간
+2026.07.01 ~ 2026.12.31
+근무요일
+월, 화, 목, 금, 토 (주 5일)
+근무시간
+평일 18:00 ~ 22:00 / 토요일 17:00 ~ 22:00
+휴게시간
+토요일 19:00 ~ 19:30
+급여
+시급 12,000원 · 매월 10일 계좌 입금
+업무
+홀 서빙, 주문 접수, 테이블 정리"""
+
+    result = {item.type: item for item in extract_conditions(text, "job_posting")}
+
+    assert result["hourly_wage"].value == 12000
+    assert result["employment_period"].value == "2026.07.01 - 2026.12.31"
+    assert result["work_days"].value == "월, 화, 목, 금, 토 (주 5일)"
+    assert result["working_hours"].value == "18:00 - 22:00"
+    assert result["break_time"].value == "19:00 - 19:30"
+    assert result["pay_date"].value == 10
+    assert result["job_duties"].value == "홀 서빙, 주문 접수, 테이블 정리"
+
+
 def test_parse_document_reads_upstage_html(monkeypatch) -> None:
     monkeypatch.setattr(
         "app.services.ocr_service.get_settings",

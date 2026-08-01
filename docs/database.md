@@ -130,5 +130,15 @@ working_hours
 pay_date
 probation
 weekly_holiday_pay
+weekly_working_hours
+total_working_hours
+overtime_hours
+break_time
+basic_pay
+gross_pay
+deductions
+net_pay
 ```
 
+은행 입금내역의 `deposit_date`는 비교 시 `pay_date`로, `deposit_amount`는
+`net_pay`로 연결한다. 급여명세서 실수령액과 실제 입금액은 같은 비교 결과에 표시한다.
