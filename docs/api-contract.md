@@ -350,3 +350,36 @@ more_evidence_needed
 대화 이력은 `comparison_id`별로 분리하지 않고 같은 `workplace_id`의 실제 발송
 문장과 고용주 답변을 하나의 시간순 타임라인으로 반환한다. AI 추천 초안과 아직
 보내지 않은 후속 문장은 이력에 포함하지 않는다.
+
+## 10. 내 공동경험 로컬 저장
+
+`POST /community/experiences`
+
+사용자가 익명화 결과를 확인하고 저장에 동의한 경우에만 로컬 DB에 저장한다.
+원문은 저장하지 않으며 저장된 경험은 공동경험 화면에 자동 공개되지 않는다.
+
+```json
+{
+  "workplace_id": "work_001",
+  "problem_type": "hourly_wage_difference",
+  "outcome": "in_progress",
+  "text": "[정확한 날짜 제거] 시급 차이를 확인했습니다.",
+  "evidence_types": ["employment_contract", "payslip"],
+  "consent_to_store": true
+}
+```
+
+`GET /community/experiences?workplace_id={workplace_id}`
+
+`POST /community/experiences/{experience_id}/share`
+
+확정하여 개인 기록으로 저장한 경험을 공동 경험에 공유한다. 확정과 공유는 별도 단계이며,
+공유 요청 전까지 `is_shared`는 `false`다.
+
+```json
+{
+  "workplace_id": "work_001"
+}
+```
+
+해당 사업장에 사용자가 저장한 익명 경험을 최신순으로 반환한다.
