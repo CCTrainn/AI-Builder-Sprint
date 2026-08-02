@@ -48,7 +48,7 @@ Codex는 아래 순서대로 행동한다.
 
 1. `AGENTS.md`, `docs/team-plan.md`, `docs/api-contract.md`,
    `docs/database.md`를 읽는다.
-2. 아래 네 역할 중 하나를 정확히 선택한다.
+2. 아래 다섯 역할 중 하나를 정확히 선택한다.
 3. 저장소 상태와 현재 브랜치를 확인한다.
 4. `.codex/ROLE.md`를 역할 템플릿에 맞춰 생성하거나 갱신한다.
 5. 담당 파일, 수정 금지 파일, 첫 세 작업, 테스트 방법을 사용자에게 알려준다.
@@ -149,6 +149,53 @@ frontend/features/conversation/
 frontend/features/record_box/
 ```
 
+### ROLE-COMMUNITY-EXPERIENCE: 공동 경험·익명 사례 담당
+
+담당:
+
+- 공동 경험 기능의 목적과 사용자 흐름 정의
+- 공유할 정보와 공유하지 않을 정보 구분
+- 개인정보 제거 및 재식별 방지 규칙
+- 익명 사례 검증 상태와 신고·숨김 기준
+- 기록 비교·대화 해결 과정을 익명 사례 단위로 변환
+- 비슷한 경험 탐색과 해결 과정 요약
+- 공동 경험이 모여 정보 비대칭을 줄이는 의미를 제품 화면에 표현
+
+이 역할은 구현보다 `docs/community-experience-plan.md` 작성이 먼저다.
+아래 다섯 항목을 팀이 승인하기 전에는 API, DB, 화면 구현을 시작하지 않는다.
+
+```text
+1. 기능의 정확한 목적
+2. 공유 단위와 제외 정보
+3. 개인정보 제거 및 재식별 방지 방법
+4. 사례 검증 상태와 신뢰도 표시 방법
+5. 허위 사례, 특정인 공격, 악용에 대한 대응 기준
+```
+
+전용 수정 가능 파일:
+
+```text
+docs/community-experience-plan.md
+backend/app/api/routes/community.py
+backend/app/services/community_service.py
+backend/app/services/anonymization_service.py
+backend/app/services/similarity_service.py
+backend/app/schemas/community.py
+backend/app/db/tables_community.py
+backend/tests/test_community.py
+frontend/features/community/
+```
+
+금지:
+
+- 원본 문서, 대화 캡처, 이름, 전화번호, 계좌번호, 외국인등록번호 공유
+- 사용자가 동의하지 않은 기록의 자동 공개
+- 특정 사업장 또는 개인을 식별할 수 있는 정보 공개
+- 검증되지 않은 경험을 법적 사실이나 확정 판례처럼 표현
+- 고용주 평가, 공개 비난, 자동 신고 기능으로 확장
+
+초기 기획과 데모에서는 실제 사용자 자료 대신 완전히 가공된 익명 예시만 사용한다.
+
 프론트엔드 두 명은 역할을 서로 바꿔도 되지만, 같은 기능 폴더를 동시에 수정하면 안 된다.
 담당 폴더 변경은 두 사람이 합의하고 `.codex/ROLE.md`에만 반영한다.
 
@@ -233,6 +280,7 @@ feature/be-records-이름
 feature/be-conversation-이름
 feature/fe-records-이름
 feature/fe-conversation-이름
+feature/community-experience-이름
 ```
 
 작업 시작:
@@ -294,10 +342,9 @@ docs(api): 대화 분석 응답 예시 추가
 - 자동 신고
 - 실제 고용주 평가
 - 원본 개인정보의 커뮤니티 공유
-- 공동 경험·증거 커뮤니티
 - 새로운 프레임워크 추가
 
-공동 경험·증거 커뮤니티는 현재 네 역할의 개발 범위에 포함하지 않는다.
-목적, 공유 단위, 개인정보 제거 방법, 검증 방식, 악용 방지 기준을 팀이 별도로
-합의한 뒤에만 새로운 기획 문서와 담당자를 정한다. 그전에는 화면, API, DB
-테이블을 미리 만들지 않는다.
+공동 경험·익명 사례 기능은 `ROLE-COMMUNITY-EXPERIENCE`의 범위다.
+단, `docs/community-experience-plan.md`에서 목적, 공유 단위, 개인정보 제거,
+검증 방식, 악용 방지 기준을 팀이 승인한 뒤에만 화면, API, DB를 구현한다.
+승인 전 작업 범위는 기획 문서와 완전히 가공된 예시 데이터 작성까지다.

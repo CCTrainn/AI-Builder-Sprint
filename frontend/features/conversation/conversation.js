@@ -38,21 +38,21 @@ const MOCK_RESPONSES = {
     conversation_id: "conv_mock",
     korean_text: "계약서와 급여명세서의 시급이 다른데 계산 근거를 확인해 주실 수 있을까요?",
     translated_text: "Mức lương theo giờ trong hợp đồng và phiếu lương khác nhau. Anh/chị có thể giúp tôi kiểm tra căn cứ tính lương được không?",
-    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원"],
+    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원", "비슷한 공동 경험 4건에서 계산 근거 확인이 도움이 됨"],
   },
   clear: {
     message_id: "msg_002",
     conversation_id: "conv_mock",
     korean_text: "계약서에는 시급 12,000원, 급여명세서에는 10,500원으로 기록되어 있습니다. 수습기간의 적용 여부와 기간, 계산 근거를 알려주세요.",
     translated_text: "Hợp đồng ghi 12.000 won/giờ, nhưng phiếu lương ghi 10.500 won/giờ. Xin hãy cho tôi biết có áp dụng thử việc hay không, thời gian áp dụng và căn cứ tính lương.",
-    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원"],
+    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원", "비슷한 공동 경험 4건에서 계산 근거 확인이 도움이 됨"],
   },
   firm: {
     message_id: "msg_003",
     conversation_id: "conv_mock",
     korean_text: "계약서의 시급 12,000원과 급여명세서의 계산 시급 10,500원이 다릅니다. 수습기간의 합의 내용과 적용 기간, 계산 근거를 서면으로 답변해 주세요.",
     translated_text: "Mức lương 12.000 won/giờ trong hợp đồng khác với mức 10.500 won/giờ trên phiếu lương. Xin hãy trả lời bằng văn bản về nội dung thỏa thuận thử việc, thời gian áp dụng và căn cứ tính mức lương.",
-    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원"],
+    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원", "비슷한 공동 경험 4건에서 계산 근거 확인이 도움이 됨"],
   },
 };
 
@@ -204,6 +204,15 @@ const CONDITION_LABELS = {
   net_pay: "실수령액",
 };
 
+const HISTORY_SENDER_LABELS = {
+  ko: { employer: "고용주에게 받은 카톡", assistant: "내가 보낸 카톡" },
+  vi: { employer: "Tin KakaoTalk nhận từ chủ lao động", assistant: "Tin KakaoTalk tôi đã gửi" },
+  "zh-CN": { employer: "雇主发来的KakaoTalk消息", assistant: "我发送的KakaoTalk消息" },
+  th: { employer: "ข้อความ KakaoTalk จากนายจ้าง", assistant: "ข้อความ KakaoTalk ที่ฉันส่ง" },
+  id: { employer: "Pesan KakaoTalk dari pemberi kerja", assistant: "Pesan KakaoTalk yang saya kirim" },
+  en: { employer: "KakaoTalk received from employer", assistant: "KakaoTalk I sent" },
+};
+
 function resolveApiBase() {
   const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
   return isLocal
@@ -348,9 +357,10 @@ function renderHistory(messages) {
       meta.className = "history-message__meta";
       const label = document.createElement("span");
       const condition = CONDITION_LABELS[message.analysis?.condition_type];
+      const senderLabels = HISTORY_SENDER_LABELS[selectedLanguage] || HISTORY_SENDER_LABELS.ko;
       label.textContent = sender === "employer"
-        ? "고용주에게 받은 카톡"
-        : `내가 보낸 카톡${condition ? ` · ${condition}` : ""}`;
+        ? senderLabels.employer
+        : `${senderLabels.assistant}${condition ? ` · ${condition}` : ""}`;
       const time = document.createElement("time");
       time.dateTime = message.created_at || "";
       time.textContent = formatHistoryTime(message.created_at);
@@ -550,6 +560,7 @@ languageSelect.addEventListener("change", () => {
     detail: { language: selectedLanguage },
   }));
   updateLanguageDisplay(selectedLanguage);
+  loadHistory();
   if (useMockData && currentReplyAnalysis) {
     currentReplyAnalysis.translated_reply = MOCK_TRANSLATIONS[selectedLanguage].employerReply;
     currentReplyAnalysis.translated_follow_up = MOCK_TRANSLATIONS[selectedLanguage].followUp;

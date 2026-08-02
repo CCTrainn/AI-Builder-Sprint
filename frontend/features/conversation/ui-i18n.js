@@ -48,6 +48,15 @@ const COPY = [
   ["저장된 대화 기록", "Lịch sử trò chuyện đã lưu", "已保存的对话记录", "ประวัติการสนทนาที่บันทึกไว้", "Riwayat percakapan tersimpan", "Saved conversation history"],
   ["지금까지 확인한 내용을 이어서 봐요", "Tiếp tục xem những nội dung đã xác nhận", "继续查看已确认的内容", "ดูสิ่งที่ตรวจสอบไว้ต่อ", "Lanjutkan dari hal yang telah dikonfirmasi", "Continue reviewing what you have confirmed"],
   ["저장된 대화가 아직 없어요.", "Chưa có cuộc trò chuyện nào được lưu.", "还没有已保存的对话。", "ยังไม่มีการสนทนาที่บันทึกไว้", "Belum ada percakapan yang disimpan.", "There are no saved conversations yet."],
+  ["실제로 보낸 카톡", "Tin nhắn KakaoTalk đã gửi", "实际发送的KakaoTalk消息", "ข้อความ KakaoTalk ที่ส่งจริง", "Pesan KakaoTalk yang benar-benar dikirim", "KakaoTalk message actually sent"],
+  ["보낸 문장을 그대로 기록해요", "Lưu chính xác nội dung đã gửi", "原样记录已发送的内容", "บันทึกข้อความที่ส่งจริงตามเดิม", "Catat persis pesan yang dikirim", "Record exactly what you sent"],
+  ["추천문 가져오기", "Dùng câu gợi ý", "使用建议句", "ใช้ข้อความแนะนำ", "Gunakan kalimat saran", "Use suggested message"],
+  ["말투를 선택하는 것만으로는 저장되지 않아요. 실제 카카오톡에 보낸 내용을 붙여넣거나 수정한 뒤 기록해 주세요.", "Việc chọn giọng điệu sẽ không tự lưu. Hãy dán hoặc sửa nội dung thực tế đã gửi trên KakaoTalk rồi lưu lại.", "仅选择语气不会保存。请粘贴或修改在KakaoTalk中实际发送的内容后再记录。", "การเลือกน้ำเสียงอย่างเดียวจะไม่บันทึก โปรดวางหรือแก้ไขข้อความที่ส่งจริงใน KakaoTalk แล้วบันทึก", "Memilih nada saja tidak akan menyimpan pesan. Tempel atau edit pesan yang benar-benar dikirim di KakaoTalk, lalu simpan.", "Choosing a tone does not save anything. Paste or edit what you actually sent on KakaoTalk, then record it."],
+  ["보낸 내용 기록하기", "Lưu nội dung đã gửi", "记录已发送内容", "บันทึกข้อความที่ส่ง", "Catat pesan terkirim", "Record sent message"],
+  ["이 사업장의 실제 대화를 이어서 봐요", "Tiếp tục cuộc trò chuyện thực tế tại nơi làm việc này", "继续查看该工作场所的实际对话", "ดูการสนทนาจริงของสถานที่ทำงานนี้ต่อ", "Lanjutkan percakapan nyata di tempat kerja ini", "Continue this workplace's actual conversation"],
+  ["실제로 보냈거나 받은 대화가 아직 없어요.", "Chưa có tin nhắn thực tế nào được gửi hoặc nhận.", "还没有实际发送或收到的对话。", "ยังไม่มีข้อความที่ส่งหรือได้รับจริง", "Belum ada percakapan nyata yang dikirim atau diterima.", "There are no actual sent or received messages yet."],
+  ["현재 사용자와 비슷한 경험 4건이 있어요", "Có 4 trải nghiệm tương tự", "有4个相似经历", "มีประสบการณ์ที่คล้ายกัน 4 รายการ", "Ada 4 pengalaman serupa", "There are 4 similar experiences"],
+  ["경험 보기", "Xem trải nghiệm", "查看经历", "ดูประสบการณ์", "Lihat pengalaman", "View experiences"],
 ];
 
 const translations = new Map(COPY.map((row) => [row[0], row]));
@@ -59,6 +68,14 @@ const PLACEHOLDERS = {
   th: "ตัวอย่าง: เนื่องจากเป็นช่วงทดลองงานจึงคำนวณค่าจ้างแบบนี้",
   id: "Contoh: Karena masih masa percobaan, upah dihitung seperti itu.",
   en: "Example: It is calculated that way because you are on probation.",
+};
+const SENT_MESSAGE_PLACEHOLDERS = {
+  ko: "카카오톡에 실제로 보낸 문장을 붙여넣어 주세요.",
+  vi: "Hãy dán nội dung bạn thực sự đã gửi trên KakaoTalk.",
+  "zh-CN": "请粘贴您在KakaoTalk中实际发送的内容。",
+  th: "โปรดวางข้อความที่คุณส่งจริงใน KakaoTalk",
+  id: "Tempel pesan yang benar-benar Anda kirim di KakaoTalk.",
+  en: "Paste the message you actually sent on KakaoTalk.",
 };
 
 function selectedLanguage() {
@@ -83,6 +100,8 @@ function translatePage(language = selectedLanguage()) {
   document.title = translations.get("확인 대화 준비 | 근로권리 동반자")[index];
   const replyInput = document.querySelector("#employer-reply");
   if (replyInput) replyInput.placeholder = PLACEHOLDERS[language];
+  const sentMessageInput = document.querySelector("#sent-message-text");
+  if (sentMessageInput) sentMessageInput.placeholder = SENT_MESSAGE_PLACEHOLDERS[language];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       return ["SCRIPT", "STYLE", "OPTION"].includes(node.parentElement?.tagName)

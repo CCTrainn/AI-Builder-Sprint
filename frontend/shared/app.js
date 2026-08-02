@@ -67,6 +67,13 @@ const NAV_ITEMS = [
     href: "../record_box/record-box.html",
     icon: '<path d="M12 5v16"/><path d="M20 19a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4a5 5 0 0 0-4 2 5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4a5 5 0 0 1 4 2 5 5 0 0 1 4-2Z"/>',
   },
+  {
+    id: "community",
+    label: "공동 경험",
+    mobileLabel: "경험",
+    href: "../community/community.html",
+    icon: '<circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="m7 7 3 3m4 0 3-3m-7 7-3 3m7-3 3 3"/>',
+  },
 ];
 
 function renderSidebar() {
