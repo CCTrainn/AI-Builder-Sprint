@@ -13,7 +13,7 @@ from app.db.tables_conversations import (
     find_latest_unanswered_items,
     find_open_conversation,
     get_or_create_conversation,
-    list_conversation_messages,
+    list_workplace_messages,
     save_message,
 )
 from app.db.tables_records import RecordDatabaseError, find_comparison_detail
@@ -26,6 +26,9 @@ from app.schemas.conversations import (
     ConversationHistoryResponse,
     ReplyAnalysisRequest,
     ReplyAnalysisResponse,
+    SentMessageData,
+    SentMessageRequest,
+    SentMessageResponse,
 )
 from app.schemas.records import ApiError
 from app.services.conversation_service import generate_confirmation_message
@@ -92,29 +95,82 @@ async def create_confirmation_message(
         request.tone,
         request.user_language,
     )
-    try:
-        conversation = await get_or_create_conversation(
-            request.workplace_id,
-            request.comparison_id,
-        )
-        message.conversation_id = conversation["id"]
-        await save_message(
-            message.conversation_id,
-            "assistant",
-            message.korean_text,
-            translated_text=message.translated_text,
-            analysis_json={"basis": message.basis, "tone": request.tone.value},
-        )
-    except ConversationDatabaseError:
-        response = ConfirmationMessageResponse(
+    return ConfirmationMessageResponse(success=True, data=message, error=None)
+
+
+@router.post("/sent-message", response_model=SentMessageResponse)
+async def record_sent_message(
+    request: SentMessageRequest,
+) -> SentMessageResponse | JSONResponse:
+    """Store only the text the user confirms was actually sent to the employer."""
+
+    if not WORKPLACE_ID_PATTERN.fullmatch(request.workplace_id):
+        response = SentMessageResponse(
             success=False,
             data=None,
             error=ApiError(
-                code="CONVERSATION_SAVE_FAILED", message="대화 기록을 저장하지 못했습니다."
+                code="INVALID_WORKPLACE_ID", message="사업장 정보 형식이 올바르지 않습니다."
+            ),
+        )
+        return JSONResponse(status_code=422, content=response.model_dump(mode="json"))
+
+    try:
+        row = await find_comparison_detail(request.comparison_id)
+    except RecordDatabaseError:
+        response = SentMessageResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="COMPARISON_LOOKUP_FAILED", message="비교 결과를 불러오지 못했습니다."
             ),
         )
         return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
-    return ConfirmationMessageResponse(success=True, data=message, error=None)
+    if row is None or row.get("workplace_id") != request.workplace_id:
+        response = SentMessageResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="COMPARISON_NOT_FOUND", message="해당 사업장의 비교 결과를 찾을 수 없습니다."
+            ),
+        )
+        return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
+
+    try:
+        conversation = await get_or_create_conversation(
+            request.workplace_id, request.comparison_id
+        )
+        saved = await save_message(
+            conversation["id"],
+            "assistant",
+            request.original_text,
+            translated_text=request.translated_text,
+            analysis_json={
+                "message_type": "sent",
+                "comparison_id": request.comparison_id,
+                "condition_type": row["condition_type"],
+                "tone": request.tone.value,
+            },
+        )
+    except ConversationDatabaseError:
+        response = SentMessageResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="CONVERSATION_SAVE_FAILED", message="보낸 문장을 기록하지 못했습니다."
+            ),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+
+    return SentMessageResponse(
+        success=True,
+        data=SentMessageData(
+            message_id=saved["id"],
+            conversation_id=conversation["id"],
+            original_text=saved["original_text"],
+            created_at=saved["created_at"],
+        ),
+        error=None,
+    )
 
 
 @router.post("/reply-analysis", response_model=ReplyAnalysisResponse)
@@ -175,17 +231,6 @@ async def analyze_reply(
             request.reply_text,
             analysis_json=analysis.model_dump(mode="json"),
         )
-        await save_message(
-            analysis.conversation_id,
-            "assistant",
-            analysis.follow_up_korean,
-            translated_text=analysis.translated_follow_up,
-            analysis_json={
-                "unanswered_items": analysis.unanswered_items,
-                "classification": analysis.classification.value,
-                "tone": request.tone.value,
-            },
-        )
     except ConversationDatabaseError:
         response = ReplyAnalysisResponse(
             success=False,
@@ -223,7 +268,7 @@ async def get_conversation_history(
                 ),
             )
             return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
-        messages = await list_conversation_messages(conversation["id"])
+        messages = await list_workplace_messages(workplace_id)
     except ConversationDatabaseError:
         response = ConversationHistoryResponse(
             success=False,

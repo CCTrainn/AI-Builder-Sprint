@@ -27,10 +27,10 @@ async def get_or_create_conversation(workplace_id: str, comparison_id: str) -> d
         existing = connection.execute(
             """
             SELECT * FROM conversations
-            WHERE workplace_id = ? AND comparison_id = ? AND status = 'open'
+            WHERE workplace_id = ? AND status = 'open'
             ORDER BY created_at DESC LIMIT 1
             """,
-            (workplace_id, comparison_id),
+            (workplace_id,),
         ).fetchone()
         if existing is not None:
             return dict(existing)
@@ -89,10 +89,10 @@ async def find_open_conversation(
         row = connection.execute(
             """
             SELECT * FROM conversations
-            WHERE workplace_id = ? AND comparison_id = ? AND status = 'open'
+            WHERE workplace_id = ? AND status = 'open'
             ORDER BY created_at DESC LIMIT 1
             """,
-            (workplace_id, comparison_id),
+            (workplace_id,),
         ).fetchone()
         return dict(row) if row is not None else None
 
@@ -136,3 +136,32 @@ async def list_conversation_messages(conversation_id: str) -> list[dict[str, Any
         return result
 
     return await _call(operation, "대화 기록을 로컬 DB에서 조회하지 못했습니다.")
+
+
+async def list_workplace_messages(workplace_id: str) -> list[dict[str, Any]]:
+    """Return one chronological Kakao-like timeline across all workplace issues."""
+
+    def operation(connection: sqlite3.Connection) -> list[dict[str, Any]]:
+        rows = connection.execute(
+            """
+            SELECT m.id, m.sender, m.original_text, m.translated_text,
+                   m.analysis_json, m.created_at
+            FROM messages AS m
+            JOIN conversations AS c ON c.id = m.conversation_id
+            WHERE c.workplace_id = ?
+            ORDER BY m.created_at ASC, m.rowid ASC
+            """,
+            (workplace_id,),
+        ).fetchall()
+        result = []
+        for row in rows:
+            item = dict(row)
+            item["analysis_json"] = json.loads(item["analysis_json"] or "{}")
+            if item["sender"] == "assistant" and item["analysis_json"].get(
+                "message_type"
+            ) != "sent":
+                continue
+            result.append(item)
+        return result
+
+    return await _call(operation, "사업장 대화 기록을 로컬 DB에서 조회하지 못했습니다.")

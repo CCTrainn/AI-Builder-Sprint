@@ -329,3 +329,24 @@ unclear
 new_condition
 more_evidence_needed
 ```
+
+## 9. 실제로 보낸 확인 문장 기록
+
+`POST /conversations/sent-message`
+
+말투 선택과 추천 문장 생성만으로는 대화 기록을 만들지 않는다. 사용자가 실제
+카카오톡에 보낸 문장을 확인한 뒤 이 API로 명시적으로 기록한다.
+
+```json
+{
+  "workplace_id": "work_001",
+  "comparison_id": "cmp_001",
+  "original_text": "계약서와 급여명세서의 시급이 달라 계산 근거를 확인하고 싶습니다.",
+  "translated_text": "Bản dịch tiếng Việt",
+  "tone": "polite"
+}
+```
+
+대화 이력은 `comparison_id`별로 분리하지 않고 같은 `workplace_id`의 실제 발송
+문장과 고용주 답변을 하나의 시간순 타임라인으로 반환한다. AI 추천 초안과 아직
+보내지 않은 후속 문장은 이력에 포함하지 않는다.

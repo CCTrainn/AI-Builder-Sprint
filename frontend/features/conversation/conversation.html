@@ -105,6 +105,34 @@
           </div>
         </article>
 
+        <section class="sent-message-card" aria-labelledby="sent-message-title">
+          <div class="sent-message-heading">
+            <div>
+              <p class="card-label">실제로 보낸 카톡</p>
+              <h3 id="sent-message-title">보낸 문장을 그대로 기록해요</h3>
+            </div>
+            <button id="use-suggested-message" class="secondary-button" type="button">
+              추천문 가져오기
+            </button>
+          </div>
+          <p class="sent-message-guide">
+            말투를 선택하는 것만으로는 저장되지 않아요. 실제 카카오톡에 보낸 내용을 붙여넣거나 수정한 뒤 기록해 주세요.
+          </p>
+          <label class="sr-only" for="sent-message-text">실제로 보낸 카카오톡 문장</label>
+          <textarea
+            id="sent-message-text"
+            rows="5"
+            maxlength="2000"
+            placeholder="카카오톡에 실제로 보낸 문장을 붙여넣어 주세요."
+          ></textarea>
+          <div class="sent-message-actions">
+            <span id="sent-message-count">0 / 2,000</span>
+            <button id="record-sent-message" class="primary-button" type="button">
+              보낸 내용 기록하기
+            </button>
+          </div>
+        </section>
+
         <div id="error-state" class="error-state" role="alert" hidden>
           <strong>문장을 불러오지 못했어요.</strong>
           <p id="error-message">잠시 후 다시 시도해 주세요.</p>
@@ -216,11 +244,11 @@
       <div class="history-heading">
         <div>
           <p class="step-label">저장된 대화 기록</p>
-          <h2 id="history-title">지금까지 확인한 내용을 이어서 봐요</h2>
+          <h2 id="history-title">이 사업장의 실제 대화를 이어서 봐요</h2>
         </div>
         <span id="history-count">0개</span>
       </div>
-      <p id="history-empty" class="history-empty">저장된 대화가 아직 없어요.</p>
+      <p id="history-empty" class="history-empty">실제로 보냈거나 받은 대화가 아직 없어요.</p>
       <ol id="history-list" class="history-list" aria-live="polite"></ol>
     </section>
 

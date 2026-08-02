@@ -94,11 +94,31 @@ const historyStatus = document.querySelector("#conversation-history-status");
 const historyList = document.querySelector("#history-list");
 const historyEmpty = document.querySelector("#history-empty");
 const historyCount = document.querySelector("#history-count");
+const sentMessageText = document.querySelector("#sent-message-text");
+const sentMessageCount = document.querySelector("#sent-message-count");
+const recordSentMessageButton = document.querySelector("#record-sent-message");
 
 let selectedTone = MESSAGE_REQUEST.tone;
 let currentMessage = null;
 let currentReplyAnalysis = null;
 let requestSequence = 0;
+const mockHistory = [];
+
+const CONDITION_LABELS = {
+  hourly_wage: "시급",
+  weekly_holiday_pay: "주휴수당",
+  working_hours: "근로시간",
+  weekly_working_hours: "주 근로시간",
+  total_working_hours: "총 근로시간",
+  overtime_hours: "연장근로",
+  break_time: "휴게시간",
+  pay_date: "급여일",
+  probation: "수습기간",
+  basic_pay: "기본급",
+  gross_pay: "지급액",
+  deductions: "공제액",
+  net_pay: "실수령액",
+};
 
 function resolveApiBase() {
   const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
@@ -226,7 +246,10 @@ function renderHistory(messages) {
       const meta = document.createElement("div");
       meta.className = "history-message__meta";
       const label = document.createElement("span");
-      label.textContent = sender === "employer" ? "고용주 답변" : "AI 확인 문장";
+      const condition = CONDITION_LABELS[message.analysis?.condition_type];
+      label.textContent = sender === "employer"
+        ? "고용주에게 받은 카톡"
+        : `내가 보낸 카톡${condition ? ` · ${condition}` : ""}`;
       const time = document.createElement("time");
       time.dateTime = message.created_at || "";
       time.textContent = formatHistoryTime(message.created_at);
@@ -258,10 +281,7 @@ async function loadMessage(tone) {
     if (currentRequest !== requestSequence) return;
     currentMessage = message;
     renderMessage(message);
-    if (message.conversation_id) {
-      historyStatus.textContent = "대화 기록에 저장됐어요. 다음 답변도 이어서 확인합니다.";
-      await loadHistory();
-    }
+    historyStatus.textContent = "추천문은 아직 대화 기록에 저장되지 않았어요.";
   } catch (error) {
     if (currentRequest !== requestSequence) return;
     currentMessage = null;
@@ -275,7 +295,7 @@ async function loadMessage(tone) {
 
 async function loadHistory() {
   if (useMockData) {
-    renderHistory([]);
+    renderHistory(mockHistory);
     return;
   }
   try {
@@ -292,6 +312,57 @@ async function loadHistory() {
       return;
     }
     historyStatus.textContent = "대화 기록을 불러오지 못했어요.";
+  }
+}
+
+function updateSentMessageCount() {
+  sentMessageCount.textContent = `${sentMessageText.value.length.toLocaleString()} / 2,000`;
+}
+
+async function recordSentMessage() {
+  const originalText = sentMessageText.value.trim();
+  if (!originalText) {
+    actionFeedback.textContent = "실제로 보낸 카카오톡 문장을 먼저 입력해 주세요.";
+    sentMessageText.focus();
+    return;
+  }
+
+  recordSentMessageButton.disabled = true;
+  actionFeedback.textContent = "보낸 문장을 대화 기록에 저장하고 있어요.";
+  try {
+    if (useMockData) {
+      mockHistory.push({
+        message_id: `msg_mock_${Date.now()}`,
+        sender: "assistant",
+        original_text: originalText,
+        translated_text: null,
+        analysis: { condition_type: "hourly_wage", message_type: "sent" },
+        created_at: new Date().toISOString(),
+      });
+    } else {
+      await fetchJson("/conversations/sent-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workplace_id: workplaceId,
+          comparison_id: comparisonId,
+          original_text: originalText,
+          translated_text: originalText === currentMessage?.korean_text
+            ? currentMessage.translated_text
+            : null,
+          tone: selectedTone,
+        }),
+      });
+    }
+    sentMessageText.value = "";
+    updateSentMessageCount();
+    actionFeedback.textContent = "실제로 보낸 카카오톡 문장을 기록했어요.";
+    historyStatus.textContent = "이 사업장의 모든 확인 대화를 한 타임라인에 보관합니다.";
+    await loadHistory();
+  } catch (error) {
+    actionFeedback.textContent = error.message;
+  } finally {
+    recordSentMessageButton.disabled = false;
   }
 }
 
@@ -347,7 +418,7 @@ async function analyzeEmployerReply() {
     showAnalysisState("result");
     analysisBadge.textContent = analysis.safety_mode ? "안전 확인" : "확인 완료";
     analysisBadge.classList.add("complete");
-    historyStatus.textContent = "답변 분석과 다음 확인 문장을 대화 기록에 저장했어요.";
+    historyStatus.textContent = "고용주 답변을 저장했어요. 후속 문장은 실제로 보낸 뒤 기록해 주세요.";
     await loadHistory();
   } catch (error) {
     currentReplyAnalysis = null;
@@ -361,6 +432,15 @@ document.querySelectorAll('input[name="tone"]').forEach((input) => {
   input.addEventListener("change", () => loadMessage(input.value));
 });
 document.querySelector("#copy-message").addEventListener("click", copyCurrentMessage);
+document.querySelector("#use-suggested-message").addEventListener("click", () => {
+  if (!currentMessage) return;
+  sentMessageText.value = currentMessage.korean_text;
+  updateSentMessageCount();
+  sentMessageText.focus();
+  actionFeedback.textContent = "추천문을 가져왔어요. 실제 보낸 내용과 같게 수정해 주세요.";
+});
+sentMessageText.addEventListener("input", updateSentMessageCount);
+recordSentMessageButton.addEventListener("click", recordSentMessage);
 document.querySelector("#retry-button").addEventListener("click", () => loadMessage(selectedTone));
 employerReply.addEventListener("input", updateReplyCount);
 document.querySelector("#load-example-reply").addEventListener("click", () => {
@@ -380,4 +460,6 @@ document.querySelector("#copy-follow-up").addEventListener("click", async () => 
   }
 });
 
+updateSentMessageCount();
+loadHistory();
 loadMessage(selectedTone);

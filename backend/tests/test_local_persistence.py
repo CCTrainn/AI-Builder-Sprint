@@ -9,6 +9,7 @@ from app.db.tables_conversations import (
     find_latest_unanswered_items,
     get_or_create_conversation,
     list_conversation_messages,
+    list_workplace_messages,
     save_message,
 )
 from app.db.tables_records import (
@@ -96,6 +97,29 @@ def test_local_record_comparison_and_conversation_round_trip(monkeypatch, tmp_pa
         messages = await list_conversation_messages(conversation["id"])
         assert [message["sender"] for message in messages] == ["assistant", "employer"]
         assert await find_latest_unanswered_items(conversation["id"]) == ["실제 적용 시급"]
+
+        reused = await get_or_create_conversation("work_001", "cmp_another_issue")
+        assert reused["id"] == conversation["id"]
+        await save_message(
+            conversation["id"],
+            "assistant",
+            "추천만 한 초안",
+            analysis_json={"tone": "polite"},
+        )
+        await save_message(
+            conversation["id"],
+            "assistant",
+            "실제로 보낸 주휴수당 질문",
+            analysis_json={
+                "message_type": "sent",
+                "condition_type": "weekly_holiday_pay",
+            },
+        )
+        workplace_messages = await list_workplace_messages("work_001")
+        assert [message["original_text"] for message in workplace_messages] == [
+            "나중에 알려줄게요.",
+            "실제로 보낸 주휴수당 질문",
+        ]
 
     try:
         asyncio.run(scenario())
