@@ -9,6 +9,10 @@
   --conversation-shadow: 0 16px 46px rgb(42 57 89 / 7%);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   min-width: 320px;
   background:
@@ -557,6 +561,27 @@ button {
   justify-content: space-between;
   gap: 10px;
   margin: 8px 0 16px;
+}
+
+.reply-translation {
+  margin-top: 12px;
+  padding: 13px 15px;
+  color: #344256;
+  background: #f7f9fc;
+  border: 1px solid #e1e7ef;
+  border-radius: 12px;
+}
+
+.reply-translation > span {
+  color: #6f788a;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.reply-translation p {
+  margin: 7px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
 }
 
 .reply-input-meta button {
