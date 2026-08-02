@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="비슷한 익명 경험과 해결 흐름을 연결해 보여주는 말대꾸 지도입니다.">
+  <meta name="description" content="익명 근로 경험을 연결해 다음 행동을 돕는 공동 경험 지도">
   <title>말대꾸 지도 | 공동 경험</title>
   <link rel="stylesheet" href="../../shared/tokens.css">
   <link rel="stylesheet" href="../../shared/common.css">
@@ -14,51 +14,31 @@
   <div id="appSidebar" class="app-sidebar-root"></div>
   <main class="community-page">
     <header class="community-header">
-      <div>
-        <p class="eyebrow">COMMUNITY EXPERIENCE GRAPH</p>
-        <h1>말대꾸 지도</h1>
-        <p>나와 비슷한 문제에서 어떤 답변을 받았고, 무엇을 다시 물었는지 익명 경험의 연결로 확인해요.</p>
-      </div>
-      <div class="header-actions"><span class="demo-badge">가공 데이터 데모</span><button id="center-graph" type="button">내 상황 중심</button></div>
+      <div><p class="eyebrow">COMMUNITY EXPERIENCE GRAPH</p><h1>말대꾸 지도</h1><p>나와 비슷한 문제를 겪은 사람들이 어떤 답변을 받고, 무엇을 확인하고, 어떻게 마무리했는지 익명 경험의 연결로 확인해요.</p></div>
+      <div class="header-actions"><span class="demo-badge">가상 데이터 데모</span></div>
     </header>
 
     <section class="similar-notice">
-      <div class="notice-symbol">✦</div>
-      <div><small>지금 대화와 비슷한 경험</small><strong>시급 차이와 수습기간 답변을 겪은 경험이 여러 건 있어요.</strong><p>사람들은 수습 적용 기간과 계산 근거를 함께 확인했어요.</p></div>
+      <div class="notice-symbol">↗</div>
+      <div><small>지금 대화와 비슷한 경험</small><strong>시급 차이와 수습기간 답변을 겪은 경험이 여러 건 있어요</strong><p>다른 사람들은 수습 적용 기간과 계산 근거를 함께 확인했어요.</p></div>
       <button id="show-path" type="button">도움이 된 경로 보기</button>
     </section>
 
-    <div class="graph-layout">
-      <aside class="filter-panel">
-        <div class="panel-title"><span>그래프 필터</span><button id="reset-filter" type="button">초기화</button></div>
-        <div class="filter-group"><p>노드 종류</p>
-          <label><input type="checkbox" value="experience" checked><i class="legend experience"></i>익명 경험</label>
-          <label><input type="checkbox" value="reply" checked><i class="legend reply"></i>받은 답변</label>
-          <label><input type="checkbox" value="action" checked><i class="legend action"></i>확인 행동</label>
-          <label><input type="checkbox" value="evidence" checked><i class="legend evidence"></i>도움이 된 기록</label>
-          <label><input type="checkbox" value="outcome" checked><i class="legend outcome"></i>진행 결과</label>
-        </div>
-        <div class="filter-group"><p>문제 유형</p><select id="problem-filter"><option value="hourly">시급·급여 차이</option><option value="delayed">급여 지급 지연</option><option value="hours">근무시간 변경</option></select></div>
-        <div class="privacy-mini"><strong>개인을 연결하지 않아요</strong><p>사업장명, 실명, 정확한 날짜와 금액은 그래프에 나타나지 않아요.</p></div>
-      </aside>
+    <section class="impact-graph" aria-labelledby="graph-title">
+      <div class="impact-graph__copy">
+        <p class="impact-kicker"><span></span>말대꾸가 모이면, 권리가 됩니다</p>
+        <h2 id="graph-title">혼자였던 말들이<br>서로의 <em>근거</em>가 되었습니다.</h2>
+        <p>누군가 어렵게 남긴 기록이, 오늘 같은 문제 앞에 선 다른 사람의 다음 말을 만듭니다.</p>
+        <dl class="impact-stats"><div><dt>익명으로 남은 목소리</dt><dd>128<small>명</small></dd></div><div><dt>서로에게 닿은 도움</dt><dd>346<small>번</small></dd></div><div class="is-growing"><dt>최근 7일 동안</dt><dd>+18<small>명</small></dd></div></dl>
+        <blockquote>“내가 겪은 일이 누군가에게는<br>처음부터 알고 시작할 권리가 되도록.”</blockquote>
+        <small class="privacy-line"><span>✓</span> 이름도, 사업장도 보이지 않습니다. 도움만 남습니다.</small>
+      </div>
+      <div class="impact-graph__visual"><div class="network-caption"><span>128개의 목소리</span><strong>하나의 권리 지식망</strong><small><i></i>밝은 점은 최근 더해진 경험입니다</small></div><svg id="experience-graph" viewBox="0 0 900 570" role="img" aria-label="공동 경험이 서로 도움으로 연결된 추상 그래프"></svg><span class="graph-pulse-label"><i></i>이 연결은 실제 사람을 식별하지 않습니다</span></div>
+    </section>
 
-      <section class="graph-panel" aria-labelledby="graph-title">
-        <div class="graph-toolbar"><div><h2 id="graph-title">내 시급 차이를 중심으로</h2><p>노드를 선택하면 연결된 경험만 강조돼요.</p></div><button id="toggle-list" type="button">목록으로 보기</button></div>
-        <div id="graph-view" class="graph-view"><svg id="experience-graph" viewBox="0 0 900 570" role="img" aria-label="익명 공동 경험 연결 그래프"></svg><div class="graph-hint">노드를 눌러 연결을 따라가 보세요</div></div>
-        <div id="list-view" class="list-view" hidden></div>
-      </section>
+    <section class="experience-cards" aria-labelledby="voices-title"><div class="section-heading voices-heading"><div><p class="eyebrow">VOICES AFTER SPEAKING UP</p><h2 id="voices-title">말하고 난 뒤, 사람들이 남긴 이야기</h2></div><p>누군가의 결과가 아니라, 다음 사람에게 건넨 짧은 메모입니다.</p></div><div class="experience-marquee"><div id="experience-card-list" class="experience-card-list"></div></div><p class="voices-note">모든 후기는 개인정보를 제거하고 사용자가 공유에 동의한 내용만 보여줍니다.</p></section>
 
-      <aside class="detail-panel">
-        <p class="detail-type" id="detail-type">내 현재 문제</p><h2 id="detail-title">계약 시급과 실제 시급 차이</h2><p id="detail-description">증거 지갑의 계약서와 급여명세서에서 시급 기록이 다르게 확인됐어요.</p>
-        <div class="connection-summary"><span>연결된 익명 경험</span><strong id="detail-count">4개</strong><small>현재는 완전히 가공된 데모 경험입니다.</small></div>
-        <div class="detail-section"><h3>사람들이 다음에 확인한 내용</h3><ul id="detail-actions"><li>수습 적용 기간</li><li>계약서의 수습 조건</li><li>실제 시급 계산 근거</li></ul></div>
-        <button id="use-in-conversation" class="primary-action" type="button">내 말대꾸에 참고하기</button><p id="detail-feedback" class="detail-feedback" role="status"></p>
-      </aside>
-    </div>
-
-    <section class="experience-cards"><div class="section-heading"><div><p class="eyebrow">SIMILAR EXPERIENCES</p><h2>비슷한 성공담과 실패담</h2></div><p>성공한 경험만 보여주지 않고, 대화가 막힌 이유도 함께 알려줘요.</p></div><div id="experience-card-list" class="experience-card-list"></div></section>
-
-    <section class="share-preview"><div><p class="eyebrow">AFTER THE CONVERSATION</p><h2>내 경험도 한 점으로 남길 수 있어요.</h2><p>사용 과정은 개인 기록으로 자동 정리되지만, 공동 경험 공유는 반드시 사용자가 내용을 확인하고 동의해야 해요.</p></div><div class="preview-card"><label for="experience-draft">공유용 경험 초안</label><textarea id="experience-draft" rows="5">2026년 7월 18일 부산 해운대구의 바다식당에서 일했습니다. 사장님이 010-1234-5678로 연락했고 계약보다 낮은 10,500원을 받았습니다.</textarea><button id="preview-anonymize" type="button">익명화 결과 미리보기</button><div id="anonymize-result" class="anonymize-result" hidden><small>공개 전 변환 결과</small><p></p><strong>아직 공개되지 않았어요. 사용자의 최종 동의가 필요합니다.</strong></div></div></section>
+    <section class="share-preview"><div><p class="eyebrow">AFTER THE CONVERSATION</p><h2>내 경험도 누군가의 다음 말이 될 수 있어요</h2><p>사용 과정은 개인 기록으로만 정리됩니다. 공동 경험 공유는 사용자가 내용을 확인하고 명시적으로 동의한 경우에만 진행돼요.</p></div><div class="preview-card"><label for="experience-draft">공유할 경험 초안</label><textarea id="experience-draft" rows="5">2026년 7월 18일 부산 해운대구의 바다식당에서 일했습니다. 사장님이 010-1234-5678로 연락했고 계약보다 적은 10,500원을 받았습니다.</textarea><button id="preview-anonymize" type="button">익명화 결과 미리보기</button><div id="anonymize-result" class="anonymize-result" hidden><small>공개 전 변환 결과</small><p></p><strong>아직 공개되지 않았어요. 사용자의 최종 동의가 필요합니다.</strong></div></div></section>
   </main>
   <script type="module" src="../../shared/app.js"></script>
   <script type="module" src="./community.js"></script>

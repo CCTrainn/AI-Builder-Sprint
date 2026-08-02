@@ -1,74 +1,32 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
-
-const nodes = [
-  { id:"problem", type:"problem", label:"내 시급 차이", x:450, y:278, r:48, count:4, description:"계약 시급과 실제 시급이 다르게 기록된 현재 문제예요.", actions:["수습 적용 기간","계약서의 수습 조건","실제 시급 계산 근거"] },
-  { id:"exp1", type:"experience", label:"익명 경험 1", x:285, y:178, r:25, count:1, description:"계산표를 받았지만 차액 지급은 확인 중이에요.", actions:["수습 기간 질문","계산표 요청"] },
-  { id:"exp2", type:"experience", label:"익명 경험 2", x:615, y:170, r:25, count:1, description:"계약 시급 기준으로 차액을 받은 경험이에요.", actions:["계약 시급 제시","계산 근거 요청"] },
-  { id:"exp3", type:"experience", label:"익명 경험 3", x:290, y:390, r:25, count:1, description:"수습 조건 근거를 받지 못한 경험이에요.", actions:["채용공고 비교","수습 조건 질문"] },
-  { id:"exp4", type:"experience", label:"익명 경험 4", x:610, y:392, r:25, count:1, description:"계산 근거 답변을 기다리는 경험이에요.", actions:["서면 질문","답변 기한 확인"] },
-  { id:"reply1", type:"reply", label:"수습기간 주장", x:448, y:105, r:31, count:2, description:"여러 시급 차이 경험에서 반복된 답변이에요.", actions:["수습 적용 기간","계약서 수습 조건"] },
-  { id:"reply2", type:"reply", label:"원래 그래요", x:750, y:255, r:27, count:1, description:"계산 근거 없이 관행만 설명한 답변이에요.", actions:["서면 계산 근거 요청"] },
-  { id:"reply3", type:"reply", label:"나중에 이야기", x:150, y:276, r:27, count:1, description:"질문에 직접 답하지 않고 대화를 미룬 답변이에요.", actions:["답변 날짜 확인","질문을 서면으로 남기기"] },
-  { id:"action1", type:"action", label:"수습 기간 질문", x:315, y:72, r:27, count:2, description:"수습의 시작일과 종료일을 구체적으로 물었어요.", actions:["시작일과 종료일","적용 시급"] },
-  { id:"action2", type:"action", label:"계산 근거 요청", x:735, y:102, r:29, count:3, description:"실제 지급액이 어떻게 계산됐는지 서면으로 요청했어요.", actions:["근무시간","적용 시급","공제 내역"] },
-  { id:"action3", type:"action", label:"답변 기한 확인", x:145, y:448, r:25, count:1, description:"언제까지 답변을 받을 수 있는지 다시 확인했어요.", actions:["정확한 답변 날짜"] },
-  { id:"evidence1", type:"evidence", label:"근로계약서", x:455, y:490, r:27, count:3, description:"약속된 시급과 수습 조건을 확인하는 데 사용됐어요.", actions:["시급 조항","수습 조항"] },
-  { id:"evidence2", type:"evidence", label:"급여명세서", x:695, y:505, r:27, count:3, description:"실제 계산 시급과 지급 내역을 확인하는 데 사용됐어요.", actions:["지급액","계산 시급"] },
-  { id:"evidence3", type:"evidence", label:"채용공고", x:175, y:95, r:23, count:1, description:"처음 안내받은 시급과 조건을 확인하는 데 사용됐어요.", actions:["공고 시급","근무 조건"] },
-  { id:"outcome1", type:"outcome", label:"차액 지급", x:828, y:410, r:26, count:1, description:"기록을 근거로 확인한 뒤 차액을 받은 가공 경험이에요.", actions:["실제 입금 확인"] },
-  { id:"outcome2", type:"outcome", label:"일부 해결", x:75, y:155, r:25, count:1, description:"계산표는 받았지만 차액은 아직 받지 못했어요.", actions:["지급일 재확인"] },
-];
-
-const edges = [
-  ["problem","exp1"],["problem","exp2"],["problem","exp3"],["problem","exp4"],
-  ["exp1","reply1"],["exp1","action1"],["exp1","action2"],["exp1","evidence1"],["exp1","evidence2"],["exp1","outcome2"],
-  ["exp2","reply2"],["exp2","action2"],["exp2","evidence1"],["exp2","outcome1"],
-  ["exp3","reply1"],["exp3","evidence3"],["exp3","action1"],
-  ["exp4","reply3"],["exp4","action3"],["exp4","evidence2"],
-];
-
-const experiences = [
-  { type:"성공 경험", outcome:"resolved", title:"계약 시급 기준으로 차액을 받았어요", summary:"계약서 시급과 급여 계산표를 함께 제시하고 계산 근거를 요청했어요.", lesson:"실제 입금까지 확인한 뒤 해결됨으로 기록했어요." },
-  { type:"부분 성공", outcome:"partial", title:"계산표는 받았지만 차액은 아직이에요", summary:"수습 적용 기간을 물어 계산 방식은 확인했지만 지급은 진행 중이에요.", lesson:"지급 약속과 실제 입금은 따로 확인해야 했어요." },
-  { type:"해결되지 않음", outcome:"unresolved", title:"수습 조건의 근거를 받지 못했어요", summary:"채용공고와 급여명세서는 있었지만 서면 계약서가 없었어요.", lesson:"어떤 기록이 부족했는지도 다음 사용자에게 알려줘요." },
-];
-
 const svg = document.querySelector("#experience-graph");
-const nodeById = new Map(nodes.map((node) => [node.id, node]));
-let selectedNodeId = "problem";
+const experiences = [
+  {type:"해결 후 남긴 말",outcome:"resolved",title:"처음으로 계산 근거를 물어봤어요",summary:"계약서와 급여명세서를 같이 보내니까 막연히 따지는 기분이 아니었어요. 계산표를 받은 뒤 차액도 확인했습니다.",lesson:"“기록을 보여주면서 물으니 덜 무서웠어요.”",evidence:["근로계약서","급여명세서"],meta:"음식점 근무 · 익명"},
+  {type:"대화 중 남긴 말",outcome:"partial",title:"수습기간이라는 답을 받았어요",summary:"예전 같으면 그냥 알겠다고 했을 텐데, 시작일과 끝나는 날을 다시 물었습니다. 아직 답변을 기다리고 있어요.",lesson:"“이번에는 질문을 끝까지 남겨두려고 해요.”",evidence:["고용주 대화","채용공고"],meta:"카페 근무 · 익명"},
+  {type:"다음 사람에게",outcome:"unresolved",title:"저는 처음 약속을 남기지 못했어요",summary:"급여명세서는 있었지만 계약서와 채용공고를 보관하지 않아서 비교할 근거가 부족했습니다.",lesson:"“일을 시작하기 전에 공고부터 꼭 저장하세요.”",evidence:["급여명세서"],meta:"편의점 근무 · 익명"},
+  {type:"해결 후 남긴 말",outcome:"resolved",title:"다음 달 말고 날짜를 물었어요",summary:"계속 다음 달에 준다는 답만 들었습니다. 입금 기록과 함께 정확한 지급일을 물은 뒤 밀린 금액을 받았어요.",lesson:"“날짜 하나를 묻는 게 이렇게 중요할 줄 몰랐어요.”",evidence:["입금 기록","고용주 대화"],meta:"물류 근무 · 익명"},
+  {type:"변화가 시작된 말",outcome:"partial",title:"근무시간 변경을 글로 확인했어요",summary:"말로만 바뀌던 시간을 계약서와 근무표로 비교했습니다. 다음 주부터 원래 시간대로 조정됐어요.",lesson:"“제가 기억을 잘못한 게 아니라는 걸 알았어요.”",evidence:["근로계약서","근무표"],meta:"음식점 근무 · 익명"},
+  {type:"다음 사람에게",outcome:"unresolved",title:"답변도 기록이라는 걸 늦게 알았어요",summary:"근무시간은 매일 적었지만 대화를 남기지 않아 왜 바뀌었는지 확인하는 과정이 끊겼습니다.",lesson:"“말로 들은 내용도 메시지로 다시 확인하세요.”",evidence:["근무 기록"],meta:"물류 근무 · 익명"}
+];
 
-function svgElement(name, attributes = {}) { const element=document.createElementNS(SVG_NS,name); Object.entries(attributes).forEach(([key,value])=>element.setAttribute(key,String(value))); return element; }
-function connectedIds(nodeId) { const ids=new Set([nodeId]); edges.forEach(([a,b])=>{if(a===nodeId)ids.add(b);if(b===nodeId)ids.add(a);}); return ids; }
-function shortLabel(label) { return label.length>9 ? `${label.slice(0,8)}…` : label; }
+function seeded(index, salt) { const value=Math.sin(index*91.73+salt*17.19)*43758.5453; return value-Math.floor(value); }
+function makeSvg(name,attrs={}) { const element=document.createElementNS(SVG_NS,name); Object.entries(attrs).forEach(([key,value])=>element.setAttribute(key,String(value))); return element; }
 
-function renderGraph() {
-  svg.replaceChildren();
-  const edgeLayer=svgElement("g"); const nodeLayer=svgElement("g"); svg.append(edgeLayer,nodeLayer);
-  edges.forEach(([sourceId,targetId],index)=>{const source=nodeById.get(sourceId);const target=nodeById.get(targetId);const line=svgElement("line",{x1:source.x,y1:source.y,x2:target.x,y2:target.y,class:"graph-edge","data-edge":index,"data-source":sourceId,"data-target":targetId});edgeLayer.append(line);});
-  nodes.forEach((node)=>{const group=svgElement("g",{class:`graph-node node-${node.type}`,transform:`translate(${node.x} ${node.y})`,tabindex:"0",role:"button","aria-label":node.label,"data-node-id":node.id});const circle=svgElement("circle",{r:node.r});const text=svgElement("text",{y:node.type==="problem"?4:node.r+17});text.textContent=shortLabel(node.label);group.append(circle,text);group.addEventListener("click",()=>selectNode(node.id));group.addEventListener("keydown",(event)=>{if(event.key==="Enter"||event.key===" ")selectNode(node.id);});nodeLayer.append(group);});
-  applyFilters(); selectNode(selectedNodeId);
+function createNetwork() {
+  const centers=[[320,210],[450,155],[580,210],[370,370],[530,370]];
+  const points=Array.from({length:128},(_,index)=>{const cluster=index%5;const [cx,cy]=centers[cluster];const angle=seeded(index,2)*Math.PI*2;const distance=18+seeded(index,3)*112;return{x:cx+Math.cos(angle)*distance,y:cy+Math.sin(angle)*distance*.72,cluster,important:index%19===0};});
+  const edgeLayer=makeSvg("g",{class:"impact-edges"}); const nodeLayer=makeSvg("g",{class:"impact-nodes"});
+  points.forEach((point,index)=>{points.map((other,otherIndex)=>({other,otherIndex,distance:Math.hypot(point.x-other.x,point.y-other.y)})).filter(item=>item.otherIndex!==index).sort((a,b)=>a.distance-b.distance).slice(0,index%8===0?6:4).forEach(({other,otherIndex})=>{if(otherIndex<index)return;edgeLayer.append(makeSvg("line",{x1:point.x,y1:point.y,x2:other.x,y2:other.y,class:index%13===0?"is-helpful":""}));});});
+  points.forEach((point,index)=>{if(index%3===0){const other=points[(index*7+29)%points.length];edgeLayer.append(makeSvg("path",{d:`M ${point.x} ${point.y} Q ${(point.x+other.x)/2+35} ${(point.y+other.y)/2-28} ${other.x} ${other.y}`,class:"cross-link"}));}});
+  points.forEach((point,index)=>{const classes=[];if(point.important)classes.push("is-impact");if(index>=110)classes.push("is-recent");const circle=makeSvg("circle",{cx:point.x,cy:point.y,r:point.important?5.5:2.2+seeded(index,5)*1.8,class:classes.join(" ")});nodeLayer.append(circle);});
+  svg.replaceChildren(edgeLayer,nodeLayer);
 }
 
-function selectNode(nodeId) {
-  selectedNodeId=nodeId; const node=nodeById.get(nodeId); const connected=connectedIds(nodeId);
-  document.querySelectorAll(".graph-node").forEach((element)=>{const id=element.dataset.nodeId;element.classList.toggle("selected",id===nodeId);element.classList.toggle("dimmed",!connected.has(id));});
-  document.querySelectorAll(".graph-edge").forEach((element)=>{const active=element.dataset.source===nodeId||element.dataset.target===nodeId;element.classList.toggle("active",active);element.classList.toggle("dimmed",!active);});
-  document.querySelector("#detail-type").textContent={problem:"내 현재 문제",experience:"익명 경험",reply:"반복된 답변",action:"확인 행동",evidence:"도움이 된 기록",outcome:"진행 결과"}[node.type];
-  document.querySelector("#detail-title").textContent=node.label; document.querySelector("#detail-description").textContent=node.description; document.querySelector("#detail-count").textContent=`${node.count||1}개 연결`;
-  document.querySelector("#detail-actions").replaceChildren(...node.actions.map((action)=>{const li=document.createElement("li");li.textContent=action;return li;}));
+function renderExperienceCards() {
+  const items=[...experiences,...experiences];
+  document.querySelector("#experience-card-list").replaceChildren(...items.map((item,index)=>{const card=document.createElement("article");card.className="experience-card";if(index>=experiences.length)card.setAttribute("aria-hidden","true");card.innerHTML=`<header><span>${item.meta}</span><b class="outcome-${item.outcome}">${item.type}</b></header><h3>${item.title}</h3><p>${item.summary}</p><div class="experience-evidence">${item.evidence.map(value=>`<span>${value}</span>`).join("")}</div><strong>${item.lesson}</strong>`;return card;}));
 }
 
-function applyFilters() { const enabled=new Set([...document.querySelectorAll('.filter-group input[type="checkbox"]:checked')].map((input)=>input.value)); document.querySelectorAll(".graph-node").forEach((element)=>{const node=nodeById.get(element.dataset.nodeId);element.hidden=node.type!=="problem"&&!enabled.has(node.type);}); document.querySelectorAll(".graph-edge").forEach((edge)=>{const source=nodeById.get(edge.dataset.source);const target=nodeById.get(edge.dataset.target);edge.hidden=(source.type!=="problem"&&!enabled.has(source.type))||(target.type!=="problem"&&!enabled.has(target.type));}); }
-function renderList() { const list=document.querySelector("#list-view");list.replaceChildren(...nodes.filter((node)=>node.type!=="problem").map((node)=>{const item=document.createElement("button");item.className="list-item";item.type="button";item.innerHTML=`<span>${node.label}</span><small>${{experience:"익명 경험",reply:"받은 답변",action:"확인 행동",evidence:"도움이 된 기록",outcome:"진행 결과"}[node.type]}</small>`;item.addEventListener("click",()=>{document.querySelector("#toggle-list").click();selectNode(node.id);});return item;})); }
-function renderExperienceCards() { document.querySelector("#experience-card-list").replaceChildren(...experiences.map((item)=>{const card=document.createElement("article");card.className="experience-card";card.innerHTML=`<header><span>시급 차이 · 가공 사례</span><b class="outcome-${item.outcome}">${item.type}</b></header><h3>${item.title}</h3><p>${item.summary}</p><strong>${item.lesson}</strong>`;return card;})); }
-
-document.querySelectorAll('.filter-group input[type="checkbox"]').forEach((input)=>input.addEventListener("change",applyFilters));
-document.querySelector("#reset-filter").addEventListener("click",()=>{document.querySelectorAll('.filter-group input[type="checkbox"]').forEach((input)=>input.checked=true);applyFilters();selectNode("problem");});
-document.querySelector("#center-graph").addEventListener("click",()=>selectNode("problem"));
-document.querySelector("#show-path").addEventListener("click",()=>selectNode("reply1"));
-document.querySelector("#use-in-conversation").addEventListener("click",()=>{document.querySelector("#detail-feedback").textContent="선택한 경험의 확인 항목을 내 기록 기반 문장에 참고할 준비가 됐어요.";});
-document.querySelector("#toggle-list").addEventListener("click",(event)=>{const graph=document.querySelector("#graph-view");const list=document.querySelector("#list-view");const showingList=list.hidden;list.hidden=!showingList;graph.hidden=showingList;event.currentTarget.textContent=showingList?"그래프로 보기":"목록으로 보기";});
-document.querySelector("#problem-filter").addEventListener("change",(event)=>{document.querySelector("#graph-title").textContent=`${event.target.selectedOptions[0].textContent} 중심 그래프`;});
-document.querySelector("#preview-anonymize").addEventListener("click",()=>{let text=document.querySelector("#experience-draft").value;text=text.replace(/01[016789][ -]?\d{3,4}[ -]?\d{4}/g,"[전화번호 제거]").replace(/20\d{2}년\s*\d{1,2}월\s*\d{1,2}일/g,"[정확한 날짜 제거]").replace(/\d{1,3}(?:,\d{3})+\s*원/g,"[정확한 금액 제거]").replace(/부산\s*해운대구/g,"부산 지역").replace(/바다식당/g,"음식점");const result=document.querySelector("#anonymize-result");result.hidden=false;result.querySelector("p").textContent=text;});
-
-renderGraph(); renderList(); renderExperienceCards();
+document.querySelector("#show-path").addEventListener("click",()=>document.querySelector(".experience-cards").scrollIntoView({behavior:"smooth"}));
+document.querySelector("#preview-anonymize").addEventListener("click",()=>{let text=document.querySelector("#experience-draft").value;text=text.replace(/01[016789][ -]?\d{3,4}[ -]?\d{4}/g,"[전화번호 제거]").replace(/20\d{2}년\s*\d{1,2}월\s*\d{1,2}일/g,"[정확한 날짜 제거]").replace(/\d{1,3}(?:,\d{3})+원/g,"[정확한 금액 제거]").replace(/부산\s*해운대구/g,"부산 지역").replace(/바다식당/g,"음식점");const result=document.querySelector("#anonymize-result");result.hidden=false;result.querySelector("p").textContent=text;});
+createNetwork(); renderExperienceCards();
