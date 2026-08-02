@@ -9,9 +9,9 @@ import httpx
 
 from app.core.config import get_settings
 from app.prompts.conversation import TRANSLATION_SYSTEM_PROMPT
+from app.schemas.community import ExperienceMatchRequest
 from app.schemas.comparisons import ComparisonItem
 from app.schemas.conversations import ConfirmationMessageData, ConversationTone
-from app.schemas.community import ExperienceMatchRequest
 from app.services.similarity_service import find_similar_experiences
 
 UPSTAGE_CHAT_URL = "https://api.upstage.ai/v1/chat/completions"
