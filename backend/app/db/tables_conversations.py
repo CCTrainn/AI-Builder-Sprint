@@ -1,91 +1,54 @@
-"""대화와 메시지 테이블 접근 함수.
+"""SQLite persistence for confirmation conversations and messages."""
 
-담당: ROLE-BE-CONVERSATION
-"""
-
-from typing import Any
+import json
+import sqlite3
+from collections.abc import Callable
+from typing import Any, TypeVar
 from uuid import uuid4
 
-import httpx
+from app.db.session import run_db
 
-from app.core.config import get_settings
+T = TypeVar("T")
 
 
 class ConversationDatabaseError(RuntimeError):
-    """Supabase 대화 테이블 작업 실패."""
+    """A local conversation database operation failed."""
 
 
-def _rest_credentials() -> tuple[str, str]:
-    settings = get_settings()
-    url = settings.supabase_url.rstrip("/")
-    key = settings.supabase_service_role_key.strip()
-    if not url or not key:
-        raise ConversationDatabaseError(
-            "SUPABASE_URL과 SUPABASE_SERVICE_ROLE_KEY를 backend/.env에 설정해 주세요."
-        )
-    return url, key
-
-
-def _headers(*, return_representation: bool = False) -> dict[str, str]:
-    _, key = _rest_credentials()
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
-    if return_representation:
-        headers["Prefer"] = "return=representation"
-    return headers
+async def _call(operation: Callable[[sqlite3.Connection], T], message: str) -> T:
+    try:
+        return await run_db(operation)
+    except sqlite3.Error as exc:
+        raise ConversationDatabaseError(message) from exc
 
 
 async def get_or_create_conversation(workplace_id: str, comparison_id: str) -> dict[str, Any]:
-    """같은 비교 항목의 열린 대화를 재사용한다."""
+    def operation(connection: sqlite3.Connection) -> dict[str, Any]:
+        existing = connection.execute(
+            """
+            SELECT * FROM conversations
+            WHERE workplace_id = ? AND status = 'open'
+            ORDER BY created_at DESC LIMIT 1
+            """,
+            (workplace_id,),
+        ).fetchone()
+        if existing is not None:
+            return dict(existing)
 
-    url, _ = _rest_credentials()
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            existing_response = await client.get(
-                f"{url}/rest/v1/conversations",
-                headers=_headers(),
-                params={
-                    "workplace_id": f"eq.{workplace_id}",
-                    "comparison_id": f"eq.{comparison_id}",
-                    "status": "eq.open",
-                    "select": "*",
-                    "order": "created_at.desc",
-                    "limit": "1",
-                },
-            )
-            if existing_response.status_code != 200:
-                raise ConversationDatabaseError(
-                    f"conversations 조회에 실패했습니다. status={existing_response.status_code}"
-                )
-            existing = existing_response.json()
-            if existing:
-                return existing[0]
-
-            new_conversation = {
-                "id": f"conv_{uuid4().hex}",
-                "workplace_id": workplace_id,
-                "comparison_id": comparison_id,
-                "status": "open",
-            }
-            created_response = await client.post(
-                f"{url}/rest/v1/conversations",
-                headers=_headers(return_representation=True),
-                json=new_conversation,
-            )
-    except httpx.HTTPError as exc:
-        raise ConversationDatabaseError("Supabase 대화 DB에 연결하지 못했습니다.") from exc
-
-    if created_response.status_code not in {200, 201}:
-        raise ConversationDatabaseError(
-            f"conversations 저장에 실패했습니다. status={created_response.status_code}"
+        conversation_id = f"conv_{uuid4().hex}"
+        connection.execute(
+            """
+            INSERT INTO conversations (id, workplace_id, comparison_id, status)
+            VALUES (?, ?, ?, 'open')
+            """,
+            (conversation_id, workplace_id, comparison_id),
         )
-    rows = created_response.json()
-    if not rows:
-        raise ConversationDatabaseError("conversations 저장 결과가 비어 있습니다.")
-    return rows[0]
+        created = connection.execute(
+            "SELECT * FROM conversations WHERE id = ?", (conversation_id,)
+        ).fetchone()
+        return dict(created)
+
+    return await _call(operation, "대화 정보를 로컬 DB에 저장하지 못했습니다.")
 
 
 async def save_message(
@@ -96,106 +59,109 @@ async def save_message(
     translated_text: str | None = None,
     analysis_json: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    url, _ = _rest_credentials()
-    row = {
-        "id": f"msg_{uuid4().hex}",
-        "conversation_id": conversation_id,
-        "sender": sender,
-        "original_text": original_text,
-        "translated_text": translated_text,
-        "analysis_json": analysis_json or {},
-    }
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(
-                f"{url}/rest/v1/messages",
-                headers=_headers(return_representation=True),
-                json=row,
-            )
-    except httpx.HTTPError as exc:
-        raise ConversationDatabaseError("대화 메시지를 저장하지 못했습니다.") from exc
-    if response.status_code not in {200, 201}:
-        raise ConversationDatabaseError(
-            f"messages 저장에 실패했습니다. status={response.status_code}"
+    message_id = f"msg_{uuid4().hex}"
+
+    def operation(connection: sqlite3.Connection) -> dict[str, Any]:
+        connection.execute(
+            """
+            INSERT INTO messages (
+                id, conversation_id, sender, original_text, translated_text, analysis_json
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                message_id, conversation_id, sender, original_text, translated_text,
+                json.dumps(analysis_json or {}, ensure_ascii=False),
+            ),
         )
-    rows = response.json()
-    if not rows:
-        raise ConversationDatabaseError("messages 저장 결과가 비어 있습니다.")
-    return rows[0]
+        row = connection.execute("SELECT * FROM messages WHERE id = ?", (message_id,)).fetchone()
+        result = dict(row)
+        result["analysis_json"] = json.loads(result["analysis_json"] or "{}")
+        return result
+
+    return await _call(operation, "대화 메시지를 로컬 DB에 저장하지 못했습니다.")
 
 
-async def find_open_conversation(workplace_id: str, comparison_id: str) -> dict[str, Any] | None:
-    url, _ = _rest_credentials()
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(
-                f"{url}/rest/v1/conversations",
-                headers=_headers(),
-                params={
-                    "workplace_id": f"eq.{workplace_id}",
-                    "comparison_id": f"eq.{comparison_id}",
-                    "status": "eq.open",
-                    "select": "*",
-                    "order": "created_at.desc",
-                    "limit": "1",
-                },
-            )
-    except httpx.HTTPError as exc:
-        raise ConversationDatabaseError("대화 정보를 조회하지 못했습니다.") from exc
-    if response.status_code != 200:
-        raise ConversationDatabaseError(
-            f"conversations 조회에 실패했습니다. status={response.status_code}"
-        )
-    rows = response.json()
-    return rows[0] if rows else None
+async def find_open_conversation(
+    workplace_id: str,
+    comparison_id: str,
+) -> dict[str, Any] | None:
+    def operation(connection: sqlite3.Connection) -> dict[str, Any] | None:
+        row = connection.execute(
+            """
+            SELECT * FROM conversations
+            WHERE workplace_id = ? AND status = 'open'
+            ORDER BY created_at DESC LIMIT 1
+            """,
+            (workplace_id,),
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    return await _call(operation, "대화 정보를 로컬 DB에서 조회하지 못했습니다.")
 
 
 async def find_latest_unanswered_items(conversation_id: str) -> list[str]:
-    url, _ = _rest_credentials()
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(
-                f"{url}/rest/v1/messages",
-                headers=_headers(),
-                params={
-                    "conversation_id": f"eq.{conversation_id}",
-                    "sender": "eq.employer",
-                    "select": "analysis_json",
-                    "order": "created_at.desc",
-                    "limit": "1",
-                },
-            )
-    except httpx.HTTPError as exc:
-        raise ConversationDatabaseError("이전 답변 분석을 조회하지 못했습니다.") from exc
-    if response.status_code != 200:
-        raise ConversationDatabaseError(
-            f"messages 조회에 실패했습니다. status={response.status_code}"
-        )
-    rows = response.json()
-    if not rows:
-        return []
-    analysis = rows[0].get("analysis_json") or {}
-    items = analysis.get("unanswered_items") or []
-    return [str(item) for item in items if isinstance(item, str)][:10]
+    def operation(connection: sqlite3.Connection) -> list[str]:
+        row = connection.execute(
+            """
+            SELECT analysis_json FROM messages
+            WHERE conversation_id = ? AND sender = 'employer'
+            ORDER BY created_at DESC, rowid DESC LIMIT 1
+            """,
+            (conversation_id,),
+        ).fetchone()
+        if row is None:
+            return []
+        analysis = json.loads(row["analysis_json"] or "{}")
+        items = analysis.get("unanswered_items") or []
+        return [str(item) for item in items if isinstance(item, str)][:10]
+
+    return await _call(operation, "이전 답변 분석을 로컬 DB에서 조회하지 못했습니다.")
 
 
 async def list_conversation_messages(conversation_id: str) -> list[dict[str, Any]]:
-    url, _ = _rest_credentials()
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(
-                f"{url}/rest/v1/messages",
-                headers=_headers(),
-                params={
-                    "conversation_id": f"eq.{conversation_id}",
-                    "select": "id,sender,original_text,translated_text,analysis_json,created_at",
-                    "order": "created_at.asc",
-                },
-            )
-    except httpx.HTTPError as exc:
-        raise ConversationDatabaseError("대화 기록을 조회하지 못했습니다.") from exc
-    if response.status_code != 200:
-        raise ConversationDatabaseError(
-            f"messages 조회에 실패했습니다. status={response.status_code}"
-        )
-    return response.json()
+    def operation(connection: sqlite3.Connection) -> list[dict[str, Any]]:
+        rows = connection.execute(
+            """
+            SELECT id, sender, original_text, translated_text, analysis_json, created_at
+            FROM messages WHERE conversation_id = ?
+            ORDER BY created_at ASC, rowid ASC
+            """,
+            (conversation_id,),
+        ).fetchall()
+        result = []
+        for row in rows:
+            item = dict(row)
+            item["analysis_json"] = json.loads(item["analysis_json"] or "{}")
+            result.append(item)
+        return result
+
+    return await _call(operation, "대화 기록을 로컬 DB에서 조회하지 못했습니다.")
+
+
+async def list_workplace_messages(workplace_id: str) -> list[dict[str, Any]]:
+    """Return one chronological Kakao-like timeline across all workplace issues."""
+
+    def operation(connection: sqlite3.Connection) -> list[dict[str, Any]]:
+        rows = connection.execute(
+            """
+            SELECT m.id, m.sender, m.original_text, m.translated_text,
+                   m.analysis_json, m.created_at
+            FROM messages AS m
+            JOIN conversations AS c ON c.id = m.conversation_id
+            WHERE c.workplace_id = ?
+            ORDER BY m.created_at ASC, m.rowid ASC
+            """,
+            (workplace_id,),
+        ).fetchall()
+        result = []
+        for row in rows:
+            item = dict(row)
+            item["analysis_json"] = json.loads(item["analysis_json"] or "{}")
+            if item["sender"] == "assistant" and item["analysis_json"].get(
+                "message_type"
+            ) != "sent":
+                continue
+            result.append(item)
+        return result
+
+    return await _call(operation, "사업장 대화 기록을 로컬 DB에서 조회하지 못했습니다.")

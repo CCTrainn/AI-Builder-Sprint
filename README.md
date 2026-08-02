@@ -115,8 +115,8 @@ git push origin develop
 
 - 프론트엔드: HTML, CSS, JavaScript
 - 백엔드: Python 3.11+, FastAPI
-- DB: Supabase PostgreSQL
-- 파일 저장: Supabase Storage private bucket
+- 로컬 MVP DB: SQLite
+- 파일 저장: 백엔드 전용 로컬 private 폴더
 - OCR: Upstage Document Parse 또는 팀이 확정한 단일 OCR
 - 법령 정보: 법제처 국가법령정보 공동활용 Open API
 
@@ -138,6 +138,10 @@ cd backend
 python -m uvicorn app.main:app --reload
 python -m pytest
 ```
+
+첫 실행 시 `backend/local_data/work-rights.db`와 업로드 폴더가 자동 생성됩니다.
+이 폴더는 프론트 정적 파일로 공개되지 않으며 Git에도 포함되지 않습니다.
+OCR·번역·법령 조회에 사용할 키만 `backend/.env`에 설정합니다.
 
 ### 팀 개발 시작
 

@@ -278,10 +278,12 @@ async def analyze_employer_reply(
     classification = _classification(answered, unanswered, detected_tactics)
     follow_up_korean = _follow_up_korean(unanswered, tone, safety_mode)
     try:
+        translated_reply = await translate_confirmation_text(reply_text, original_language)
         translated_follow_up = await translate_confirmation_text(
             follow_up_korean, original_language
         )
     except TranslationError:
+        translated_reply = reply_text
         translated_follow_up = follow_up_korean
     return ReplyAnalysisData(
         reply_id=f"reply_{uuid4().hex}",
@@ -297,6 +299,7 @@ async def analyze_employer_reply(
             if safety_mode
             else None
         ),
+        translated_reply=translated_reply,
         follow_up_korean=follow_up_korean,
         translated_follow_up=translated_follow_up,
     )

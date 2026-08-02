@@ -155,16 +155,12 @@ def test_message_api_reads_comparison_and_returns_envelope(monkeypatch) -> None:
             basis=["계약 시급 12,000원"],
         )
 
-    async def fake_get_or_create(_workplace_id: str, _comparison_id: str):
-        return {"id": "conv_001"}
-
-    async def fake_save_message(*_args, **_kwargs):
-        return {"id": "saved_msg_001"}
+    async def should_not_save_draft(*_args, **_kwargs):
+        raise AssertionError("추천 초안은 실제 대화 기록에 저장하면 안 됩니다.")
 
     monkeypatch.setattr(conversations, "find_comparison_detail", fake_detail)
     monkeypatch.setattr(conversations, "generate_confirmation_message", fake_generate)
-    monkeypatch.setattr(conversations, "get_or_create_conversation", fake_get_or_create)
-    monkeypatch.setattr(conversations, "save_message", fake_save_message)
+    monkeypatch.setattr(conversations, "save_message", should_not_save_draft)
 
     app = FastAPI()
     app.include_router(conversations.router, prefix="/api/v1/conversations")
@@ -181,6 +177,63 @@ def test_message_api_reads_comparison_and_returns_envelope(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json()["success"] is True
     assert response.json()["data"]["message_id"] == "msg_001"
+    assert response.json()["data"]["conversation_id"] is None
+
+
+def test_sent_message_api_saves_only_confirmed_kakao_text(monkeypatch) -> None:
+    async def fake_detail(_comparison_id: str):
+        return {
+            "id": "cmp_001",
+            "workplace_id": "work_001",
+            "condition_type": "hourly_wage",
+        }
+
+    async def fake_get_or_create(_workplace_id: str, _comparison_id: str):
+        return {"id": "conv_001"}
+
+    saved_messages: list[dict] = []
+
+    async def fake_save_message(conversation_id: str, sender: str, original_text: str, **kwargs):
+        saved_messages.append(
+            {
+                "conversation_id": conversation_id,
+                "sender": sender,
+                "original_text": original_text,
+                **kwargs,
+            }
+        )
+        return {
+            "id": "msg_sent_001",
+            "original_text": original_text,
+            "created_at": "2026-08-02T12:00:00Z",
+        }
+
+    monkeypatch.setattr(conversations, "find_comparison_detail", fake_detail)
+    monkeypatch.setattr(conversations, "get_or_create_conversation", fake_get_or_create)
+    monkeypatch.setattr(conversations, "save_message", fake_save_message)
+
+    app = FastAPI()
+    app.include_router(conversations.router, prefix="/api/v1/conversations")
+    response = TestClient(app).post(
+        "/api/v1/conversations/sent-message",
+        json={
+            "workplace_id": "work_001",
+            "comparison_id": "cmp_001",
+            "original_text": "시급 계산 근거를 확인해 주세요.",
+            "translated_text": "Please confirm the wage calculation.",
+            "tone": "clear",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["message_id"] == "msg_sent_001"
+    assert [message["sender"] for message in saved_messages] == ["assistant"]
+    assert saved_messages[0]["analysis_json"] == {
+        "message_type": "sent",
+        "comparison_id": "cmp_001",
+        "condition_type": "hourly_wage",
+        "tone": "clear",
+    }
 
 
 def test_message_api_hides_comparison_from_another_workplace(monkeypatch) -> None:
@@ -326,7 +379,7 @@ def test_reply_analysis_api_returns_structured_result(monkeypatch) -> None:
     assert response.json()["data"]["classification"] == "partly_answered"
     assert response.json()["data"]["claims"][0]["status"] == "claimed"
     assert response.json()["data"]["conversation_id"] == "conv_001"
-    assert [message["sender"] for message in saved_messages] == ["employer", "assistant"]
+    assert [message["sender"] for message in saved_messages] == ["employer"]
 
 
 def test_reply_analysis_uses_previous_unanswered_items(monkeypatch) -> None:

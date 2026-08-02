@@ -9,8 +9,10 @@ import httpx
 
 from app.core.config import get_settings
 from app.prompts.conversation import TRANSLATION_SYSTEM_PROMPT
+from app.schemas.community import ExperienceMatchRequest
 from app.schemas.comparisons import ComparisonItem
 from app.schemas.conversations import ConfirmationMessageData, ConversationTone
+from app.services.similarity_service import find_similar_experiences
 
 UPSTAGE_CHAT_URL = "https://api.upstage.ai/v1/chat/completions"
 UPSTAGE_MODEL = "solar-pro3"
@@ -55,6 +57,22 @@ def _comparison_basis(comparison: ComparisonItem) -> list[str]:
     ]
     rights_check = comparison.legal_reference.rights_check
     basis.extend(rights_check.basis)
+    problem_type = {
+        "hourly_wage": "hourly_wage_difference",
+        "gross_pay": "delayed_payment",
+        "net_pay": "delayed_payment",
+        "working_hours": "working_hours_changed",
+        "weekly_working_hours": "working_hours_changed",
+    }.get(comparison.condition)
+    if problem_type:
+        matched = find_similar_experiences(
+            ExperienceMatchRequest(problem_type=problem_type, limit=4)
+        )
+        if matched.matches:
+            basis.append(
+                f"비슷한 공동 경험 {len(matched.matches)}건 참고: "
+                f"{matched.matches[0].experience.helpful_action}"
+            )
     return list(dict.fromkeys(basis))
 
 

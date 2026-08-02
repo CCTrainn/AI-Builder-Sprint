@@ -37,6 +37,27 @@ class ConfirmationMessageResponse(BaseModel):
     error: ApiError | None
 
 
+class SentMessageRequest(BaseModel):
+    workplace_id: str = Field(min_length=1, max_length=100)
+    comparison_id: str = Field(min_length=1, max_length=100)
+    original_text: str = Field(min_length=1, max_length=2_000)
+    translated_text: str | None = Field(default=None, max_length=2_000)
+    tone: ConversationTone = ConversationTone.POLITE
+
+
+class SentMessageData(BaseModel):
+    message_id: str
+    conversation_id: str
+    original_text: str
+    created_at: str
+
+
+class SentMessageResponse(BaseModel):
+    success: bool
+    data: SentMessageData | None
+    error: ApiError | None
+
+
 class ReplyClassification(StrEnum):
     FULLY_ANSWERED = "fully_answered"
     PARTLY_ANSWERED = "partly_answered"
@@ -90,6 +111,7 @@ class ReplyAnalysisData(BaseModel):
     evidence_check: EvidenceCheck
     safety_mode: bool = False
     safety_note: str | None = None
+    translated_reply: str = ""
     follow_up_korean: str
     translated_follow_up: str
 

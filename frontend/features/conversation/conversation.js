@@ -6,13 +6,30 @@ const comparisonId = pageParams.get("comparison_id") || "cmp_001";
 const useMockData = pageParams.get("mode") === "mock";
 const API_BASE = resolveApiBase();
 
+const SUPPORTED_LANGUAGES = {
+  ko: { label: "한국어", htmlLang: "ko" },
+  vi: { label: "Tiếng Việt", htmlLang: "vi" },
+  "zh-CN": { label: "简体中文", htmlLang: "zh-CN" },
+  th: { label: "ภาษาไทย", htmlLang: "th" },
+  id: { label: "Bahasa Indonesia", htmlLang: "id" },
+  en: { label: "English", htmlLang: "en" },
+};
+
+const requestedLanguage = pageParams.get("language");
+const storedLanguage = readSessionValue("site_display_language_v2");
+const initialLanguage = [requestedLanguage, storedLanguage, "ko"].find(
+  (language) => language && SUPPORTED_LANGUAGES[language],
+);
+
 writeSessionValue("workplace_id", workplaceId);
+writeSessionValue("site_display_language_v2", initialLanguage);
+writeSessionValue("user_language", initialLanguage);
 
 const MESSAGE_REQUEST = {
   workplace_id: workplaceId,
   comparison_id: comparisonId,
   tone: "polite",
-  user_language: "vi",
+  user_language: initialLanguage,
 };
 
 const MOCK_RESPONSES = {
@@ -21,21 +38,21 @@ const MOCK_RESPONSES = {
     conversation_id: "conv_mock",
     korean_text: "계약서와 급여명세서의 시급이 다른데 계산 근거를 확인해 주실 수 있을까요?",
     translated_text: "Mức lương theo giờ trong hợp đồng và phiếu lương khác nhau. Anh/chị có thể giúp tôi kiểm tra căn cứ tính lương được không?",
-    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원"],
+    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원", "비슷한 공동 경험 4건에서 계산 근거 확인이 도움이 됨"],
   },
   clear: {
     message_id: "msg_002",
     conversation_id: "conv_mock",
     korean_text: "계약서에는 시급 12,000원, 급여명세서에는 10,500원으로 기록되어 있습니다. 수습기간의 적용 여부와 기간, 계산 근거를 알려주세요.",
     translated_text: "Hợp đồng ghi 12.000 won/giờ, nhưng phiếu lương ghi 10.500 won/giờ. Xin hãy cho tôi biết có áp dụng thử việc hay không, thời gian áp dụng và căn cứ tính lương.",
-    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원"],
+    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원", "비슷한 공동 경험 4건에서 계산 근거 확인이 도움이 됨"],
   },
   firm: {
     message_id: "msg_003",
     conversation_id: "conv_mock",
     korean_text: "계약서의 시급 12,000원과 급여명세서의 계산 시급 10,500원이 다릅니다. 수습기간의 합의 내용과 적용 기간, 계산 근거를 서면으로 답변해 주세요.",
     translated_text: "Mức lương 12.000 won/giờ trong hợp đồng khác với mức 10.500 won/giờ trên phiếu lương. Xin hãy trả lời bằng văn bản về nội dung thỏa thuận thử việc, thời gian áp dụng và căn cứ tính mức lương.",
-    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원"],
+    basis: ["계약서 시급 12,000원", "급여명세서 시급 10,500원", "비슷한 공동 경험 4건에서 계산 근거 확인이 도움이 됨"],
   },
 };
 
@@ -50,8 +67,66 @@ const MOCK_REPLY_ANALYSIS = {
   evidence_check: { status: "record_difference", explanation: "계약서와 급여명세서의 시급 기록이 다릅니다." },
   safety_mode: false,
   safety_note: null,
+  translated_reply: "Đó là cách tính thông thường vì đang trong thời gian thử việc.",
   follow_up_korean: "수습기간의 적용 기간과 시급 계산 근거를 확인해 주실 수 있을까요?",
   translated_follow_up: "Anh/chị có thể xác nhận thời gian áp dụng thử việc và căn cứ tính lương theo giờ không?",
+};
+
+const MOCK_TRANSLATIONS = {
+  ko: {
+    message: {
+      polite: MOCK_RESPONSES.polite.korean_text,
+      clear: MOCK_RESPONSES.clear.korean_text,
+      firm: MOCK_RESPONSES.firm.korean_text,
+    },
+    followUp: MOCK_REPLY_ANALYSIS.follow_up_korean,
+    employerReply: "수습기간이라 원래 그렇게 계산해요.",
+  },
+  vi: {
+    message: {
+      polite: "Mức lương theo giờ trong hợp đồng và phiếu lương khác nhau. Anh/chị có thể giúp tôi kiểm tra căn cứ tính lương được không?",
+      clear: "Hợp đồng ghi 12.000 won/giờ, nhưng phiếu lương ghi 10.500 won/giờ. Xin hãy cho tôi biết có áp dụng thử việc hay không, thời gian áp dụng và căn cứ tính lương.",
+      firm: "Mức lương 12.000 won/giờ trong hợp đồng khác với mức 10.500 won/giờ trên phiếu lương. Xin hãy trả lời bằng văn bản về nội dung thỏa thuận thử việc, thời gian áp dụng và căn cứ tính lương.",
+    },
+    followUp: "Anh/chị có thể xác nhận thời gian áp dụng thử việc và căn cứ tính lương theo giờ không?",
+    employerReply: "Đó là cách tính thông thường vì đang trong thời gian thử việc.",
+  },
+  "zh-CN": {
+    message: {
+      polite: "合同和工资明细单上的时薪不同，可以帮我确认一下工资计算依据吗？",
+      clear: "劳动合同中记录的时薪为12,000韩元，工资明细单中为10,500韩元。请告知是否适用试用期、适用期间以及工资计算依据。",
+      firm: "劳动合同中的时薪12,000韩元与工资明细单中的计算时薪10,500韩元不一致。请以书面形式答复试用期的约定内容、适用期间和计算依据。",
+    },
+    followUp: "可以请您确认试用期的适用期间和时薪计算依据吗？",
+    employerReply: "因为是试用期，所以通常就是这样计算的。",
+  },
+  th: {
+    message: {
+      polite: "อัตราค่าจ้างรายชั่วโมงในสัญญาจ้างและสลิปเงินเดือนไม่ตรงกัน กรุณาช่วยตรวจสอบหลักเกณฑ์การคำนวณค่าจ้างได้ไหมคะ/ครับ",
+      clear: "ในสัญญาจ้างระบุค่าจ้างชั่วโมงละ 12,000 วอน แต่ในสลิปเงินเดือนระบุ 10,500 วอน กรุณาแจ้งว่ามีการใช้ช่วงทดลองงานหรือไม่ ระยะเวลาที่ใช้ และหลักเกณฑ์การคำนวณค่าจ้าง",
+      firm: "ค่าจ้างชั่วโมงละ 12,000 วอนในสัญญาจ้างไม่ตรงกับอัตรา 10,500 วอนที่ใช้คำนวณในสลิปเงินเดือน กรุณาตอบเป็นลายลักษณ์อักษรเกี่ยวกับข้อตกลงช่วงทดลองงาน ระยะเวลาที่ใช้ และหลักเกณฑ์การคำนวณ",
+    },
+    followUp: "กรุณาช่วยยืนยันระยะเวลาที่ใช้ช่วงทดลองงานและหลักเกณฑ์การคำนวณค่าจ้างรายชั่วโมงได้ไหมคะ/ครับ",
+    employerReply: "เนื่องจากเป็นช่วงทดลองงานจึงคำนวณแบบนี้ตามปกติ",
+  },
+  id: {
+    message: {
+      polite: "Upah per jam pada kontrak dan slip gaji berbeda. Bisakah Anda membantu memastikan dasar perhitungan upahnya?",
+      clear: "Kontrak mencatat upah 12.000 won per jam, sedangkan slip gaji mencatat 10.500 won. Mohon jelaskan apakah masa percobaan diterapkan, periode penerapannya, dan dasar perhitungan upah.",
+      firm: "Upah 12.000 won per jam dalam kontrak berbeda dengan upah 10.500 won yang digunakan pada slip gaji. Mohon berikan jawaban tertulis mengenai kesepakatan masa percobaan, periode penerapan, dan dasar perhitungannya.",
+    },
+    followUp: "Bisakah Anda memastikan periode penerapan masa percobaan dan dasar perhitungan upah per jam?",
+    employerReply: "Karena masih masa percobaan, biasanya dihitung seperti itu.",
+  },
+  en: {
+    message: {
+      polite: "The hourly wage shown in the employment contract and the payslip is different. Could you please confirm the basis used to calculate my wage?",
+      clear: "The employment contract states an hourly wage of KRW 12,000, while the payslip shows KRW 10,500. Please explain whether a probationary period applies, how long it applies, and the basis for the wage calculation.",
+      firm: "The hourly wage of KRW 12,000 in the employment contract differs from the KRW 10,500 rate used on the payslip. Please provide a written response explaining the probation agreement, the applicable period, and the basis for the calculation.",
+    },
+    followUp: "Could you please confirm the applicable probationary period and the basis used to calculate the hourly wage?",
+    employerReply: "It is normally calculated that way because you are on probation.",
+  },
 };
 
 const CLASSIFICATION_LABELS = {
@@ -94,11 +169,49 @@ const historyStatus = document.querySelector("#conversation-history-status");
 const historyList = document.querySelector("#history-list");
 const historyEmpty = document.querySelector("#history-empty");
 const historyCount = document.querySelector("#history-count");
+const sentMessageText = document.querySelector("#sent-message-text");
+const sentMessageCount = document.querySelector("#sent-message-count");
+const recordSentMessageButton = document.querySelector("#record-sent-message");
+const languageSelect = document.querySelector("#site-language");
+const translationLanguageLabel = document.querySelector("#translation-language-label");
+const followUpLanguageLabel = document.querySelector("#follow-up-language-label");
+const replyLanguageLabel = document.querySelector("#reply-language-label");
+const replyTranslation = document.querySelector("#employer-reply-translation");
+const translatedEmployerReply = document.querySelector("#translated-employer-reply");
+const messageTranslation = document.querySelector(".translated-message");
+const followUpTranslation = document.querySelector(".follow-up-translation");
 
 let selectedTone = MESSAGE_REQUEST.tone;
+let selectedLanguage = MESSAGE_REQUEST.user_language;
 let currentMessage = null;
 let currentReplyAnalysis = null;
 let requestSequence = 0;
+const mockHistory = [];
+
+const CONDITION_LABELS = {
+  hourly_wage: "시급",
+  weekly_holiday_pay: "주휴수당",
+  working_hours: "근로시간",
+  weekly_working_hours: "주 근로시간",
+  total_working_hours: "총 근로시간",
+  overtime_hours: "연장근로",
+  break_time: "휴게시간",
+  pay_date: "급여일",
+  probation: "수습기간",
+  basic_pay: "기본급",
+  gross_pay: "지급액",
+  deductions: "공제액",
+  net_pay: "실수령액",
+};
+
+const HISTORY_SENDER_LABELS = {
+  ko: { employer: "고용주에게 받은 카톡", assistant: "내가 보낸 카톡" },
+  vi: { employer: "Tin KakaoTalk nhận từ chủ lao động", assistant: "Tin KakaoTalk tôi đã gửi" },
+  "zh-CN": { employer: "雇主发来的KakaoTalk消息", assistant: "我发送的KakaoTalk消息" },
+  th: { employer: "ข้อความ KakaoTalk จากนายจ้าง", assistant: "ข้อความ KakaoTalk ที่ฉันส่ง" },
+  id: { employer: "Pesan KakaoTalk dari pemberi kerja", assistant: "Pesan KakaoTalk yang saya kirim" },
+  en: { employer: "KakaoTalk received from employer", assistant: "KakaoTalk I sent" },
+};
 
 function resolveApiBase() {
   const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
@@ -169,6 +282,21 @@ function renderMessage(message) {
   );
 }
 
+function updateLanguageDisplay(language) {
+  const metadata = SUPPORTED_LANGUAGES[language];
+  languageSelect.value = language;
+  translationLanguageLabel.textContent = metadata.label;
+  followUpLanguageLabel.textContent = metadata.label;
+  replyLanguageLabel.textContent = metadata.label;
+  translatedText.lang = metadata.htmlLang;
+  document.querySelector("#translated-follow-up").lang = metadata.htmlLang;
+  translatedEmployerReply.lang = metadata.htmlLang;
+  const isKorean = language === "ko";
+  messageTranslation.hidden = isKorean;
+  followUpTranslation.hidden = isKorean;
+  if (isKorean) replyTranslation.hidden = true;
+}
+
 function setLoading(isLoading) {
   requestStatus.textContent = isLoading ? "선택한 말투로 문장을 준비하고 있어요." : "";
   requestStatus.classList.toggle("loading", isLoading);
@@ -189,6 +317,8 @@ function renderReplyAnalysis(analysis) {
   fillList(document.querySelector("#unanswered-list"), analysis.unanswered_items || []);
   document.querySelector("#follow-up-korean").textContent = analysis.follow_up_korean;
   document.querySelector("#translated-follow-up").textContent = analysis.translated_follow_up;
+  translatedEmployerReply.textContent = analysis.translated_reply || employerReply.value;
+  replyTranslation.hidden = selectedLanguage === "ko";
 
   const context = document.querySelector("#analysis-context");
   context.hidden = false;
@@ -226,7 +356,11 @@ function renderHistory(messages) {
       const meta = document.createElement("div");
       meta.className = "history-message__meta";
       const label = document.createElement("span");
-      label.textContent = sender === "employer" ? "고용주 답변" : "AI 확인 문장";
+      const condition = CONDITION_LABELS[message.analysis?.condition_type];
+      const senderLabels = HISTORY_SENDER_LABELS[selectedLanguage] || HISTORY_SENDER_LABELS.ko;
+      label.textContent = sender === "employer"
+        ? senderLabels.employer
+        : `${senderLabels.assistant}${condition ? ` · ${condition}` : ""}`;
       const time = document.createElement("time");
       time.dateTime = message.created_at || "";
       time.textContent = formatHistoryTime(message.created_at);
@@ -248,20 +382,21 @@ async function loadMessage(tone) {
   messageResult.hidden = false;
   actionFeedback.textContent = "";
   try {
-    const message = useMockData
-      ? structuredClone(MOCK_RESPONSES[tone])
-      : await fetchJson("/conversations/message", {
+    let message;
+    if (useMockData) {
+      message = structuredClone(MOCK_RESPONSES[tone]);
+      message.translated_text = MOCK_TRANSLATIONS[selectedLanguage].message[tone];
+    } else {
+      message = await fetchJson("/conversations/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...MESSAGE_REQUEST, tone }),
       });
+    }
     if (currentRequest !== requestSequence) return;
     currentMessage = message;
     renderMessage(message);
-    if (message.conversation_id) {
-      historyStatus.textContent = "대화 기록에 저장됐어요. 다음 답변도 이어서 확인합니다.";
-      await loadHistory();
-    }
+    historyStatus.textContent = "추천문은 아직 대화 기록에 저장되지 않았어요.";
   } catch (error) {
     if (currentRequest !== requestSequence) return;
     currentMessage = null;
@@ -275,7 +410,7 @@ async function loadMessage(tone) {
 
 async function loadHistory() {
   if (useMockData) {
-    renderHistory([]);
+    renderHistory(mockHistory);
     return;
   }
   try {
@@ -292,6 +427,57 @@ async function loadHistory() {
       return;
     }
     historyStatus.textContent = "대화 기록을 불러오지 못했어요.";
+  }
+}
+
+function updateSentMessageCount() {
+  sentMessageCount.textContent = `${sentMessageText.value.length.toLocaleString()} / 2,000`;
+}
+
+async function recordSentMessage() {
+  const originalText = sentMessageText.value.trim();
+  if (!originalText) {
+    actionFeedback.textContent = "실제로 보낸 카카오톡 문장을 먼저 입력해 주세요.";
+    sentMessageText.focus();
+    return;
+  }
+
+  recordSentMessageButton.disabled = true;
+  actionFeedback.textContent = "보낸 문장을 대화 기록에 저장하고 있어요.";
+  try {
+    if (useMockData) {
+      mockHistory.push({
+        message_id: `msg_mock_${Date.now()}`,
+        sender: "assistant",
+        original_text: originalText,
+        translated_text: null,
+        analysis: { condition_type: "hourly_wage", message_type: "sent" },
+        created_at: new Date().toISOString(),
+      });
+    } else {
+      await fetchJson("/conversations/sent-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workplace_id: workplaceId,
+          comparison_id: comparisonId,
+          original_text: originalText,
+          translated_text: originalText === currentMessage?.korean_text
+            ? currentMessage.translated_text
+            : null,
+          tone: selectedTone,
+        }),
+      });
+    }
+    sentMessageText.value = "";
+    updateSentMessageCount();
+    actionFeedback.textContent = "실제로 보낸 카카오톡 문장을 기록했어요.";
+    historyStatus.textContent = "이 사업장의 모든 확인 대화를 한 타임라인에 보관합니다.";
+    await loadHistory();
+  } catch (error) {
+    actionFeedback.textContent = error.message;
+  } finally {
+    recordSentMessageButton.disabled = false;
   }
 }
 
@@ -329,9 +515,13 @@ async function analyzeEmployerReply() {
   analysisBadge.textContent = "분석 중";
   analysisBadge.classList.remove("complete");
   try {
-    const analysis = useMockData
-      ? structuredClone(MOCK_REPLY_ANALYSIS)
-      : await fetchJson("/conversations/reply-analysis", {
+    let analysis;
+    if (useMockData) {
+      analysis = structuredClone(MOCK_REPLY_ANALYSIS);
+      analysis.translated_reply = MOCK_TRANSLATIONS[selectedLanguage].employerReply;
+      analysis.translated_follow_up = MOCK_TRANSLATIONS[selectedLanguage].followUp;
+    } else {
+      analysis = await fetchJson("/conversations/reply-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -342,12 +532,13 @@ async function analyzeEmployerReply() {
           tone: selectedTone,
         }),
       });
+    }
     currentReplyAnalysis = analysis;
     renderReplyAnalysis(analysis);
     showAnalysisState("result");
     analysisBadge.textContent = analysis.safety_mode ? "안전 확인" : "확인 완료";
     analysisBadge.classList.add("complete");
-    historyStatus.textContent = "답변 분석과 다음 확인 문장을 대화 기록에 저장했어요.";
+    historyStatus.textContent = "고용주 답변을 저장했어요. 후속 문장은 실제로 보낸 뒤 기록해 주세요.";
     await loadHistory();
   } catch (error) {
     currentReplyAnalysis = null;
@@ -360,7 +551,33 @@ async function analyzeEmployerReply() {
 document.querySelectorAll('input[name="tone"]').forEach((input) => {
   input.addEventListener("change", () => loadMessage(input.value));
 });
+languageSelect.addEventListener("change", () => {
+  selectedLanguage = languageSelect.value;
+  MESSAGE_REQUEST.user_language = selectedLanguage;
+  writeSessionValue("user_language", selectedLanguage);
+  writeSessionValue("site_display_language_v2", selectedLanguage);
+  document.dispatchEvent(new CustomEvent("userlanguagechange", {
+    detail: { language: selectedLanguage },
+  }));
+  updateLanguageDisplay(selectedLanguage);
+  loadHistory();
+  if (useMockData && currentReplyAnalysis) {
+    currentReplyAnalysis.translated_reply = MOCK_TRANSLATIONS[selectedLanguage].employerReply;
+    currentReplyAnalysis.translated_follow_up = MOCK_TRANSLATIONS[selectedLanguage].followUp;
+    renderReplyAnalysis(currentReplyAnalysis);
+  }
+  loadMessage(selectedTone);
+});
 document.querySelector("#copy-message").addEventListener("click", copyCurrentMessage);
+document.querySelector("#use-suggested-message").addEventListener("click", () => {
+  if (!currentMessage) return;
+  sentMessageText.value = currentMessage.korean_text;
+  updateSentMessageCount();
+  sentMessageText.focus();
+  actionFeedback.textContent = "추천문을 가져왔어요. 실제 보낸 내용과 같게 수정해 주세요.";
+});
+sentMessageText.addEventListener("input", updateSentMessageCount);
+recordSentMessageButton.addEventListener("click", recordSentMessage);
 document.querySelector("#retry-button").addEventListener("click", () => loadMessage(selectedTone));
 employerReply.addEventListener("input", updateReplyCount);
 document.querySelector("#load-example-reply").addEventListener("click", () => {
@@ -380,4 +597,7 @@ document.querySelector("#copy-follow-up").addEventListener("click", async () => 
   }
 });
 
+updateSentMessageCount();
+loadHistory();
+updateLanguageDisplay(selectedLanguage);
 loadMessage(selectedTone);

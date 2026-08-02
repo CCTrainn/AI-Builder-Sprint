@@ -186,6 +186,14 @@ body {
   stroke-linejoin: round;
 }
 
+.quick-menu__icon--teal {
+  color: #0b948b;
+}
+
+.quick-menu__item--community {
+  grid-column: 1 / -1;
+}
+
 .quick-menu__icon--blue {
   background: transparent;
 }
@@ -317,6 +325,10 @@ body {
   .quick-menu__list {
     grid-template-columns: 1fr;
     gap: 11px;
+  }
+
+  .quick-menu__item--community {
+    grid-column: auto;
   }
 
   .quick-menu__item {

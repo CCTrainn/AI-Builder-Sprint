@@ -1,4 +1,35 @@
 const sidebarRoot = document.querySelector("#appSidebar");
+const DISPLAY_LANGUAGES = [
+  { value: "ko", label: "Korean" },
+  { value: "vi", label: "Vietnamese" },
+  { value: "zh-CN", label: "Chinese" },
+  { value: "th", label: "Thai" },
+  { value: "id", label: "Indonesian" },
+  { value: "en", label: "English" },
+];
+
+function readDisplayLanguage() {
+  const requested = new URLSearchParams(window.location.search).get("language");
+  const stored = window.sessionStorage.getItem("site_display_language_v2");
+  return DISPLAY_LANGUAGES.some(({ value }) => value === requested)
+    ? requested
+    : DISPLAY_LANGUAGES.some(({ value }) => value === stored) ? stored : "ko";
+}
+
+function languageOptions(selected) {
+  return DISPLAY_LANGUAGES.map(({ value, label }) => (
+    `<option value="${value}"${value === selected ? " selected" : ""}>${label}</option>`
+  )).join("");
+}
+
+function languageMenuItems(selected) {
+  return DISPLAY_LANGUAGES.map(({ value, label }) => `
+    <button class="language-menu__item${value === selected ? " is-selected" : ""}"
+      type="button" role="option" aria-selected="${value === selected}" data-language="${value}">
+      <span>${label}</span><span class="language-menu__check" aria-hidden="true">✓</span>
+    </button>
+  `).join("");
+}
 
 const NAV_ITEMS = [
   {
@@ -36,12 +67,20 @@ const NAV_ITEMS = [
     href: "../record_box/record-box.html",
     icon: '<path d="M12 5v16"/><path d="M20 19a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4a5 5 0 0 0-4 2 5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4a5 5 0 0 1 4 2 5 5 0 0 1 4-2Z"/>',
   },
+  {
+    id: "community",
+    label: "공동 경험",
+    mobileLabel: "경험",
+    href: "../community/community.html",
+    icon: '<circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="m7 7 3 3m4 0 3-3m-7 7-3 3m7-3 3 3"/>',
+  },
 ];
 
 function renderSidebar() {
   if (!sidebarRoot) return;
 
   const activePage = document.body.dataset.page || "";
+  const displayLanguage = readDisplayLanguage();
   const navigation = NAV_ITEMS.map((item) => {
     const isActive = item.id === activePage;
     return `
@@ -76,10 +115,76 @@ function renderSidebar() {
         <span class="app-sidebar__workspace-copy">
           <strong>이름</strong>
         </span>
+        <div class="app-sidebar__language-picker">
+          <button id="language-menu-toggle" class="language-menu__toggle" type="button"
+            aria-label="Select language" aria-haspopup="listbox" aria-expanded="false">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
+          </svg>
+          </button>
+          <select id="site-language" aria-label="Site display language" tabindex="-1" hidden>
+            ${languageOptions(displayLanguage)}
+          </select>
+          <div id="language-menu" class="language-menu" role="listbox" aria-label="Select language" hidden>
+            <strong>Language</strong>
+            ${languageMenuItems(displayLanguage)}
+          </div>
+        </div>
       </div>
     </aside>
   `;
 }
 
 renderSidebar();
+import("./site-i18n.js?v=20260802-4");
 
+const siteLanguage = document.querySelector("#site-language");
+const languageMenuToggle = document.querySelector("#language-menu-toggle");
+const languageMenu = document.querySelector("#language-menu");
+
+function closeLanguageMenu() {
+  languageMenu.hidden = true;
+  languageMenuToggle.setAttribute("aria-expanded", "false");
+}
+
+languageMenuToggle?.addEventListener("click", () => {
+  const willOpen = languageMenu.hidden;
+  languageMenu.hidden = !willOpen;
+  languageMenuToggle.setAttribute("aria-expanded", String(willOpen));
+  if (willOpen) languageMenu.querySelector(".is-selected")?.focus();
+});
+
+languageMenu?.addEventListener("click", (event) => {
+  const item = event.target.closest("[data-language]");
+  if (!item) return;
+  siteLanguage.value = item.dataset.language;
+  siteLanguage.dispatchEvent(new Event("change", { bubbles: true }));
+  languageMenu.querySelectorAll("[data-language]").forEach((button) => {
+    const selected = button.dataset.language === siteLanguage.value;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-selected", String(selected));
+  });
+  closeLanguageMenu();
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".app-sidebar__language-picker")) closeLanguageMenu();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !languageMenu.hidden) {
+    closeLanguageMenu();
+    languageMenuToggle.focus();
+  }
+});
+
+if (siteLanguage) {
+  siteLanguage.addEventListener("change", () => {
+    window.sessionStorage.setItem("site_display_language_v2", siteLanguage.value);
+    window.sessionStorage.setItem("user_language", siteLanguage.value);
+    document.dispatchEvent(new CustomEvent("userlanguagechange", {
+      detail: { language: siteLanguage.value },
+    }));
+  });
+}

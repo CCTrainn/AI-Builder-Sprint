@@ -1,15 +1,16 @@
-# DB 및 Storage 구조
+# 로컬 MVP DB 및 파일 저장 구조
 
 ## 원칙
 
-- 원본 파일은 Supabase Storage에 저장한다.
-- DB에는 파일 위치와 추출된 정보만 저장한다.
-- 사용자 원본 bucket은 private으로 설정한다.
+- 원본 파일은 `backend/local_data/uploads`에 저장한다.
+- 구조화된 정보와 파일 위치는 SQLite `backend/local_data/work-rights.db`에 저장한다.
+- `backend/local_data`는 프론트 정적 경로에 포함하거나 Git에 커밋하지 않는다.
+- 저장 계층 함수의 인터페이스를 유지해 이후 PostgreSQL·객체 스토리지로 교체한다.
 
 ## Storage 경로
 
 ```text
-work-records/
+backend/local_data/uploads/
   {user_id}/
     {workplace_id}/
       {record_id}/
