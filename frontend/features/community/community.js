@@ -1,5 +1,21 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const svg = document.querySelector("#experience-graph");
+const DRAFTS = {
+  ko: "2025년 7월 10일 부산 해운대구 바다식당에서 사장님께 시급 차이를 물었고, 010-1234-5678로 답변을 받았습니다. 계약서와 급여명세서를 함께 보여드린 뒤 차액 120,000원을 받았습니다.",
+  vi: "Ngày 10 tháng 7 năm 2025, tại một nhà hàng ở Busan, tôi hỏi chủ lao động về chênh lệch lương theo giờ và nhận được trả lời qua điện thoại. Sau khi cho xem hợp đồng và phiếu lương, tôi đã nhận được khoản chênh lệch 120.000 won.",
+  "zh-CN": "2025年7月10日，我在釜山的一家餐厅向雇主询问时薪差额，并通过电话收到了回复。出示合同和工资单后，我收到了12万韩元的差额。",
+  th: "เมื่อวันที่ 10 กรกฎาคม 2025 ที่ร้านอาหารแห่งหนึ่งในปูซาน ฉันถามนายจ้างเรื่องส่วนต่างค่าจ้างรายชั่วโมงและได้รับคำตอบทางโทรศัพท์ หลังจากแสดงสัญญาและสลิปเงินเดือน ฉันได้รับเงินส่วนต่าง 120,000 วอน",
+  id: "Pada 10 Juli 2025, di sebuah restoran di Busan, saya menanyakan selisih upah per jam kepada pemberi kerja dan menerima jawaban melalui telepon. Setelah menunjukkan kontrak dan slip gaji, saya menerima selisih 120.000 won.",
+  en: "On July 10, 2025, at a restaurant in Busan, I asked my employer about the hourly-wage difference and received a reply by phone. After showing the contract and payslip, I received the KRW 120,000 difference.",
+};
+const REDACTIONS = {
+  ko: { phone: "[전화번호 제거]", date: "[정확한 날짜 제거]", amount: "[정확한 금액 제거]", region: "부산 지역", workplace: "음식점" },
+  vi: { phone: "[đã xóa số điện thoại]", date: "[đã xóa ngày chính xác]", amount: "[đã xóa số tiền chính xác]", region: "khu vực Busan", workplace: "nhà hàng" },
+  "zh-CN": { phone: "[已删除电话号码]", date: "[已删除具体日期]", amount: "[已删除具体金额]", region: "釜山地区", workplace: "餐厅" },
+  th: { phone: "[ลบหมายเลขโทรศัพท์แล้ว]", date: "[ลบวันที่ที่แน่นอนแล้ว]", amount: "[ลบจำนวนเงินที่แน่นอนแล้ว]", region: "พื้นที่ปูซาน", workplace: "ร้านอาหาร" },
+  id: { phone: "[nomor telepon dihapus]", date: "[tanggal pasti dihapus]", amount: "[jumlah pasti dihapus]", region: "wilayah Busan", workplace: "restoran" },
+  en: { phone: "[phone number removed]", date: "[exact date removed]", amount: "[exact amount removed]", region: "Busan area", workplace: "restaurant" },
+};
 const experiences = [
   {type:"해결 후 남긴 말",outcome:"resolved",title:"처음으로 계산 근거를 물어봤어요",summary:"계약서와 급여명세서를 같이 보내니까 막연히 따지는 기분이 아니었어요. 계산표를 받은 뒤 차액도 확인했습니다.",lesson:"“기록을 보여주면서 물으니 덜 무서웠어요.”",evidence:["근로계약서","급여명세서"],meta:"음식점 근무 · 익명"},
   {type:"대화 중 남긴 말",outcome:"partial",title:"수습기간이라는 답을 받았어요",summary:"예전 같으면 그냥 알겠다고 했을 텐데, 시작일과 끝나는 날을 다시 물었습니다. 아직 답변을 기다리고 있어요.",lesson:"“이번에는 질문을 끝까지 남겨두려고 해요.”",evidence:["고용주 대화","채용공고"],meta:"카페 근무 · 익명"},
@@ -28,5 +44,31 @@ function renderExperienceCards() {
 }
 
 document.querySelector("#show-path").addEventListener("click",()=>document.querySelector(".experience-cards").scrollIntoView({behavior:"smooth"}));
-document.querySelector("#preview-anonymize").addEventListener("click",()=>{let text=document.querySelector("#experience-draft").value;text=text.replace(/01[016789][ -]?\d{3,4}[ -]?\d{4}/g,"[전화번호 제거]").replace(/20\d{2}년\s*\d{1,2}월\s*\d{1,2}일/g,"[정확한 날짜 제거]").replace(/\d{1,3}(?:,\d{3})+원/g,"[정확한 금액 제거]").replace(/부산\s*해운대구/g,"부산 지역").replace(/바다식당/g,"음식점");const result=document.querySelector("#anonymize-result");result.hidden=false;result.querySelector("p").textContent=text;});
+function currentLanguage() {
+  const value = window.sessionStorage.getItem("site_display_language_v2") || "ko";
+  return DRAFTS[value] ? value : "ko";
+}
+
+const draft = document.querySelector("#experience-draft");
+if (Object.values(DRAFTS).includes(draft.value.trim())) draft.value = DRAFTS[currentLanguage()];
+
+document.addEventListener("userlanguagechange", (event) => {
+  if (Object.values(DRAFTS).includes(draft.value.trim())) {
+    draft.value = DRAFTS[event.detail.language] || DRAFTS.ko;
+  }
+});
+
+document.querySelector("#preview-anonymize").addEventListener("click",()=>{
+  const labels = REDACTIONS[currentLanguage()];
+  let text=draft.value;
+  text=text
+    .replace(/01[016789][ -]?\d{3,4}[ -]?\d{4}/g,labels.phone)
+    .replace(/20\d{2}년\s*\d{1,2}월\s*\d{1,2}일|(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+20\d{2}|\d{1,2}\s+tháng\s+\d{1,2}\s+năm\s+20\d{2}|20\d{2}年\d{1,2}月\d{1,2}日|\d{1,2}\s+กรกฎาคม\s+20\d{2}|\d{1,2}\s+Juli\s+20\d{2}/gi,labels.date)
+    .replace(/(?:KRW\s*)?\d{1,3}(?:[,.]\d{3})+(?:\s*(?:원|won|วอน))?/gi,labels.amount)
+    .replace(/부산\s*해운대구|Busan|釜山|ปูซาน/gi,labels.region)
+    .replace(/바다식당|restaurant|nhà hàng|餐厅|ร้านอาหาร|restoran/gi,labels.workplace);
+  const result=document.querySelector("#anonymize-result");
+  result.hidden=false;
+  result.querySelector("p").textContent=text;
+});
 createNetwork(); renderExperienceCards();

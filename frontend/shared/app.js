@@ -137,7 +137,7 @@ function renderSidebar() {
 }
 
 renderSidebar();
-import("./site-i18n.js?v=20260802-4");
+import("./site-i18n.js?v=20260802-5");
 
 const siteLanguage = document.querySelector("#site-language");
 const languageMenuToggle = document.querySelector("#language-menu-toggle");
