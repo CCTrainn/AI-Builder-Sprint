@@ -141,7 +141,7 @@
           <button id="analyze-reply" class="primary-button analyze-button" type="button">
             답변 분석하기
           </button>
-          <p class="privacy-note">입력한 답변은 데모 화면 안에서만 사용됩니다.</p>
+          <p class="privacy-note">입력한 답변은 다음 확인 문장을 만들기 위해 대화 기록에 저장됩니다.</p>
         </div>
 
         <div class="analysis-panel">
@@ -183,6 +183,14 @@
               </section>
             </div>
 
+            <section id="analysis-context" class="analysis-context" hidden>
+              <h4>답변을 이렇게 확인했어요</h4>
+              <p class="analysis-disclaimer"><strong>기록으로 확인된 사실</strong>과 <strong>AI의 참고 분석</strong>을 구분해서 보여드려요. 위법 여부를 확정하는 법률 판단은 아닙니다.</p>
+              <p id="evidence-check"></p>
+              <ul id="tactic-list"></ul>
+              <p id="safety-note" class="safety-note" hidden></p>
+            </section>
+
             <section class="follow-up-card" aria-labelledby="follow-up-title">
               <div class="message-label-row">
                 <h4 id="follow-up-title">다음에 확인할 문장</h4>
@@ -195,13 +203,25 @@
               </div>
             </section>
             <div class="record-box-link-row">
-              <span>분석 결과는 이 브라우저의 데모 기록에 보관돼요.</span>
+              <span id="conversation-history-status">대화 기록에 안전하게 보관돼요.</span>
               <a href="../record_box/record-box.html">근로 기록함에서 보기</a>
             </div>
             <p id="analysis-feedback" class="action-feedback" role="status" aria-live="polite"></p>
           </article>
         </div>
       </div>
+    </section>
+
+    <section class="conversation-history" aria-labelledby="history-title">
+      <div class="history-heading">
+        <div>
+          <p class="step-label">저장된 대화 기록</p>
+          <h2 id="history-title">지금까지 확인한 내용을 이어서 봐요</h2>
+        </div>
+        <span id="history-count">0개</span>
+      </div>
+      <p id="history-empty" class="history-empty">저장된 대화가 아직 없어요.</p>
+      <ol id="history-list" class="history-list" aria-live="polite"></ol>
     </section>
 
     <p class="disclaimer">이 문장은 기록을 확인하기 위한 예시이며, 위법 여부를 판단하거나 법률 자문을 제공하지 않습니다.</p>
