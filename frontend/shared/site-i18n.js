@@ -5,7 +5,7 @@ const ROWS = [
   ["자료", "Tài liệu", "资料", "เอกสาร", "Dokumen", "Records"],
   ["조건 비교하기", "So sánh điều kiện", "比较条件", "เปรียบเทียบเงื่อนไข", "Bandingkan ketentuan", "Compare terms"],
   ["비교", "So sánh", "比较", "เปรียบเทียบ", "Bandingkan", "Compare"],
-  ["대화 도우미", "Hỗ trợ trao đổi", "对话助手", "ผู้ช่วยสนทนา", "Asisten percakapan", "Conversation helper"],
+  ["대꾸 AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI"],
   ["대화", "Trao đổi", "对话", "สนทนา", "Percakapan", "Conversation"],
   ["내 기록", "Hồ sơ của tôi", "我的记录", "บันทึกของฉัน", "Catatan saya", "My records"],
   ["기록함", "Hồ sơ", "记录夹", "กล่องบันทึก", "Kotak catatan", "Record box"],

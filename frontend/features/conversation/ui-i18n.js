@@ -3,6 +3,11 @@ const LANGUAGE_INDEX = { ko: 0, vi: 1, "zh-CN": 2, th: 3, id: 4, en: 5 };
 // Korean is the source text. The generated Korean message itself is intentionally
 // excluded because it is the message the worker sends to a Korean employer.
 const COPY = [
+  ["대꾸 AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI"],
+  ["기록이 다른 부분을 근거로 확인할 말을 만들고, 받은 답변의 다음 말까지 이어드려요.", "Tạo lời xác nhận từ các điểm khác nhau trong hồ sơ và tiếp tục với câu tiếp theo sau khi nhận phản hồi.", "根据记录差异生成确认用语，并在收到回复后继续准备下一句话。", "สร้างข้อความยืนยันจากจุดที่บันทึกต่างกัน และช่วยเตรียมคำพูดถัดไปหลังได้รับคำตอบ", "Membuat kalimat konfirmasi dari perbedaan catatan dan melanjutkan dengan kalimat berikutnya setelah menerima jawaban.", "Create a confirmation message from record differences and continue with what to say after the reply."],
+  ["기록 기반 대화", "Trao đổi dựa trên hồ sơ", "基于记录的对话", "การสนทนาจากบันทึก", "Percakapan berbasis catatan", "Record-based conversation"],
+  ["대꾸 AI | 근로권리 동반자", "Daekku AI | Đồng hành quyền lao động", "Daekku AI | 劳动权益伙伴", "Daekku AI | ผู้ช่วยสิทธิแรงงาน", "Daekku AI | Pendamping hak pekerja", "Daekku AI | Work Rights Companion"],
+  ["STEP 3 · 대꾸 AI", "BƯỚC 3 · Daekku AI", "第 3 步 · Daekku AI", "ขั้นตอนที่ 3 · Daekku AI", "LANGKAH 3 · Daekku AI", "STEP 3 · Daekku AI"],
   ["확인 대화 준비 | 근로권리 동반자", "Chuẩn bị trao đổi | Đồng hành quyền lao động", "准备确认对话 | 劳动权益伙伴", "เตรียมการสนทนา | ผู้ช่วยสิทธิแรงงาน", "Persiapan percakapan | Pendamping hak pekerja", "Prepare a conversation | Work Rights Companion"],
   ["STEP 3 · 확인 대화", "BƯỚC 3 · Trao đổi xác nhận", "第3步 · 确认对话", "ขั้นตอน 3 · การสนทนาเพื่อยืนยัน", "LANGKAH 3 · Percakapan konfirmasi", "STEP 3 · Confirmation conversation"],
   ["고용주에게 확인할 말을 준비해요", "Chuẩn bị câu hỏi cho chủ lao động", "准备向雇主确认的话", "เตรียมข้อความเพื่อสอบถามนายจ้าง", "Siapkan pertanyaan untuk pemberi kerja", "Prepare what to ask your employer"],

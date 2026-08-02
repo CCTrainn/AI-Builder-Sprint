@@ -280,7 +280,7 @@ function renderComparisonCard(comparison) {
   const rightsCheck = comparison.legal_reference?.rights_check;
 
   return `
-    <article class="comparison-card">
+    <article class="comparison-card comparison-card--${escapeHtml(status.className)}">
       <header class="comparison-card__header">
         <div class="condition-name">
           <span class="condition-icon">${getConditionIcon(comparison.condition)}</span>
@@ -375,7 +375,7 @@ function renderAction(comparison) {
   ) {
     const id = encodeURIComponent(comparison.comparison_id);
     const workplace = encodeURIComponent(workplaceId);
-    return `<a class="conversation-link" href="../conversation/conversation.html?workplace_id=${workplace}&comparison_id=${id}">대화 도우미</a>`;
+    return `<a class="conversation-link" href="../conversation/conversation.html?workplace_id=${workplace}&comparison_id=${id}">대꾸 AI</a>`;
   }
   return "";
 }

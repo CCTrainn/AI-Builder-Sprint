@@ -55,8 +55,8 @@ const NAV_ITEMS = [
   },
   {
     id: "conversation",
-    label: "대화 도우미",
-    mobileLabel: "대화",
+    label: "대꾸 AI",
+    mobileLabel: "대꾸 AI",
     href: "../conversation/conversation.html",
     icon: '<path d="M16 10a2 2 0 0 1-2 2H6.8a2 2 0 0 0-1.4.6l-2.2 2.2A.7.7 0 0 1 2 14.3V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/><path d="M20 9a2 2 0 0 1 2 2v10.3a.7.7 0 0 1-1.2.5l-2.2-2.2a2 2 0 0 0-1.4-.6H10a2 2 0 0 1-2-2v-1"/>',
   },
@@ -137,7 +137,7 @@ function renderSidebar() {
 }
 
 renderSidebar();
-import("./site-i18n.js?v=20260803-2");
+import("./site-i18n.js?v=20260803-3");
 
 const siteLanguage = document.querySelector("#site-language");
 const languageMenuToggle = document.querySelector("#language-menu-toggle");

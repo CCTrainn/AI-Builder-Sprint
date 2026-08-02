@@ -409,9 +409,22 @@ button {
 }
 
 .status-badge--different {
-  color: var(--compare-warning);
-  background: var(--compare-warning-bg);
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#9a3412;
+  background:#ffedd5;
+  border:1px solid #fdba74;
+  box-shadow:0 4px 12px rgb(194 65 12 / 10%);
 }
+
+.status-badge--different::before{display:grid;width:16px;height:16px;place-items:center;border-radius:50%;background:#ea580c;color:#fff;font-size:10px;font-weight:900;content:"!"}
+.comparison-card--different{border:2px solid #fb923c;background:linear-gradient(90deg,#fff8f1 0,#fff 22%);box-shadow:0 12px 32px rgb(194 65 12 / 10%)}
+.comparison-card--different:hover{border-color:#ea580c;box-shadow:0 16px 38px rgb(194 65 12 / 15%)}
+.comparison-card--different .comparison-card__header{border-bottom:1px solid #ffedd5}
+.comparison-card--different .condition-icon{color:#c2410c;background:#ffedd5}
+.summary-metrics div:first-child{background:#fff7ed}.summary-metrics div:first-child strong{color:#c2410c}.summary-metrics div:first-child span{color:#9a3412;font-weight:800}
+.status-tab[data-filter="different"]{color:#9a3412;background:#fff7ed;border-color:#fed7aa}.status-tab[data-filter="different"]:hover,.status-tab[data-filter="different"].is-active{color:#9a3412;background:#ffedd5;border-color:#fb923c}
 
 .status-badge--needs_confirmation {
   color: var(--compare-purple);
