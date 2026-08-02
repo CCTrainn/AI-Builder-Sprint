@@ -111,6 +111,7 @@ class ReplyAnalysisData(BaseModel):
     evidence_check: EvidenceCheck
     safety_mode: bool = False
     safety_note: str | None = None
+    translated_reply: str = ""
     follow_up_korean: str
     translated_follow_up: str
 

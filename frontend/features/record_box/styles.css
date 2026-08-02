@@ -9,6 +9,10 @@
   --record-shadow: 0 16px 46px rgb(42 57 89 / 7%);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   min-width: 320px;
   background:
