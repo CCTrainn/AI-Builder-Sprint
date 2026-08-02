@@ -806,4 +806,6 @@ async function initializeConversation() {
   await Promise.all([loadHistory(), loadMessage(selectedTone)]);
 }
 
-initializeConversation();
+if (!document.querySelector(".guided-chat")) {
+  initializeConversation();
+}

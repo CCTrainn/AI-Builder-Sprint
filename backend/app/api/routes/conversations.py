@@ -13,6 +13,7 @@ from app.db.tables_conversations import (
     find_latest_unanswered_items,
     find_open_conversation,
     get_or_create_conversation,
+    list_conversation_messages,
     list_workplace_messages,
     save_message,
 )
@@ -217,12 +218,14 @@ async def analyze_reply(
                 request.workplace_id, request.comparison_id
             )
         prior_unanswered = await find_latest_unanswered_items(conversation["id"])
+        prior_messages = await list_conversation_messages(conversation["id"])
         analysis = await analyze_employer_reply(
             comparison,
             request.reply_text,
             request.original_language,
             request.tone,
             required_items_override=prior_unanswered or None,
+            conversation_history=prior_messages,
         )
         analysis.conversation_id = conversation["id"]
         await save_message(

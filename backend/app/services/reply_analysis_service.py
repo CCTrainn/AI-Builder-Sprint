@@ -10,7 +10,7 @@ from uuid import uuid4
 import httpx
 
 from app.core.config import get_settings
-from app.prompts.conversation import REPLY_ANALYSIS_SYSTEM_PROMPT
+from app.prompts.conversation import FOLLOW_UP_WRITER_SYSTEM_PROMPT, REPLY_ANALYSIS_SYSTEM_PROMPT
 from app.schemas.comparisons import ComparisonItem
 from app.schemas.conversations import (
     ConversationTactic,
@@ -27,6 +27,18 @@ from app.services.conversation_service import (
     TranslationError,
     translate_confirmation_text,
 )
+
+_PHONE_PATTERN = re.compile(r"(?<!\d)01[016789][- ]?\d{3,4}[- ]?\d{4}(?!\d)")
+_ID_PATTERN = re.compile(r"(?<!\d)\d{6}[- ]?[1-8]\d{6}(?!\d)")
+_EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+_LONG_NUMBER_PATTERN = re.compile(r"(?<!\d)\d(?:[- ]?\d){7,15}(?!\d)")
+
+
+def _mask_private_text(value: str) -> str:
+    masked = _EMAIL_PATTERN.sub("[EMAIL]", value)
+    masked = _PHONE_PATTERN.sub("[PHONE]", masked)
+    masked = _ID_PATTERN.sub("[IDENTIFIER]", masked)
+    return _LONG_NUMBER_PATTERN.sub("[LONG_NUMBER]", masked)
 
 TACTIC_PATTERNS: dict[ConversationTactic, tuple[re.Pattern[str], str]] = {
     ConversationTactic.CUSTOMARY_CLAIM: (
@@ -175,9 +187,10 @@ async def _llm_coverage(
     reply_text: str,
     required_items: list[str],
     comparison: ComparisonItem,
+    conversation_history: list[dict] | None = None,
     *,
     client: httpx.AsyncClient | None = None,
-) -> tuple[list[str], list[str], list[EmployerClaim], list[ConversationTactic]]:
+) -> tuple[list[str], list[str], list[EmployerClaim], list[ConversationTactic], str | None]:
     settings = get_settings()
     api_key = settings.llm_api_key.strip() or settings.upstage_api_key.strip()
     if not api_key:
@@ -195,13 +208,24 @@ async def _llm_coverage(
                         "rights_check": comparison.legal_reference.rights_check.model_dump(
                             mode="json"
                         ),
-                        "employer_reply": reply_text,
+                        "prior_conversation": [
+                            {
+                                "speaker": (
+                                    "worker" if item.get("sender") == "assistant" else "employer"
+                                ),
+                                "message": _mask_private_text(
+                                    str(item.get("original_text", ""))[:500]
+                                ),
+                            }
+                            for item in (conversation_history or [])[-6:]
+                        ],
+                        "employer_reply": _mask_private_text(reply_text),
                     },
                     ensure_ascii=False,
                 ),
             },
         ],
-        "temperature": 0,
+        "temperature": 0.3,
         "max_tokens": 700,
         "response_format": {"type": "json_object"},
         "stream": False,
@@ -233,7 +257,16 @@ async def _llm_coverage(
             for value in parsed.get("tactics", [])
             if value in ConversationTactic._value2member_map_
         ]
-        return list(dict.fromkeys(answered)), unanswered, claims, tactics
+        suggested_follow_up = str(parsed.get("suggested_follow_up", "")).strip()[:240]
+        if any(word in suggested_follow_up for word in ("불법", "거짓말", "신고하", "고소하")):
+            suggested_follow_up = ""
+        return (
+            list(dict.fromkeys(answered)),
+            unanswered,
+            claims,
+            tactics,
+            suggested_follow_up or None,
+        )
     except (
         httpx.HTTPError,
         KeyError,
@@ -248,21 +281,91 @@ async def _llm_coverage(
             await request_client.aclose()
 
 
+async def _llm_contextual_follow_up(
+    reply_text: str,
+    unanswered_items: list[str],
+    tone: ConversationTone,
+    conversation_history: list[dict] | None,
+    comparison: ComparisonItem,
+) -> str:
+    settings = get_settings()
+    api_key = settings.llm_api_key.strip() or settings.upstage_api_key.strip()
+    if not api_key:
+        raise ReplyAnalysisLLMError("LLM API key is not configured")
+    recent = [
+        {
+            "speaker": "worker" if item.get("sender") == "assistant" else "employer",
+            "message": _mask_private_text(str(item.get("original_text", ""))[:500]),
+        }
+        for item in (conversation_history or [])[-6:]
+    ]
+    refusal_hint = (
+        "The employer explicitly refused. Explain why the information is still needed and keep "
+        "the conversation moving, but do not repeat or paraphrase the refusal. Do not say "
+        "'알겠습니다' or accept ending the discussion."
+        if any(marker in reply_text for marker in ("싫", "안 해", "못 해", "말하기 싫"))
+        else "Respond specifically to the employer's latest wording."
+    )
+    payload = {
+        "model": UPSTAGE_MODEL,
+        "messages": [
+            {"role": "system", "content": FOLLOW_UP_WRITER_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "recent_conversation": recent,
+                        "employer_latest_reply": _mask_private_text(reply_text),
+                        "interaction_requirement": refusal_hint,
+                        "current_issue": _mask_private_text(comparison.summary),
+                        "still_missing_information": unanswered_items[:3],
+                        "requested_tone": tone.value,
+                    },
+                    ensure_ascii=False,
+                ),
+            },
+        ],
+        "temperature": 0.55,
+        "max_tokens": 300,
+        "stream": False,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post(
+                UPSTAGE_CHAT_URL,
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json=payload,
+            )
+        if response.status_code != 200:
+            raise ReplyAnalysisLLMError("Follow-up generation failed")
+        text = response.json()["choices"][0]["message"]["content"].strip().strip('"')[:240]
+        if not text or any(word in text for word in ("불법", "거짓말", "신고하", "고소하")):
+            raise ReplyAnalysisLLMError("Unsafe or empty follow-up")
+        return text
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
+        raise ReplyAnalysisLLMError("Could not generate contextual follow-up") from exc
+
+
 async def analyze_employer_reply(
     comparison: ComparisonItem,
     reply_text: str,
     original_language: str,
     tone: ConversationTone,
     required_items_override: list[str] | None = None,
+    conversation_history: list[dict] | None = None,
 ) -> ReplyAnalysisData:
     required_items = required_items_override or _required_items(comparison)
     detected_tactics = _tactics(reply_text, required_items)
+    llm_follow_up: str | None = None
+    llm_available = False
     try:
-        answered, unanswered, claims, llm_tactics = await _llm_coverage(
+        answered, unanswered, claims, llm_tactics, llm_follow_up = await _llm_coverage(
             reply_text,
             required_items,
             comparison,
+            conversation_history,
         )
+        llm_available = True
         for tactic in llm_tactics:
             if tactic not in {item.type for item in detected_tactics}:
                 detected_tactics.append(
@@ -276,7 +379,15 @@ async def analyze_employer_reply(
 
     safety_mode = any(item.type == ConversationTactic.INTIMIDATING for item in detected_tactics)
     classification = _classification(answered, unanswered, detected_tactics)
-    follow_up_korean = _follow_up_korean(unanswered, tone, safety_mode)
+    if unanswered and not safety_mode and llm_available:
+        try:
+            follow_up_korean = await _llm_contextual_follow_up(
+                reply_text, unanswered, tone, conversation_history, comparison
+            )
+        except ReplyAnalysisLLMError:
+            follow_up_korean = llm_follow_up or _follow_up_korean(unanswered, tone, safety_mode)
+    else:
+        follow_up_korean = _follow_up_korean(unanswered, tone, safety_mode)
     try:
         translated_reply = await translate_confirmation_text(reply_text, original_language)
         translated_follow_up = await translate_confirmation_text(
