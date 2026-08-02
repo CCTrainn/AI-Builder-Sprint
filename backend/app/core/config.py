@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -8,13 +9,13 @@ class Settings(BaseSettings):
 
     app_name: str = "Work Rights Companion API"
     app_env: str = "local"
-    supabase_url: str = ""
-    supabase_anon_key: str = ""
-    supabase_service_role_key: str = ""
     upstage_api_key: str = ""
     llm_api_key: str = ""
     law_api_oc: str = ""
     max_upload_bytes: int = 10 * 1024 * 1024
+    local_data_dir: Path = Path(__file__).resolve().parents[2] / "local_data"
+    local_db_name: str = "work-rights.db"
+    local_upload_dir_name: str = "uploads"
 
 
 @lru_cache
