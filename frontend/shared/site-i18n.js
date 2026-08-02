@@ -149,6 +149,8 @@ const ROWS = [
   ["준비됨", "Đã sẵn sàng", "已准备", "พร้อมแล้ว", "Siap", "Ready"],
   ["답변을 다시 분석하기", "Phân tích lại câu trả lời", "重新分析答复", "วิเคราะห์คำตอบอีกครั้ง", "Analisis ulang jawaban", "Analyze the reply again"],
   ["이 기록함은 사용자가 모은 자료와 대화를 정리해 보여주며, 위법 여부를 확정하지 않습니다.", "Hồ sơ này sắp xếp tài liệu và cuộc trò chuyện của bạn; không kết luận vi phạm pháp luật.", "本记录夹整理展示用户资料和对话，不判定是否违法。", "กล่องบันทึกนี้จัดระเบียบเอกสารและการสนทนา โดยไม่ได้ตัดสินว่าผิดกฎหมายหรือไม่", "Kotak ini merangkum dokumen dan percakapan Anda tanpa menetapkan pelanggaran hukum.", "This record box organizes your documents and conversations; it does not determine legality."],
+  ["공동 경험", "Kinh nghiệm chung", "共同经历", "ประสบการณ์ร่วม", "Pengalaman bersama", "Shared experiences"],
+  ["경험", "Kinh nghiệm", "经历", "ประสบการณ์", "Pengalaman", "Experiences"],
   ["말대꾸 지도 | 공동 경험", "Bản đồ tiếng nói | Kinh nghiệm chung", "发声地图 | 共同经历", "แผนที่เสียง | ประสบการณ์ร่วม", "Peta suara | Pengalaman bersama", "Voice map | Shared experiences"],
   ["익명 근로 경험을 연결해 다음 행동을 돕는 공동 경험 지도", "Bản đồ kết nối kinh nghiệm lao động ẩn danh để gợi ý bước tiếp theo", "连接匿名劳动经历、帮助确定下一步行动的共同经历地图", "แผนที่เชื่อมโยงประสบการณ์การทำงานแบบไม่ระบุตัวตนเพื่อช่วยเลือกขั้นตอนถัดไป", "Peta yang menghubungkan pengalaman kerja anonim untuk membantu langkah berikutnya", "A shared-experience map connecting anonymous work experiences to support the next step"],
   ["말대꾸 지도", "Bản đồ tiếng nói", "发声地图", "แผนที่เสียง", "Peta suara", "Voice map"],
