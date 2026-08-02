@@ -173,6 +173,7 @@ async def analyze_reply(
             analysis.conversation_id,
             "employer",
             request.reply_text,
+            translated_text=analysis.translated_reply,
             analysis_json=analysis.model_dump(mode="json"),
         )
         await save_message(
