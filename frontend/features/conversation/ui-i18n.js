@@ -3,6 +3,11 @@ const LANGUAGE_INDEX = { ko: 0, vi: 1, "zh-CN": 2, th: 3, id: 4, en: 5 };
 // Korean is the source text. The generated Korean message itself is intentionally
 // excluded because it is the message the worker sends to a Korean employer.
 const COPY = [
+  ["대꾸 AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI"],
+  ["기록이 다른 부분을 근거로 확인할 말을 만들고, 받은 답변의 다음 말까지 이어드려요.", "Tạo lời xác nhận từ các điểm khác nhau trong hồ sơ và tiếp tục với câu tiếp theo sau khi nhận phản hồi.", "根据记录差异生成确认用语，并在收到回复后继续准备下一句话。", "สร้างข้อความยืนยันจากจุดที่บันทึกต่างกัน และช่วยเตรียมคำพูดถัดไปหลังได้รับคำตอบ", "Membuat kalimat konfirmasi dari perbedaan catatan dan melanjutkan dengan kalimat berikutnya setelah menerima jawaban.", "Create a confirmation message from record differences and continue with what to say after the reply."],
+  ["기록 기반 대화", "Trao đổi dựa trên hồ sơ", "基于记录的对话", "การสนทนาจากบันทึก", "Percakapan berbasis catatan", "Record-based conversation"],
+  ["대꾸 AI | 근로권리 동반자", "Daekku AI | Đồng hành quyền lao động", "Daekku AI | 劳动权益伙伴", "Daekku AI | ผู้ช่วยสิทธิแรงงาน", "Daekku AI | Pendamping hak pekerja", "Daekku AI | Work Rights Companion"],
+  ["STEP 3 · 대꾸 AI", "BƯỚC 3 · Daekku AI", "第 3 步 · Daekku AI", "ขั้นตอนที่ 3 · Daekku AI", "LANGKAH 3 · Daekku AI", "STEP 3 · Daekku AI"],
   ["확인 대화 준비 | 근로권리 동반자", "Chuẩn bị trao đổi | Đồng hành quyền lao động", "准备确认对话 | 劳动权益伙伴", "เตรียมการสนทนา | ผู้ช่วยสิทธิแรงงาน", "Persiapan percakapan | Pendamping hak pekerja", "Prepare a conversation | Work Rights Companion"],
   ["STEP 3 · 확인 대화", "BƯỚC 3 · Trao đổi xác nhận", "第3步 · 确认对话", "ขั้นตอน 3 · การสนทนาเพื่อยืนยัน", "LANGKAH 3 · Percakapan konfirmasi", "STEP 3 · Confirmation conversation"],
   ["고용주에게 확인할 말을 준비해요", "Chuẩn bị câu hỏi cho chủ lao động", "准备向雇主确认的话", "เตรียมข้อความเพื่อสอบถามนายจ้าง", "Siapkan pertanyaan untuk pemberi kerja", "Prepare what to ask your employer"],
@@ -11,6 +16,16 @@ const COPY = [
   ["바로 연락하지 않아도 괜찮아요.", "Bạn không cần liên hệ ngay.", "不必马上联系。", "ไม่จำเป็นต้องติดต่อทันที", "Anda tidak perlu langsung menghubungi.", "You do not have to contact them right away."],
   ["지금은 문장만 준비하거나 기록으로 보관할 수 있어요.", "Bây giờ bạn có thể chỉ chuẩn bị câu hoặc lưu lại.", "现在可以只准备句子或保存记录。", "ตอนนี้คุณเตรียมข้อความหรือบันทึกไว้ก่อนได้", "Untuk sekarang, Anda dapat menyiapkan kalimat atau menyimpannya.", "For now, you can prepare the sentence or save it."],
   ["현재 확인할 내용", "Nội dung cần xác nhận", "当前需要确认", "สิ่งที่ต้องตรวจสอบ", "Hal yang perlu dikonfirmasi", "What to confirm"],
+  ["확인할 항목을 불러오는 중...", "Đang tải các mục cần xác nhận...", "正在加载待确认项目……", "กำลังโหลดรายการที่ต้องตรวจสอบ...", "Memuat hal yang perlu dikonfirmasi...", "Loading items to confirm..."],
+  ["기록 차이를 확인하고 있어요", "Đang kiểm tra sự khác nhau giữa các hồ sơ", "正在检查记录差异", "กำลังตรวจสอบความแตกต่างของบันทึก", "Memeriksa perbedaan catatan", "Checking differences in your records"],
+  ["기록 차이", "Hồ sơ khác nhau", "记录不同", "บันทึกต่างกัน", "Catatan berbeda", "Records differ"],
+  ["확인 필요", "Cần xác nhận", "需要确认", "ต้องตรวจสอบ", "Perlu dikonfirmasi", "Needs confirmation"],
+  ["기록이 다르거나 추가 확인이 필요한 항목 중 하나를 선택하세요.", "Chọn một mục có hồ sơ khác nhau hoặc cần xác nhận thêm.", "请选择一项记录不一致或需要进一步确认的内容。", "เลือกหนึ่งรายการที่บันทึกไม่ตรงกันหรือต้องตรวจสอบเพิ่มเติม", "Pilih salah satu hal dengan catatan berbeda atau yang perlu dikonfirmasi lebih lanjut.", "Choose one item where records differ or more confirmation is needed."],
+  ["서로 다르게 기록된 항목 중 하나를 선택하세요.", "Chọn một mục được ghi khác nhau giữa các hồ sơ.", "请选择一项记录不一致的内容。", "เลือกหนึ่งรายการที่บันทึกไว้แตกต่างกัน", "Pilih salah satu item yang tercatat berbeda.", "Choose one item that differs between records."],
+  ["비교 항목을 불러오지 못했어요", "Không thể tải các mục so sánh", "无法加载比较项目", "ไม่สามารถโหลดรายการเปรียบเทียบได้", "Tidak dapat memuat item perbandingan", "Could not load comparison items"],
+  ["비교할 수 있는 기록이 아직 없어요", "Chưa có hồ sơ nào có thể so sánh", "还没有可比较的记录", "ยังไม่มีบันทึกที่เปรียบเทียบได้", "Belum ada catatan yang dapat dibandingkan", "There are no records to compare yet"],
+  ["서로 다르게 기록된 항목이 아직 없어요", "Chưa có mục nào được ghi khác nhau", "还没有记录不一致的项目", "ยังไม่มีรายการที่บันทึกแตกต่างกัน", "Belum ada item yang tercatat berbeda", "There are no differing records yet"],
+  ["먼저 자료를 두 개 이상 모으고 기록 비교를 실행해 주세요.", "Trước tiên, hãy thu thập ít nhất hai hồ sơ rồi chạy so sánh.", "请先收集至少两份资料并运行记录比较。", "โปรดรวบรวมบันทึกอย่างน้อยสองรายการแล้วเปรียบเทียบบันทึก", "Kumpulkan setidaknya dua catatan terlebih dahulu, lalu jalankan perbandingan.", "Collect at least two records first, then run the comparison."],
   ["함께 확인할 내용", "Nội dung cần hỏi thêm", "需要一并确认", "สิ่งที่ต้องตรวจสอบร่วมกัน", "Hal lain yang perlu dikonfirmasi", "Items to confirm together"],
   ["수습기간", "Thời gian thử việc", "试用期", "ช่วงทดลองงาน", "Masa percobaan", "Probation period"],
   ["적용 기간", "Thời gian áp dụng", "适用期间", "ระยะเวลาที่ใช้", "Periode penerapan", "Applicable period"],

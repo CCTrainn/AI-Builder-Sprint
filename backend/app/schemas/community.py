@@ -121,3 +121,66 @@ class AnonymizePreviewResponse(BaseModel):
     success: bool
     data: AnonymizePreviewData | None
     error: ApiError | None
+
+
+class UserExperienceCreateRequest(BaseModel):
+    workplace_id: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")
+    problem_type: str = Field(min_length=1, max_length=100)
+    outcome: ExperienceOutcome
+    text: str = Field(min_length=10, max_length=4_000)
+    evidence_types: list[str] = Field(default_factory=list, max_length=20)
+    consent_to_store: bool
+
+
+class UserExperience(BaseModel):
+    experience_id: str
+    workplace_id: str
+    problem_type: str
+    outcome: ExperienceOutcome
+    anonymized_text: str
+    evidence_types: list[str]
+    consented_at: str
+    is_shared: bool = False
+    shared_at: str | None = None
+    created_at: str
+
+
+class UserExperienceShareRequest(BaseModel):
+    workplace_id: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+class UserExperienceData(BaseModel):
+    experience: UserExperience
+    notice: str
+
+
+class UserExperienceResponse(BaseModel):
+    success: bool
+    data: UserExperienceData | None
+    error: ApiError | None
+
+
+class UserExperienceListData(BaseModel):
+    workplace_id: str
+    total: int
+    experiences: list[UserExperience]
+
+
+class UserExperienceListResponse(BaseModel):
+    success: bool
+    data: UserExperienceListData | None
+    error: ApiError | None
+
+
+class ExperienceDraftData(BaseModel):
+    workplace_id: str
+    problem_type: str
+    outcome: ExperienceOutcome = ExperienceOutcome.IN_PROGRESS
+    text: str
+    source_comparison_id: str | None = None
+
+
+class ExperienceDraftResponse(BaseModel):
+    success: bool
+    data: ExperienceDraftData | None
+    error: ApiError | None

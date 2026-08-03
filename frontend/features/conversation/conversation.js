@@ -2,7 +2,7 @@ const pageParams = new URLSearchParams(window.location.search);
 const requestedWorkplaceId = pageParams.get("workplace_id");
 const storedWorkplaceId = readSessionValue("workplace_id");
 const workplaceId = requestedWorkplaceId || storedWorkplaceId || "demo-e2e";
-const comparisonId = pageParams.get("comparison_id") || "cmp_001";
+let activeComparisonId = pageParams.get("comparison_id") || "cmp_001";
 const useMockData = pageParams.get("mode") === "mock";
 const API_BASE = resolveApiBase();
 
@@ -27,7 +27,7 @@ writeSessionValue("user_language", initialLanguage);
 
 const MESSAGE_REQUEST = {
   workplace_id: workplaceId,
-  comparison_id: comparisonId,
+  comparison_id: activeComparisonId,
   tone: "polite",
   user_language: initialLanguage,
 };
@@ -180,12 +180,18 @@ const replyTranslation = document.querySelector("#employer-reply-translation");
 const translatedEmployerReply = document.querySelector("#translated-employer-reply");
 const messageTranslation = document.querySelector(".translated-message");
 const followUpTranslation = document.querySelector(".follow-up-translation");
+const issueSelect = document.querySelector("#issue-select");
+const issueTitle = document.querySelector("#issue-title");
+const issueValues = document.querySelector("#issue-values");
+const issueCheckItems = document.querySelector("#issue-check-items");
 
 let selectedTone = MESSAGE_REQUEST.tone;
 let selectedLanguage = MESSAGE_REQUEST.user_language;
 let currentMessage = null;
 let currentReplyAnalysis = null;
 let requestSequence = 0;
+let activeComparison = null;
+let availableComparisons = [];
 const mockHistory = [];
 
 const CONDITION_LABELS = {
@@ -203,6 +209,61 @@ const CONDITION_LABELS = {
   deductions: "공제액",
   net_pay: "실수령액",
 };
+
+const CONDITION_LABEL_TRANSLATIONS = {
+  vi: { hourly_wage: "Lương theo giờ", weekly_holiday_pay: "Trợ cấp ngày nghỉ hằng tuần", working_hours: "Giờ làm việc", weekly_working_hours: "Giờ làm mỗi tuần", total_working_hours: "Tổng giờ làm", overtime_hours: "Giờ làm thêm", break_time: "Thời gian nghỉ", pay_date: "Ngày trả lương", probation: "Thời gian thử việc", basic_pay: "Lương cơ bản", gross_pay: "Tổng tiền lương", deductions: "Khoản khấu trừ", net_pay: "Lương thực nhận" },
+  "zh-CN": { hourly_wage: "时薪", weekly_holiday_pay: "周休津贴", working_hours: "工作时间", weekly_working_hours: "每周工时", total_working_hours: "总工时", overtime_hours: "加班时间", break_time: "休息时间", pay_date: "发薪日", probation: "试用期", basic_pay: "基本工资", gross_pay: "工资总额", deductions: "扣除额", net_pay: "实发工资" },
+  th: { hourly_wage: "ค่าจ้างรายชั่วโมง", weekly_holiday_pay: "ค่าจ้างวันหยุดประจำสัปดาห์", working_hours: "เวลาทำงาน", weekly_working_hours: "ชั่วโมงทำงานต่อสัปดาห์", total_working_hours: "ชั่วโมงทำงานรวม", overtime_hours: "เวลาทำงานล่วงเวลา", break_time: "เวลาพัก", pay_date: "วันจ่ายค่าจ้าง", probation: "ช่วงทดลองงาน", basic_pay: "ค่าจ้างพื้นฐาน", gross_pay: "ค่าจ้างรวม", deductions: "รายการหัก", net_pay: "เงินรับสุทธิ" },
+  id: { hourly_wage: "Upah per jam", weekly_holiday_pay: "Upah hari libur mingguan", working_hours: "Jam kerja", weekly_working_hours: "Jam kerja mingguan", total_working_hours: "Total jam kerja", overtime_hours: "Jam lembur", break_time: "Waktu istirahat", pay_date: "Tanggal pembayaran", probation: "Masa percobaan", basic_pay: "Upah pokok", gross_pay: "Total pembayaran", deductions: "Potongan", net_pay: "Upah bersih" },
+  en: { hourly_wage: "Hourly wage", weekly_holiday_pay: "Weekly holiday pay", working_hours: "Working hours", weekly_working_hours: "Weekly working hours", total_working_hours: "Total working hours", overtime_hours: "Overtime hours", break_time: "Break time", pay_date: "Pay date", probation: "Probation period", basic_pay: "Basic pay", gross_pay: "Gross pay", deductions: "Deductions", net_pay: "Net pay" },
+};
+
+const RECORD_ROLE_LABELS = {
+  promised: "약속 기록",
+  contracted: "계약 기록",
+  actual: "실제 기록",
+};
+
+const RECORD_ROLE_TRANSLATIONS = {
+  vi: { promised: "Hồ sơ đã hứa", contracted: "Hồ sơ hợp đồng", actual: "Hồ sơ thực tế" },
+  "zh-CN": { promised: "约定记录", contracted: "合同记录", actual: "实际记录" },
+  th: { promised: "บันทึกที่ตกลง", contracted: "บันทึกในสัญญา", actual: "บันทึกจริง" },
+  id: { promised: "Catatan kesepakatan", contracted: "Catatan kontrak", actual: "Catatan aktual" },
+  en: { promised: "Promised terms", contracted: "Contract terms", actual: "Actual records" },
+};
+
+function conditionLabel(condition) {
+  return CONDITION_LABEL_TRANSLATIONS[selectedLanguage]?.[condition]
+    || CONDITION_LABELS[condition]
+    || condition;
+}
+
+function roleLabel(role) {
+  return RECORD_ROLE_TRANSLATIONS[selectedLanguage]?.[role] || RECORD_ROLE_LABELS[role];
+}
+
+const MOCK_COMPARISONS = [
+  {
+    comparison_id: "cmp_001",
+    condition: "hourly_wage",
+    status: "different",
+    summary: "계약 시급과 실제 급여 계산 시급이 1,500원 다르게 기록되어 있어요.",
+    promised: null,
+    contracted: { value: 12000, unit: "KRW" },
+    actual: { value: 10500, unit: "KRW" },
+    confirmation_items: ["수습기간", "적용 기간", "임금 계산 근거"],
+  },
+  {
+    comparison_id: "cmp_weekly_holiday_pay",
+    condition: "weekly_holiday_pay",
+    status: "different",
+    summary: "주휴수당 지급 조건을 추가로 확인해야 해요.",
+    promised: { value: "포함" },
+    contracted: { value: "미포함" },
+    actual: null,
+    confirmation_items: ["소정근로일 개근 여부", "주휴수당 포함 계산 근거"],
+  },
+];
 
 const HISTORY_SENDER_LABELS = {
   ko: { employer: "고용주에게 받은 카톡", assistant: "내가 보낸 카톡" },
@@ -260,6 +321,123 @@ async function fetchJson(path, options = {}) {
   return body.data;
 }
 
+function formatComparisonValue(item) {
+  if (!item || item.value === null || item.value === undefined) return "기록 없음";
+  const value = item.value;
+  if (item.unit === "KRW") return `${Number(value).toLocaleString("ko-KR")}원`;
+  if (item.unit === "hours_per_week") return `주 ${value}시간`;
+  if (item.unit === "hours_per_month") return `${value}시간`;
+  if (item.unit === "day") return `매월 ${value}일`;
+  if (item.unit === "month") return `${value}개월`;
+  if (item.unit === "week") return `${value}주`;
+  return String(value);
+}
+
+function renderIssue(comparison) {
+  activeComparison = comparison;
+  issueTitle.textContent = comparison.summary || `${conditionLabel(comparison.condition)} 기록을 확인해요.`;
+  const values = ["promised", "contracted", "actual"]
+    .filter((role) => comparison[role])
+    .map((role) => {
+      const row = document.createElement("div");
+      const term = document.createElement("dt");
+      const detail = document.createElement("dd");
+      term.textContent = roleLabel(role);
+      detail.textContent = formatComparisonValue(comparison[role]);
+      row.append(term, detail);
+      return row;
+    });
+  issueValues.replaceChildren(...values);
+
+  const rightsItems = comparison.legal_reference?.rights_check?.missing_information || [];
+  const checkItems = [...new Set([...(comparison.confirmation_items || []), ...rightsItems])];
+  fillList(issueCheckItems, checkItems.length ? checkItems : ["기록의 적용 시점과 변경 이유"]);
+}
+
+function updateIssueOptions(comparisons) {
+  availableComparisons = comparisons.filter((comparison) => comparison.status === "different");
+
+  issueSelect.replaceChildren(
+    ...availableComparisons.map((comparison) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "issue-option";
+      button.dataset.comparisonId = comparison.comparison_id;
+      button.setAttribute("role", "option");
+      const label = document.createElement("strong");
+      label.textContent = conditionLabel(comparison.condition);
+      const status = document.createElement("span");
+      status.textContent = "기록 차이";
+      button.append(label, status);
+      return button;
+    }),
+  );
+  issueSelect.setAttribute("aria-busy", "false");
+
+  const selected = availableComparisons.find((item) => item.comparison_id === activeComparisonId)
+    || availableComparisons[0];
+  if (!selected) {
+    const empty = document.createElement("div");
+    empty.className = "issue-loading";
+    empty.textContent = "서로 다르게 기록된 항목이 아직 없어요";
+    issueSelect.replaceChildren(empty);
+    return false;
+  }
+  activeComparisonId = selected.comparison_id;
+  MESSAGE_REQUEST.comparison_id = activeComparisonId;
+  issueSelect.querySelectorAll(".issue-option").forEach((button) => {
+    const isActive = button.dataset.comparisonId === activeComparisonId;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+  renderIssue(selected);
+  return true;
+}
+
+async function loadIssueOptions() {
+  if (useMockData) return updateIssueOptions(MOCK_COMPARISONS);
+  try {
+    const data = await fetchJson(`/workplaces/${encodeURIComponent(workplaceId)}/compare`, {
+      method: "POST",
+    });
+    return updateIssueOptions(data.comparisons || []);
+  } catch (error) {
+    const failed = document.createElement("div");
+    failed.className = "issue-loading";
+    failed.textContent = "비교 항목을 불러오지 못했어요";
+    issueSelect.replaceChildren(failed);
+    issueSelect.setAttribute("aria-busy", "false");
+    document.querySelector("#issue-select-help").textContent = error.message;
+    return false;
+  }
+}
+
+async function changeIssue(comparisonId) {
+  const comparison = availableComparisons.find((item) => item.comparison_id === comparisonId);
+  if (!comparison || comparison.comparison_id === activeComparisonId) return;
+  activeComparisonId = comparison.comparison_id;
+  MESSAGE_REQUEST.comparison_id = activeComparisonId;
+  issueSelect.querySelectorAll(".issue-option").forEach((button) => {
+    const isActive = button.dataset.comparisonId === activeComparisonId;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+  renderIssue(comparison);
+  const url = new URL(window.location.href);
+  url.searchParams.set("workplace_id", workplaceId);
+  url.searchParams.set("comparison_id", activeComparisonId);
+  window.history.replaceState(null, "", url);
+
+  currentMessage = null;
+  currentReplyAnalysis = null;
+  sentMessageText.value = "";
+  employerReply.value = "";
+  updateSentMessageCount();
+  updateReplyCount();
+  showAnalysisState("empty");
+  await Promise.all([loadHistory(), loadMessage(selectedTone)]);
+}
+
 function fillList(list, values) {
   list.replaceChildren(
     ...values.map((value) => {
@@ -303,6 +481,9 @@ function setLoading(isLoading) {
   messageResult.setAttribute("aria-busy", String(isLoading));
   document.querySelectorAll('input[name="tone"]').forEach((input) => {
     input.disabled = isLoading;
+  });
+  issueSelect.querySelectorAll(".issue-option").forEach((button) => {
+    button.disabled = isLoading;
   });
 }
 
@@ -356,7 +537,9 @@ function renderHistory(messages) {
       const meta = document.createElement("div");
       meta.className = "history-message__meta";
       const label = document.createElement("span");
-      const condition = CONDITION_LABELS[message.analysis?.condition_type];
+      const condition = message.analysis?.condition_type
+        ? conditionLabel(message.analysis.condition_type)
+        : null;
       const senderLabels = HISTORY_SENDER_LABELS[selectedLanguage] || HISTORY_SENDER_LABELS.ko;
       label.textContent = sender === "employer"
         ? senderLabels.employer
@@ -415,7 +598,7 @@ async function loadHistory() {
   }
   try {
     const history = await fetchJson(
-      `/conversations/${encodeURIComponent(comparisonId)}/history?workplace_id=${encodeURIComponent(workplaceId)}`,
+      `/conversations/${encodeURIComponent(activeComparisonId)}/history?workplace_id=${encodeURIComponent(workplaceId)}`,
     );
     if (history.messages.length > 0) {
       historyStatus.textContent = `이전 대화 ${history.messages.length}개를 불러왔어요. 남은 질문부터 이어서 확인합니다.`;
@@ -451,7 +634,7 @@ async function recordSentMessage() {
         sender: "assistant",
         original_text: originalText,
         translated_text: null,
-        analysis: { condition_type: "hourly_wage", message_type: "sent" },
+        analysis: { condition_type: activeComparison?.condition || "hourly_wage", message_type: "sent" },
         created_at: new Date().toISOString(),
       });
     } else {
@@ -460,7 +643,7 @@ async function recordSentMessage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           workplace_id: workplaceId,
-          comparison_id: comparisonId,
+          comparison_id: activeComparisonId,
           original_text: originalText,
           translated_text: originalText === currentMessage?.korean_text
             ? currentMessage.translated_text
@@ -526,7 +709,7 @@ async function analyzeEmployerReply() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           workplace_id: workplaceId,
-          comparison_id: comparisonId,
+          comparison_id: activeComparisonId,
           reply_text: replyText,
           original_language: MESSAGE_REQUEST.user_language,
           tone: selectedTone,
@@ -538,6 +721,13 @@ async function analyzeEmployerReply() {
     showAnalysisState("result");
     analysisBadge.textContent = analysis.safety_mode ? "안전 확인" : "확인 완료";
     analysisBadge.classList.add("complete");
+    if (analysis.classification === "fully_answered") {
+      writeSessionValue("workplace_id", workplaceId);
+      historyStatus.textContent = "확인 대화가 마무리됐어요. 내 경험을 확정하는 페이지로 이동합니다.";
+      window.setTimeout(() => {
+        window.location.assign(`../community/community.html?from=completed&workplace_id=${encodeURIComponent(workplaceId)}`);
+      }, 1200);
+    }
     historyStatus.textContent = "고용주 답변을 저장했어요. 후속 문장은 실제로 보낸 뒤 기록해 주세요.";
     await loadHistory();
   } catch (error) {
@@ -551,6 +741,10 @@ async function analyzeEmployerReply() {
 document.querySelectorAll('input[name="tone"]').forEach((input) => {
   input.addEventListener("change", () => loadMessage(input.value));
 });
+issueSelect.addEventListener("click", (event) => {
+  const button = event.target.closest(".issue-option");
+  if (button) changeIssue(button.dataset.comparisonId);
+});
 languageSelect.addEventListener("change", () => {
   selectedLanguage = languageSelect.value;
   MESSAGE_REQUEST.user_language = selectedLanguage;
@@ -560,6 +754,7 @@ languageSelect.addEventListener("change", () => {
     detail: { language: selectedLanguage },
   }));
   updateLanguageDisplay(selectedLanguage);
+  if (availableComparisons.length) updateIssueOptions(availableComparisons);
   loadHistory();
   if (useMockData && currentReplyAnalysis) {
     currentReplyAnalysis.translated_reply = MOCK_TRANSLATIONS[selectedLanguage].employerReply;
@@ -597,7 +792,20 @@ document.querySelector("#copy-follow-up").addEventListener("click", async () => 
   }
 });
 
-updateSentMessageCount();
-loadHistory();
-updateLanguageDisplay(selectedLanguage);
-loadMessage(selectedTone);
+async function initializeConversation() {
+  updateSentMessageCount();
+  updateLanguageDisplay(selectedLanguage);
+  const hasDifferentRecords = await loadIssueOptions();
+  if (!hasDifferentRecords) {
+    messageResult.hidden = true;
+    errorMessage.textContent = "먼저 자료를 두 개 이상 모으고 기록 비교를 실행해 주세요.";
+    errorState.hidden = false;
+    await loadHistory();
+    return;
+  }
+  await Promise.all([loadHistory(), loadMessage(selectedTone)]);
+}
+
+if (!document.querySelector(".guided-chat")) {
+  initializeConversation();
+}

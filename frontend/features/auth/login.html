@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>로그인 | 근로권리 동반자</title>
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/common.css">
+  <link rel="stylesheet" href="../../shared/sidebar.css?v=20260803-3">
+  <style>
+    .login-container { max-width: 400px; margin: 80px auto; padding: 32px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .login-form { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-weight: 600; font-size: 14px; }
+    .form-group input { padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .login-btn { padding: 12px; background-color: var(--color-primary, #2563eb); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px; }
+    .login-btn:hover { opacity: 0.9; }
+    .error-msg { color: #dc2626; font-size: 13px; margin-top: 8px; line-height: 1.4; }
+    .signup-link { text-align: center; margin-top: 16px; font-size: 14px; }
+    .signup-link a { color: var(--color-primary, #2563eb); font-weight: bold; text-decoration: none; }
+    .demo-tip { margin-top: 24px; padding: 16px; background: #f3f4f6; border-radius: 8px; font-size: 13px; color: #4b5563; }
+  </style>
+</head>
+<body class="has-app-sidebar" data-page="auth">
+  <div id="appSidebar" class="app-sidebar-root"></div>
+
+  <main class="login-container">
+    <h1>로그인</h1>
+    <p>서비스 이용을 위해 로그인해주세요.</p>
+
+    <form id="login-form" class="login-form">
+      <div class="form-group">
+        <label for="email">이메일</label>
+        <input type="email" id="email" required placeholder="example@email.com">
+      </div>
+      <div class="form-group">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" required placeholder="비밀번호 입력">
+      </div>
+      <button type="submit" class="login-btn">로그인</button>
+      <p id="error-msg" class="error-msg" hidden></p>
+    </form>
+
+    <p class="signup-link">
+      계정이 없으신가요? <a href="./signup.html">회원가입하기</a>
+    </p>
+
+    <div class="demo-tip">
+      <strong>💡 데모 시연용 테스트 계정</strong><br>
+      이메일: <code>test@cctrainn.com</code><br>
+      비밀번호: <code>1234</code>
+    </div>
+  </main>
+
+  <script type="module" src="../../shared/app.js?v=20260803-16"></script>
+  <script type="module" src="./login.js"></script>
+</body>
+</html>

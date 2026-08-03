@@ -231,6 +231,40 @@ def extract_conditions(
                     _condition("pay_date", posting_pay_date, int(posting_pay_date.group(1)), "day", 0.92)
                 )
 
+    if document_type == "employer_message":
+        existing_types = {condition.type for condition in conditions}
+
+        if "working_hours" not in existing_types:
+            changed_hours = re.search(
+                r"(?:근무시간|근로시간)(?:을|를|은|는)?\s*"
+                r"([01]?\d|2[0-3]):(\d{2})\s*(?:~|～|-|–|—)\s*"
+                r"([01]?\d|2[0-3]):(\d{2})",
+                normalized,
+            )
+            if changed_hours:
+                start = f"{int(changed_hours.group(1)):02d}:{changed_hours.group(2)}"
+                end = f"{int(changed_hours.group(3)):02d}:{changed_hours.group(4)}"
+                conditions.append(
+                    _condition("working_hours", changed_hours, f"{start}-{end}", None, 0.94)
+                )
+
+        if "pay_date" not in existing_types:
+            delayed_pay_date = re.search(
+                r"(?:급여|임금)[^.\n]{0,50}?"
+                r"(?:\d{4}년\s*)?(?:\d{1,2}월\s*)?(\d{1,2})일에\s*입금",
+                normalized,
+            )
+            if delayed_pay_date:
+                conditions.append(
+                    _condition(
+                        "pay_date",
+                        delayed_pay_date,
+                        int(delayed_pay_date.group(1)),
+                        "day",
+                        0.93,
+                    )
+                )
+
     if document_type in {"work_schedule", "attendance"}:
         table_rows = re.finditer(
             r"(?P<date>\d{1,2}/\d{1,2}\s*\([월화수목금토일]\))\s*\n"
@@ -318,6 +352,44 @@ def extract_conditions(
                 )
             )
 
+        existing_types = {condition.type for condition in conditions}
+        if "working_hours" not in existing_types:
+            compact_actual_time = re.search(
+                r"실제\s*근무시간[\s\S]{0,80}?"
+                r"([01]?\d|2[0-3]):(\d{2})\s*(?:~|～|-|–|—)\s*"
+                r"([01]?\d|2[0-3]):(\d{2})",
+                normalized,
+            )
+            if compact_actual_time:
+                start = f"{int(compact_actual_time.group(1)):02d}:{compact_actual_time.group(2)}"
+                end = f"{int(compact_actual_time.group(3)):02d}:{compact_actual_time.group(4)}"
+                conditions.append(
+                    _condition("working_hours", compact_actual_time, f"{start}-{end}", None, 0.94)
+                )
+
+        monthly_hours_patterns = (
+            ("total_working_hours", r"총\s*근로시간\s*[:：]?\s*(\d+(?:\.\d+)?)\s*시간", 0.96),
+            (
+                "overtime_hours",
+                r"연장[·ㆍ,\s]*야간[·ㆍ,\s]*휴일근로\s*[:：]?\s*(\d+(?:\.\d+)?)\s*시간",
+                0.95,
+            ),
+        )
+        for condition_type, pattern, confidence in monthly_hours_patterns:
+            if condition_type in existing_types:
+                continue
+            match = re.search(pattern, normalized)
+            if match:
+                conditions.append(
+                    _condition(
+                        condition_type,
+                        match,
+                        float(match.group(1)),
+                        "hours_per_month",
+                        confidence,
+                    )
+                )
+
     if document_type == "bank_deposit":
         transactions = re.finditer(
             r"(?P<date>\d{1,4}[./-]\d{1,2}(?:[./-]\d{1,2})?\s+\d{1,2}:\d{2})\s*"
@@ -350,5 +422,38 @@ def extract_conditions(
                     ),
                 ]
             )
+
+        existing_types = {condition.type for condition in conditions}
+        if "deposit_date" not in existing_types:
+            labeled_date = re.search(
+                r"입금일\s*[:：]?\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일",
+                normalized,
+            )
+            if labeled_date:
+                value = (
+                    f"{int(labeled_date.group(1)):04d}-"
+                    f"{int(labeled_date.group(2)):02d}-"
+                    f"{int(labeled_date.group(3)):02d}"
+                )
+                conditions.append(_condition("deposit_date", labeled_date, value, None, 0.97))
+
+        if "deposit_amount" not in existing_types:
+            labeled_amount = re.search(
+                r"(\d{1,3}(?:,\d{3})+|\d+)\s*원\s*입금",
+                normalized,
+            ) or re.search(
+                r"입금(?:액|금액)\s*[:：]?\s*(\d{1,3}(?:,\d{3})+|\d+)\s*원",
+                normalized,
+            )
+            if labeled_amount:
+                conditions.append(
+                    _condition(
+                        "deposit_amount",
+                        labeled_amount,
+                        int(labeled_amount.group(1).replace(",", "")),
+                        "KRW",
+                        0.97,
+                    )
+                )
 
     return conditions

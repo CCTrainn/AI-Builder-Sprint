@@ -1,4 +1,4 @@
-import { mountThemeToggle } from "./theme.js?v=20260803-1";
+import { mountThemeToggle } from "./theme.js?v=20260803-7";
 
 const sidebarRoot = document.querySelector("#appSidebar");
 const DISPLAY_LANGUAGES = [
@@ -33,6 +33,15 @@ function languageMenuItems(selected) {
   `).join("");
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"]/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+  })[character]);
+}
+
 const NAV_ITEMS = [
   {
     id: "home",
@@ -57,8 +66,8 @@ const NAV_ITEMS = [
   },
   {
     id: "conversation",
-    label: "대화 도우미",
-    mobileLabel: "대화",
+    label: "대꾸 AI",
+    mobileLabel: "대꾸 AI",
     href: "../conversation/conversation.html",
     icon: '<path d="M16 10a2 2 0 0 1-2 2H6.8a2 2 0 0 0-1.4.6l-2.2 2.2A.7.7 0 0 1 2 14.3V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/><path d="M20 9a2 2 0 0 1 2 2v10.3a.7.7 0 0 1-1.2.5l-2.2-2.2a2 2 0 0 0-1.4-.6H10a2 2 0 0 1-2-2v-1"/>',
   },
@@ -98,6 +107,12 @@ function renderSidebar() {
       </a>
     `;
   }).join("");
+  const userEmail = window.localStorage.getItem("cctrainn_email");
+  const shortName = userEmail ? userEmail.split("@")[0] : "";
+  const accountContent = userEmail
+    ? `<strong>${escapeHtml(shortName)}</strong><button id="logout-btn" type="button">로그아웃</button>`
+    : '<a href="../auth/login.html">로그인 / 회원가입</a>';
+  const avatarText = userEmail ? escapeHtml(shortName.charAt(0).toUpperCase()) : "?";
 
   sidebarRoot.innerHTML = `
     <aside class="app-sidebar" aria-label="앱 사이드바">
@@ -112,35 +127,45 @@ function renderSidebar() {
         ${navigation}
       </nav>
 
-      <div class="app-sidebar__workspace">
-        <span class="app-sidebar__avatar" aria-hidden="true">프사</span>
-        <span class="app-sidebar__workspace-copy">
-          <strong>이름</strong>
-        </span>
-        <div class="app-sidebar__language-picker">
-          <button id="language-menu-toggle" class="language-menu__toggle" type="button"
-            aria-label="Select language" aria-haspopup="listbox" aria-expanded="false">
-          <svg aria-hidden="true" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
-          </svg>
-          </button>
-          <select id="site-language" aria-label="Site display language" tabindex="-1" hidden>
-            ${languageOptions(displayLanguage)}
-          </select>
-          <div id="language-menu" class="language-menu" role="listbox" aria-label="Select language" hidden>
-            <strong>Language</strong>
-            ${languageMenuItems(displayLanguage)}
+      <div class="app-sidebar__footer">
+        <div class="app-sidebar__workspace">
+          <span class="app-sidebar__avatar" aria-hidden="true">${avatarText}</span>
+          <span class="app-sidebar__workspace-copy">
+            ${accountContent}
+          </span>
+        </div>
+        <div class="app-sidebar__controls" aria-label="화면 설정">
+          <div class="app-sidebar__language-picker">
+            <button id="language-menu-toggle" class="language-menu__toggle" type="button"
+              aria-label="Select language" aria-haspopup="listbox" aria-expanded="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
+            </svg>
+            </button>
+            <select id="site-language" aria-label="Site display language" tabindex="-1" hidden>
+              ${languageOptions(displayLanguage)}
+            </select>
+            <div id="language-menu" class="language-menu" role="listbox" aria-label="Select language" hidden>
+              <strong>Language</strong>
+              ${languageMenuItems(displayLanguage)}
+            </div>
           </div>
         </div>
       </div>
     </aside>
   `;
+
+  document.querySelector("#logout-btn")?.addEventListener("click", () => {
+    window.localStorage.removeItem("cctrainn_token");
+    window.localStorage.removeItem("cctrainn_email");
+    window.location.reload();
+  });
 }
 
 renderSidebar();
 mountThemeToggle();
-import("./site-i18n.js?v=20260802-6");
+import("./site-i18n.js?v=20260803-12");
 
 const siteLanguage = document.querySelector("#site-language");
 const languageMenuToggle = document.querySelector("#language-menu-toggle");

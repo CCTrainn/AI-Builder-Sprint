@@ -890,3 +890,7 @@ input[type="date"],
     transition-duration: 0.01ms !important;
   }
 }
+
+[data-theme="dark"] .records-page .page-header h1 {
+  color: #fff;
+}

@@ -510,3 +510,120 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* 기록함은 한 장의 검은 카드가 아니라 기록 단계별 표면과 의미색을 유지한다. */
+[data-theme="dark"] .record-box-page {
+  --record-navy: #edf3fc;
+  --record-teal-soft: #203a67;
+  --record-blue-soft: #22334f;
+  --record-amber-soft: #44351d;
+  --record-amber: #ffd083;
+}
+
+[data-theme="dark"] body[data-page="record_box"] {
+  background:
+    radial-gradient(circle at 90% -12%, rgb(65 116 190 / 22%), transparent 32%),
+    #121a28;
+}
+
+[data-theme="dark"] .record-box-page .summary-grid {
+  background: #1b2638;
+  border-color: #3a4960;
+  box-shadow: 0 16px 42px rgb(0 0 0 / 16%);
+}
+
+[data-theme="dark"] .record-box-page .summary-grid article + article {
+  border-color: #3a4960;
+}
+
+[data-theme="dark"] .record-box-page .summary-grid span,
+[data-theme="dark"] .record-box-page .page-header p:last-child {
+  color: #aebbd0;
+}
+
+[data-theme="dark"] .record-box-page .record-content {
+  color: #e8eef9;
+  background: #1b2638;
+  border-color: #3a4960;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 18%);
+}
+
+[data-theme="dark"] .record-box-page .record-heading h2 {
+  color: #f2f6fc;
+}
+
+[data-theme="dark"] .record-box-page .record-heading > span,
+[data-theme="dark"] .record-box-page .analysis-item header mark,
+[data-theme="dark"] .record-box-page .evidence-strip mark {
+  color: #ffd18b;
+  background: #46351d;
+}
+
+[data-theme="dark"] .record-box-page .evidence-strip {
+  background:
+    radial-gradient(circle at 100% 0%, rgb(92 116 155 / 18%), transparent 34%),
+    linear-gradient(135deg, #223550, #302c4b 115%);
+  border: 1px solid #40516a;
+}
+
+[data-theme="dark"] .record-box-page .evidence-strip div span {
+  color: #aebbd0;
+}
+
+[data-theme="dark"] .record-box-page .evidence-strip div strong {
+  color: #edf3fc;
+}
+
+[data-theme="dark"] .record-box-page .timeline-item > article {
+  color: #dce6f5;
+  background: #202d41;
+  border-color: #40516a;
+}
+
+[data-theme="dark"] .record-box-page .timeline-marker {
+  border-color: #1b2638;
+  box-shadow: 0 0 0 1px #536680;
+}
+
+[data-theme="dark"] .record-box-page .timeline-item:not(:last-child)::before {
+  background: #43536a;
+}
+
+[data-theme="dark"] .record-box-page :is(.timeline-item article > p, .timeline-item blockquote) {
+  color: #d2dbea;
+}
+
+[data-theme="dark"] .record-box-page .translation-box {
+  background: #243751;
+  border: 1px solid #3e587b;
+}
+
+[data-theme="dark"] .record-box-page .translation-box span {
+  color: #9fbae0;
+}
+
+[data-theme="dark"] .record-box-page .translation-box p {
+  color: #d8e3f2;
+}
+
+[data-theme="dark"] .record-box-page .analysis-columns section {
+  background: #213b4b;
+}
+
+[data-theme="dark"] .record-box-page .analysis-columns .needs-check {
+  background: #40351f;
+}
+
+[data-theme="dark"] .record-box-page .analysis-columns :is(h3, ul) {
+  color: #dce6f5;
+}
+
+[data-theme="dark"] .record-box-page .basis-list li {
+  color: #f0cf94;
+  background: #40351f;
+  border-color: #65522e;
+}
+
+[data-theme="dark"] .record-box-page .page-header h1 {
+  color: #fff;
+}

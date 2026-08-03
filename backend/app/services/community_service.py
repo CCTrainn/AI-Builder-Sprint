@@ -90,6 +90,9 @@ DEMO_EXPERIENCES = [
     _case(10, "working_hours_changed", "편의점", ["work_schedule", "message"], ["customary_claim"], ["asked_schedule_in_writing"], ExperienceOutcome.RESOLVED, "합의한 시간대로 근무표가 변경됨", "변경 동의 여부를 서면으로 답해 달라고 요청함", "구두 설명보다 변경된 근무표가 중요했음"),
     _case(11, "working_hours_changed", "물류", ["employment_contract", "work_schedule"], ["schedule_changed"], ["compared_contract_hours"], ExperienceOutcome.UNRESOLVED, "추가 근무가 계속됨", "실제 근무시간을 날짜별로 기록함", "고용주 답변 기록이 없어 대화 흐름이 끊겼음"),
     _case(12, "working_hours_changed", "카페", ["job_posting", "work_schedule", "message"], ["evasive_reply"], ["asked_schedule_in_writing"], ExperienceOutcome.IN_PROGRESS, "변경 이유와 기간 답변을 기다리는 중", "채용공고 시간과 현재 근무표를 함께 제시함", "변경 종료 시점을 반드시 물어봐야 함"),
+    _case(13, "hourly_wage_difference", "제조", ["employment_contract", "payslip", "bank_record"], ["customary_claim"], ["requested_wage_calculation"], ExperienceOutcome.RESOLVED, "급여 계산표를 확인한 뒤 차액을 받음", "계약 시급과 입금액을 월별로 정리함", "월마다 같은 방식으로 기록을 남기는 것이 도움이 됐음"),
+    _case(14, "delayed_payment", "숙박", ["employment_contract", "bank_record", "message"], ["delay_promise"], ["requested_payment_date", "shared_bank_record"], ExperienceOutcome.IN_PROGRESS, "두 차례 나누어 지급하겠다는 일정을 확인함", "미입금 금액과 지급 예정일을 한 문장으로 질문함", "지급 일정이 바뀔 때마다 새 날짜를 기록해야 함"),
+    _case(15, "working_hours_changed", "농축산", ["job_posting", "work_schedule", "message"], ["schedule_changed"], ["asked_schedule_in_writing", "compared_contract_hours"], ExperienceOutcome.PARTIALLY_RESOLVED, "휴일 근무 횟수는 줄었고 이전 기록은 확인 중", "채용공고와 실제 근무표의 휴일을 비교함", "근무일뿐 아니라 쉬기로 한 날도 기록해야 함"),
 ]
 
 

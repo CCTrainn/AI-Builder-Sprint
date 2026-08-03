@@ -86,4 +86,20 @@ CREATE TABLE IF NOT EXISTS legal_references (
     fetched_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     UNIQUE (law_name, article_number)
 );
+
+CREATE TABLE IF NOT EXISTS community_experiences (
+    id TEXT PRIMARY KEY,
+    workplace_id TEXT NOT NULL,
+    problem_type TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    anonymized_text TEXT NOT NULL,
+    evidence_types TEXT NOT NULL DEFAULT '[]',
+    consented_at TEXT NOT NULL,
+    is_shared INTEGER NOT NULL DEFAULT 0,
+    shared_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS community_experiences_workplace_idx
+    ON community_experiences (workplace_id, created_at DESC);
 """

@@ -1,11 +1,79 @@
 const INDEX = { ko: 0, vi: 1, "zh-CN": 2, th: 3, id: 4, en: 5 };
 const ROWS = [
   ["홈", "Trang chủ", "首页", "หน้าหลัก", "Beranda", "Home"],
+  ["로그인 / 회원가입", "Đăng nhập / Đăng ký", "登录 / 注册", "เข้าสู่ระบบ / สมัครสมาชิก", "Masuk / Daftar", "Log in / Sign up"],
+  ["내 근로 기록을 확인하고 있어요", "Đang kiểm tra hồ sơ làm việc của tôi", "正在查看我的工作记录", "กำลังตรวจสอบบันทึกการทำงานของฉัน", "Sedang memeriksa catatan kerja saya", "Reviewing my work records"],
+  ["모아둔 자료에서 현재 상태를 불러오는 중입니다.", "Đang tải trạng thái hiện tại từ tài liệu đã lưu.", "正在从已保存的资料中加载当前状态。", "กำลังโหลดสถานะปัจจุบันจากเอกสารที่บันทึกไว้", "Memuat status saat ini dari dokumen tersimpan.", "Loading the current status from saved records."],
+  ["추천 다음 단계", "Bước tiếp theo được đề xuất", "建议的下一步", "ขั้นตอนถัดไปที่แนะนำ", "Langkah berikutnya yang disarankan", "Recommended next step"],
+  ["기록을 확인하는 중...", "Đang kiểm tra hồ sơ...", "正在检查记录……", "กำลังตรวจสอบบันทึก...", "Memeriksa catatan...", "Checking records..."],
+  ["잠시만 기다려 주세요.", "Vui lòng chờ một chút.", "请稍候。", "โปรดรอสักครู่", "Mohon tunggu sebentar.", "Please wait a moment."],
+  ["전체 기능 바로가기", "Lối tắt đến tất cả chức năng", "所有功能快捷入口", "ทางลัดไปยังทุกฟังก์ชัน", "Pintasan ke semua fitur", "All feature shortcuts"],
+  ["원하는 페이지로 바로 이동하세요", "Đi thẳng đến trang bạn muốn", "直接前往所需页面", "ไปยังหน้าที่ต้องการได้ทันที", "Langsung buka halaman yang diinginkan", "Go directly to the page you need"],
+  ["계약서·명세서 추가", "Thêm hợp đồng · phiếu lương", "添加合同和工资单", "เพิ่มสัญญาและสลิปเงินเดือน", "Tambah kontrak · slip gaji", "Add contracts · payslips"],
+  ["조건 비교", "So sánh điều kiện", "条件比较", "เปรียบเทียบเงื่อนไข", "Bandingkan ketentuan", "Compare terms"],
+  ["달라진 기록 확인", "Kiểm tra hồ sơ khác nhau", "查看不同的记录", "ตรวจสอบบันทึกที่ต่างกัน", "Periksa catatan yang berbeda", "Review differing records"],
+  ["확인 문장·답변 분석", "Câu xác nhận · phân tích trả lời", "确认语句和答复分析", "ข้อความยืนยัน · วิเคราะห์คำตอบ", "Pesan konfirmasi · analisis jawaban", "Confirmation message · reply analysis"],
+  ["전체 기록 다시 보기", "Xem lại toàn bộ hồ sơ", "重新查看全部记录", "ดูบันทึกทั้งหมดอีกครั้ง", "Lihat kembali semua catatan", "Review all records"],
+  ["공동 경험", "Kinh nghiệm chung", "共同经验", "ประสบการณ์ร่วม", "Pengalaman bersama", "Shared experiences"],
+  ["비슷한 경험 확인", "Xem kinh nghiệm tương tự", "查看相似经历", "ดูประสบการณ์ที่คล้ายกัน", "Lihat pengalaman serupa", "Review similar experiences"],
+  ["현재 상황", "Tình trạng hiện tại", "当前情况", "สถานการณ์ปัจจุบัน", "Situasi saat ini", "Current situation"],
+  ["자세히 보기 →", "Xem chi tiết →", "查看详情 →", "ดูรายละเอียด →", "Lihat detail →", "View details →"],
+  ["기록 요약", "Tóm tắt hồ sơ", "记录摘要", "สรุปบันทึก", "Ringkasan catatan", "Record summary"],
+  ["자료를 불러오는 중입니다.", "Đang tải tài liệu.", "正在加载资料。", "กำลังโหลดเอกสาร", "Memuat dokumen.", "Loading records."],
+  ["약속·계약", "Thỏa thuận · hợp đồng", "约定和合同", "ข้อตกลง · สัญญา", "Janji · kontrak", "Promise · contract"],
+  ["전체 진행", "Tiến độ tổng thể", "总体进度", "ความคืบหน้าทั้งหมด", "Progres keseluruhan", "Overall progress"],
+  ["자료 수집", "Thu thập tài liệu", "收集资料", "รวบรวมเอกสาร", "Pengumpulan dokumen", "Collect records"],
+  ["근로자료를 모아요", "Thu thập tài liệu làm việc", "收集工作资料", "รวบรวมเอกสารการทำงาน", "Kumpulkan dokumen kerja", "Collect work records"],
+  ["기록 비교", "So sánh hồ sơ", "记录比较", "เปรียบเทียบบันทึก", "Bandingkan catatan", "Compare records"],
+  ["달라진 조건을 확인해요", "Kiểm tra điều kiện đã thay đổi", "检查变化的条件", "ตรวจสอบเงื่อนไขที่เปลี่ยนไป", "Periksa ketentuan yang berubah", "Check changed terms"],
+  ["확인 대화", "Trao đổi xác nhận", "确认对话", "การสนทนาเพื่อยืนยัน", "Percakapan konfirmasi", "Confirmation conversation"],
+  ["고용주에게 확인하고 답변을 남겨요", "Xác nhận với chủ lao động và lưu câu trả lời", "向雇主确认并保存答复", "ยืนยันกับนายจ้างและบันทึกคำตอบ", "Konfirmasi kepada pemberi kerja dan simpan jawaban", "Confirm with the employer and save the reply"],
+  ["경험 정리", "Tóm tắt kinh nghiệm", "整理经历", "สรุปประสบการณ์", "Rangkum pengalaman", "Summarize experience"],
+  ["내 경험을 확인하고 공유해요", "Kiểm tra và chia sẻ kinh nghiệm của tôi", "查看并分享我的经历", "ตรวจสอบและแบ่งปันประสบการณ์ของฉัน", "Periksa dan bagikan pengalaman saya", "Review and share my experience"],
+  ["대기", "Chờ", "等待", "รอ", "Menunggu", "Waiting"],
+  ["진행 중", "Đang tiến hành", "进行中", "กำลังดำเนินการ", "Sedang berlangsung", "In progress"],
+  ["완료", "Hoàn tất", "完成", "เสร็จสิ้น", "Selesai", "Complete"],
+  ["모아둔 기록", "Hồ sơ đã lưu", "已保存的记录", "บันทึกที่เก็บไว้", "Catatan tersimpan", "Saved records"],
+  ["내 기록 보기 →", "Xem hồ sơ của tôi →", "查看我的记录 →", "ดูบันทึกของฉัน →", "Lihat catatan saya →", "View my records →"],
+  ["비슷한 경험", "Kinh nghiệm tương tự", "相似经历", "ประสบการณ์ที่คล้ายกัน", "Pengalaman serupa", "Similar experiences"],
+  ["공동 경험 보기 →", "Xem kinh nghiệm chung →", "查看共同经验 →", "ดูประสบการณ์ร่วม →", "Lihat pengalaman bersama →", "View shared experiences →"],
+  ["첫 근로자료부터 모아볼까요?", "Hãy bắt đầu với tài liệu làm việc đầu tiên nhé?", "从第一份工作资料开始收集吧？", "มาเริ่มเก็บเอกสารการทำงานชิ้นแรกกันไหม", "Mari mulai dari dokumen kerja pertama.", "Shall we collect your first work record?"],
+  ["계약서나 급여명세서를 추가하면 기록 사이에 달라진 조건이 있는지 함께 확인합니다.", "Thêm hợp đồng hoặc phiếu lương để kiểm tra các điều kiện khác nhau giữa hồ sơ.", "添加合同或工资单后，我们会一起检查记录之间是否存在不同条件。", "เพิ่มสัญญาหรือสลิปเงินเดือนเพื่อตรวจสอบเงื่อนไขที่ต่างกันระหว่างบันทึก", "Tambahkan kontrak atau slip gaji untuk memeriksa perbedaan ketentuan antarcatatan.", "Add a contract or payslip to check for differing terms across records."],
+  ["첫 자료를 추가해 주세요", "Hãy thêm tài liệu đầu tiên", "请添加第一份资料", "เพิ่มเอกสารชิ้นแรก", "Tambahkan dokumen pertama", "Add your first record"],
+  ["사진이나 PDF 한 개부터 시작할 수 있어요.", "Bạn có thể bắt đầu bằng một ảnh hoặc tệp PDF.", "可以从一张图片或一个 PDF 开始。", "เริ่มได้ด้วยรูปภาพหรือ PDF หนึ่งไฟล์", "Anda dapat mulai dengan satu foto atau PDF.", "You can start with one photo or PDF."],
+  ["아직 모아둔 자료가 없어요", "Chưa có tài liệu nào được lưu", "还没有已保存的资料", "ยังไม่มีเอกสารที่บันทึกไว้", "Belum ada dokumen tersimpan", "No records saved yet"],
+  ["자료를 추가하면 현재 상황이 여기에 정리됩니다.", "Khi thêm tài liệu, tình trạng hiện tại sẽ được tóm tắt tại đây.", "添加资料后，当前情况会汇总在这里。", "เมื่อเพิ่มเอกสาร สถานการณ์ปัจจุบันจะสรุปไว้ที่นี่", "Setelah menambah dokumen, situasi saat ini akan dirangkum di sini.", "Once you add records, the current situation will be summarized here."],
+  ["근로자료를 모으고 있어요", "Đang thu thập tài liệu làm việc", "正在收集工作资料", "กำลังรวบรวมเอกสารการทำงาน", "Sedang mengumpulkan dokumen kerja", "Collecting work records"],
+  ["기록 비교 결과를 확인해 주세요", "Hãy kiểm tra kết quả so sánh hồ sơ", "请查看记录比较结果", "ตรวจสอบผลการเปรียบเทียบบันทึก", "Periksa hasil perbandingan catatan", "Review the record comparison"],
+  ["서로 다른 조건이나 추가로 필요한 기록이 있는지 살펴보세요.", "Kiểm tra các điều kiện khác nhau hoặc tài liệu cần bổ sung.", "查看是否存在不同条件或需要补充的记录。", "ตรวจสอบเงื่อนไขที่ต่างกันหรือบันทึกที่ต้องเพิ่ม", "Periksa ketentuan yang berbeda atau catatan tambahan yang diperlukan.", "Check for differing terms or additional records needed."],
+  ["자료 수집 완료", "Đã thu thập tài liệu", "资料收集完成", "รวบรวมเอกสารแล้ว", "Pengumpulan dokumen selesai", "Records collected"],
+  ["정리한 경험을 확인해 주세요", "Hãy kiểm tra kinh nghiệm đã tóm tắt", "请查看整理后的经历", "ตรวจสอบประสบการณ์ที่สรุปไว้", "Periksa pengalaman yang telah dirangkum", "Review your summarized experience"],
+  ["내용은 언제든 수정할 수 있고, 공유되는 경험은 한 개만 유지됩니다.", "Bạn có thể sửa bất cứ lúc nào và chỉ duy trì một kinh nghiệm được chia sẻ.", "内容可随时修改，并且只保留一条共享经历。", "แก้ไขได้ทุกเมื่อและเก็บประสบการณ์ที่แชร์ไว้เพียงหนึ่งรายการ", "Isi dapat diedit kapan saja dan hanya satu pengalaman yang dibagikan akan disimpan.", "You can edit it anytime, and only one shared experience is kept."],
+  ["경험 수정하기", "Sửa kinh nghiệm", "修改经历", "แก้ไขประสบการณ์", "Edit pengalaman", "Edit experience"],
+  ["확인 대화가 마무리됐어요", "Cuộc trao đổi xác nhận đã hoàn tất", "确认对话已结束", "การสนทนาเพื่อยืนยันเสร็จแล้ว", "Percakapan konfirmasi selesai", "The confirmation conversation is complete"],
+  ["모아둔 기록과 대화를 바탕으로 내 경험이 자동 작성됩니다.", "Kinh nghiệm của bạn được tự động soạn từ hồ sơ và cuộc trò chuyện đã lưu.", "系统会根据保存的记录和对话自动生成您的经历。", "ระบบจะเขียนประสบการณ์จากบันทึกและบทสนทนาที่เก็บไว้โดยอัตโนมัติ", "Pengalaman Anda dibuat otomatis dari catatan dan percakapan tersimpan.", "Your experience is drafted automatically from saved records and conversations."],
+  ["경험 정리하기", "Tóm tắt kinh nghiệm", "整理经历", "สรุปประสบการณ์", "Rangkum pengalaman", "Summarize experience"],
+  ["고용주 답변을 확인해 주세요", "Hãy kiểm tra câu trả lời của chủ lao động", "请查看雇主答复", "ตรวจสอบคำตอบของนายจ้าง", "Periksa jawaban pemberi kerja", "Review the employer's reply"],
+  ["답변된 내용과 아직 답변되지 않은 내용을 나누어 보여드립니다.", "Nội dung đã trả lời và chưa trả lời được hiển thị riêng.", "已回答和未回答的内容会分别显示。", "แสดงเนื้อหาที่ตอบแล้วและยังไม่ได้ตอบแยกกัน", "Jawaban dan hal yang belum dijawab ditampilkan terpisah.", "Answered and unanswered items are shown separately."],
+  ["답변 분석하기", "Phân tích câu trả lời", "分析答复", "วิเคราะห์คำตอบ", "Analisis jawaban", "Analyze reply"],
+  ["고용주의 답변을 받았나요?", "Bạn đã nhận được câu trả lời của chủ lao động chưa?", "收到雇主的答复了吗？", "ได้รับคำตอบจากนายจ้างหรือยัง", "Sudah menerima jawaban pemberi kerja?", "Did you receive the employer's reply?"],
+  ["받은 답변을 붙여 넣으면 다음 질문까지 이어서 정리합니다.", "Dán câu trả lời nhận được để tiếp tục đến câu hỏi tiếp theo.", "粘贴收到的答复后，系统会继续整理下一个问题。", "วางคำตอบที่ได้รับเพื่อจัดทำคำถามถัดไป", "Tempel jawaban yang diterima untuk melanjutkan ke pertanyaan berikutnya.", "Paste the reply to continue with the next question."],
+  ["답변 기록하기", "Lưu câu trả lời", "记录答复", "บันทึกคำตอบ", "Catat jawaban", "Record reply"],
+  ["고용주에게 확인할 문장을 준비해 주세요", "Hãy chuẩn bị câu hỏi xác nhận cho chủ lao động", "请准备向雇主确认的语句", "เตรียมข้อความยืนยันสำหรับนายจ้าง", "Siapkan pesan konfirmasi untuk pemberi kerja", "Prepare a confirmation message for the employer"],
+  ["발견된 기록 차이를 바탕으로 정중하고 명확한 문장을 만듭니다.", "Tạo câu lịch sự và rõ ràng dựa trên khác biệt trong hồ sơ.", "根据发现的记录差异生成礼貌而明确的语句。", "สร้างข้อความสุภาพและชัดเจนจากความแตกต่างของบันทึก", "Buat pesan yang sopan dan jelas berdasarkan perbedaan catatan.", "Create a polite, clear message from the record differences."],
+  ["확인 문장 만들기", "Tạo câu xác nhận", "生成确认语句", "สร้างข้อความยืนยัน", "Buat pesan konfirmasi", "Create confirmation message"],
+  ["내 근로 기록", "Hồ sơ làm việc của tôi", "我的工作记录", "บันทึกการทำงานของฉัน", "Catatan kerja saya", "My work records"],
+  ["현재 기록 상태를 불러오지 못했지만 자료 추가는 계속할 수 있습니다.", "Không thể tải trạng thái hiện tại nhưng bạn vẫn có thể thêm tài liệu.", "无法加载当前记录状态，但仍可继续添加资料。", "ไม่สามารถโหลดสถานะปัจจุบันได้ แต่ยังเพิ่มเอกสารได้", "Status saat ini tidak dapat dimuat, tetapi Anda tetap dapat menambah dokumen.", "The current status could not be loaded, but you can still add records."],
+  ["근로자료를 확인해 주세요", "Hãy kiểm tra tài liệu làm việc", "请查看工作资料", "ตรวจสอบเอกสารการทำงาน", "Periksa dokumen kerja", "Review work records"],
+  ["자료 보러 가기", "Xem tài liệu", "查看资料", "ดูเอกสาร", "Lihat dokumen", "View records"],
+  ["상태를 불러오지 못했어요", "Không thể tải trạng thái", "无法加载状态", "ไม่สามารถโหลดสถานะ", "Status tidak dapat dimuat", "Could not load status"],
+  ["잠시 후 다시 방문하면 현재 진행 상태를 확인할 수 있습니다.", "Hãy quay lại sau để kiểm tra tiến độ hiện tại.", "请稍后回来查看当前进度。", "กลับมาอีกครั้งภายหลังเพื่อตรวจสอบความคืบหน้า", "Kembali lagi nanti untuk memeriksa progres saat ini.", "Come back shortly to check the current progress."],
+  ["별도계산", "Tính riêng", "另行计算", "คำนวณแยก", "Dihitung terpisah", "Calculated separately"],
   ["자료 모으기", "Thu thập tài liệu", "收集资料", "รวบรวมเอกสาร", "Kumpulkan dokumen", "Collect records"],
   ["자료", "Tài liệu", "资料", "เอกสาร", "Dokumen", "Records"],
   ["조건 비교하기", "So sánh điều kiện", "比较条件", "เปรียบเทียบเงื่อนไข", "Bandingkan ketentuan", "Compare terms"],
   ["비교", "So sánh", "比较", "เปรียบเทียบ", "Bandingkan", "Compare"],
-  ["대화 도우미", "Hỗ trợ trao đổi", "对话助手", "ผู้ช่วยสนทนา", "Asisten percakapan", "Conversation helper"],
+  ["대꾸 AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI", "Daekku AI"],
   ["대화", "Trao đổi", "对话", "สนทนา", "Percakapan", "Conversation"],
   ["내 기록", "Hồ sơ của tôi", "我的记录", "บันทึกของฉัน", "Catatan saya", "My records"],
   ["기록함", "Hồ sơ", "记录夹", "กล่องบันทึก", "Kotak catatan", "Record box"],
@@ -150,6 +218,21 @@ const ROWS = [
   ["답변을 다시 분석하기", "Phân tích lại câu trả lời", "重新分析答复", "วิเคราะห์คำตอบอีกครั้ง", "Analisis ulang jawaban", "Analyze the reply again"],
   ["이 기록함은 사용자가 모은 자료와 대화를 정리해 보여주며, 위법 여부를 확정하지 않습니다.", "Hồ sơ này sắp xếp tài liệu và cuộc trò chuyện của bạn; không kết luận vi phạm pháp luật.", "本记录夹整理展示用户资料和对话，不判定是否违法。", "กล่องบันทึกนี้จัดระเบียบเอกสารและการสนทนา โดยไม่ได้ตัดสินว่าผิดกฎหมายหรือไม่", "Kotak ini merangkum dokumen dan percakapan Anda tanpa menetapkan pelanggaran hukum.", "This record box organizes your documents and conversations; it does not determine legality."],
   ["공동 경험", "Kinh nghiệm chung", "共同经历", "ประสบการณ์ร่วม", "Pengalaman bersama", "Shared experiences"],
+  ["비슷한 경험과 다음 행동 보기", "Xem trải nghiệm tương tự và bước tiếp theo", "查看相似经历和下一步行动", "ดูประสบการณ์ที่คล้ายกันและขั้นตอนถัดไป", "Lihat pengalaman serupa dan langkah berikutnya", "View similar experiences and next steps"],
+  ["명", "người", "人", "คน", "orang", "people"],
+  ["번", "lần", "次", "ครั้ง", "kali", "times"],
+  ["“내가 겪은 일이 누군가에게는", "“Để trải nghiệm của tôi có thể giúp ai đó", "“愿我的经历能让别人", "“เพื่อให้สิ่งที่ฉันเผชิญช่วยให้ใครบางคน", "“Semoga pengalaman saya membantu orang lain", "“May what I experienced give someone"],
+  ["처음부터 알고 시작할 권리가 되도록.”", "có quyền được biết ngay từ đầu.”", "从一开始就拥有知情的权利。”", "มีสิทธิที่จะรู้ตั้งแต่เริ่มต้น”", "hak untuk mengetahui sejak awal.”", "the right to know from the start.”"],
+  ["백엔드에 연결하지 못했어요. API 서버와 CORS 설정을 확인해 주세요.", "Không thể kết nối với máy chủ. Vui lòng kiểm tra máy chủ API và cài đặt CORS.", "无法连接后端，请检查API服务器和CORS设置。", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ โปรดตรวจสอบ API และการตั้งค่า CORS", "Tidak dapat terhubung ke server. Periksa server API dan pengaturan CORS.", "Could not connect to the server. Check the API server and CORS settings."],
+  ["사업장 정보 형식이 올바르지 않아요.", "Định dạng thông tin nơi làm việc không hợp lệ.", "工作场所信息格式不正确。", "รูปแบบข้อมูลสถานที่ทำงานไม่ถูกต้อง", "Format informasi tempat kerja tidak valid.", "The workplace information format is invalid."],
+  ["근무자료 목록을 불러오지 못했어요.", "Không thể tải danh sách tài liệu làm việc.", "无法加载工作资料列表。", "ไม่สามารถโหลดรายการเอกสารการทำงานได้", "Daftar dokumen kerja tidak dapat dimuat.", "Could not load the work-record list."],
+  ["근무자료 상세 내용을 불러오지 못했어요.", "Không thể tải chi tiết tài liệu làm việc.", "无法加载工作资料详情。", "ไม่สามารถโหลดรายละเอียดเอกสารการทำงานได้", "Detail dokumen kerja tidak dapat dimuat.", "Could not load the work-record details."],
+  ["비교할 근무자료를 불러오지 못했어요.", "Không thể tải tài liệu làm việc để so sánh.", "无法加载要比较的工作资料。", "ไม่สามารถโหลดเอกสารการทำงานเพื่อเปรียบเทียบได้", "Dokumen kerja untuk perbandingan tidak dapat dimuat.", "Could not load the work records to compare."],
+  ["비교 결과를 저장하지 못했어요.", "Không thể lưu kết quả so sánh.", "无法保存比较结果。", "ไม่สามารถบันทึกผลการเปรียบเทียบได้", "Hasil perbandingan tidak dapat disimpan.", "Could not save the comparison results."],
+  ["해당 비교 결과를 찾을 수 없어요.", "Không tìm thấy kết quả so sánh.", "找不到该比较结果。", "ไม่พบผลการเปรียบเทียบนี้", "Hasil perbandingan tidak ditemukan.", "The comparison result could not be found."],
+  ["여러 사용자가 계약 시급과 급여명세서를 함께 제시하고 수습 적용 기간과 계산 근거를 확인했어요. 이 흐름이 위 추천 문장에 반영됐습니다.", "Nhiều người đã cùng đưa hợp đồng và phiếu lương để xác nhận thời gian thử việc và căn cứ tính lương. Cách làm này được phản ánh trong câu gợi ý ở trên.", "多名用户同时出示合同和工资单，确认了试用期和工资计算依据。上述建议句已参考这一做法。", "ผู้ใช้หลายคนแสดงสัญญาและสลิปเงินเดือนร่วมกันเพื่อตรวจสอบช่วงทดลองงานและหลักเกณฑ์การคำนวณ แนวทางนี้ถูกนำมาใช้ในข้อความแนะนำข้างต้น", "Beberapa pengguna menunjukkan kontrak dan slip gaji bersama-sama untuk memastikan masa percobaan dan dasar perhitungan. Alur ini diterapkan pada pesan saran di atas.", "Several users presented their contracts and payslips together to confirm the probation period and calculation basis. This approach is reflected in the suggested message above."],
+  ["비슷한 익명 경험 보기", "Xem trải nghiệm ẩn danh tương tự", "查看相似的匿名经历", "ดูประสบการณ์แบบไม่ระบุตัวตนที่คล้ายกัน", "Lihat pengalaman anonim serupa", "View similar anonymous experiences"],
+  ["백엔드에 연결하지 못했습니다.", "Không thể kết nối với máy chủ.", "无法连接后端。", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "Tidak dapat terhubung ke server.", "Could not connect to the server."],
   ["경험", "Kinh nghiệm", "经历", "ประสบการณ์", "Pengalaman", "Experiences"],
   ["말대꾸 지도 | 공동 경험", "Bản đồ tiếng nói | Kinh nghiệm chung", "发声地图 | 共同经历", "แผนที่เสียง | ประสบการณ์ร่วม", "Peta suara | Pengalaman bersama", "Voice map | Shared experiences"],
   ["익명 근로 경험을 연결해 다음 행동을 돕는 공동 경험 지도", "Bản đồ kết nối kinh nghiệm lao động ẩn danh để gợi ý bước tiếp theo", "连接匿名劳动经历、帮助确定下一步行动的共同经历地图", "แผนที่เชื่อมโยงประสบการณ์การทำงานแบบไม่ระบุตัวตนเพื่อช่วยเลือกขั้นตอนถัดไป", "Peta yang menghubungkan pengalaman kerja anonim untuk membantu langkah berikutnya", "A shared-experience map connecting anonymous work experiences to support the next step"],
@@ -180,6 +263,29 @@ const ROWS = [
   ["말하고 난 뒤, 사람들이 남긴 이야기", "Những câu chuyện được để lại sau khi lên tiếng", "人们发声后留下的故事", "เรื่องราวที่ผู้คนทิ้งไว้หลังจากพูดออกมา", "Cerita yang ditinggalkan setelah berbicara", "Stories people left after speaking up"],
   ["누군가의 결과가 아니라, 다음 사람에게 건넨 짧은 메모입니다.", "Đây không phải kết luận về ai đó, mà là ghi chú ngắn gửi cho người tiếp theo.", "这不是对某人的结论，而是留给下一位的简短留言。", "นี่ไม่ใช่ข้อสรุปของใคร แต่เป็นบันทึกสั้น ๆ ส่งต่อให้คนถัดไป", "Ini bukan kesimpulan tentang seseorang, melainkan catatan singkat untuk orang berikutnya.", "These are not verdicts about anyone, but short notes for the next person."],
   ["모든 후기는 개인정보를 제거하고 사용자가 공유에 동의한 내용만 보여줍니다.", "Tất cả câu chuyện đã được loại bỏ thông tin cá nhân và chỉ hiển thị nội dung người dùng đồng ý chia sẻ.", "所有经历均已删除个人信息，仅显示用户同意分享的内容。", "ทุกเรื่องราวลบข้อมูลส่วนบุคคลแล้วและแสดงเฉพาะเนื้อหาที่ผู้ใช้ยินยอมแชร์", "Semua cerita telah menghapus data pribadi dan hanya menampilkan isi yang disetujui pengguna.", "All stories remove personal information and show only content users agreed to share."],
+  ["가상 사용자 경험", "Trải nghiệm người dùng giả lập", "虚拟用户经历", "ประสบการณ์ผู้ใช้จำลอง", "Pengalaman pengguna simulasi", "Simulated user experiences"],
+  ["도움이 된 기록 연결", "Kết nối hồ sơ hữu ích", "有帮助的记录连接", "การเชื่อมโยงบันทึกที่เป็นประโยชน์", "Koneksi catatan yang membantu", "Helpful record connections"],
+  ["최근 추가한 경험", "Trải nghiệm mới thêm", "最近新增的经历", "ประสบการณ์ที่เพิ่มล่าสุด", "Pengalaman yang baru ditambahkan", "Recently added experiences"],
+  ["15개의 가상 경험", "15 trải nghiệm giả lập", "15个虚拟经历", "15 ประสบการณ์จำลอง", "15 pengalaman simulasi", "15 simulated experiences"],
+  ["아래 15건은 실제 개인정보를 사용하지 않은 완전한 가상 시연 경험입니다.", "15 trường hợp dưới đây là trải nghiệm minh họa hoàn toàn giả lập, không sử dụng dữ liệu cá nhân thật.", "以下15项是完全虚构的演示经历，不使用任何真实个人信息。", "15 กรณีด้านล่างเป็นประสบการณ์สาธิตที่สร้างขึ้นทั้งหมดและไม่ใช้ข้อมูลส่วนบุคคลจริง", "15 kasus di bawah ini adalah pengalaman demo yang sepenuhnya dibuat-buat tanpa menggunakan data pribadi nyata.", "The 15 cases below are fully simulated demo experiences and use no real personal information."],
+  ["내 경험은 익명화된 내용만 로컬 기록에 저장됩니다. 저장해도 공동 경험에 자동 공개되지 않아요.", "Chỉ nội dung đã ẩn danh được lưu vào hồ sơ cục bộ của tôi và không tự động công khai.", "仅匿名化内容会保存到本地个人记录中，保存后不会自动公开。", "จะบันทึกเฉพาะเนื้อหาที่ไม่ระบุตัวตนไว้ในบันทึกภายในเครื่องและจะไม่เผยแพร่อัตโนมัติ", "Hanya isi anonim yang disimpan di catatan lokal saya dan tidak dipublikasikan otomatis.", "Only anonymized content is saved to your local records and it is never published automatically."],
+  ["내 경험 초안", "Bản nháp trải nghiệm của tôi", "我的经历草稿", "ร่างประสบการณ์ของฉัน", "Draf pengalaman saya", "My experience draft"],
+  ["문제 유형", "Loại vấn đề", "问题类型", "ประเภทปัญหา", "Jenis masalah", "Issue type"],
+  ["현재 상태", "Trạng thái hiện tại", "当前状态", "สถานะปัจจุบัน", "Status saat ini", "Current status"],
+  ["시급 차이", "Chênh lệch lương giờ", "时薪差异", "ส่วนต่างค่าจ้างรายชั่วโมง", "Selisih upah per jam", "Hourly-wage difference"],
+  ["급여 지급 지연", "Chậm trả lương", "工资延迟支付", "การจ่ายค่าจ้างล่าช้า", "Keterlambatan pembayaran upah", "Delayed wage payment"],
+  ["근무시간 변경", "Thay đổi giờ làm", "工作时间变更", "การเปลี่ยนเวลาทำงาน", "Perubahan jam kerja", "Working-hours change"],
+  ["확인 중", "Đang xác nhận", "确认中", "กำลังตรวจสอบ", "Sedang dikonfirmasi", "In progress"],
+  ["해결됨", "Đã giải quyết", "已解决", "แก้ไขแล้ว", "Selesai", "Resolved"],
+  ["일부 해결", "Đã giải quyết một phần", "部分解决", "แก้ไขบางส่วน", "Sebagian selesai", "Partially resolved"],
+  ["미해결", "Chưa giải quyết", "未解决", "ยังไม่แก้ไข", "Belum selesai", "Unresolved"],
+  ["저장 전 익명화 결과", "Kết quả ẩn danh trước khi lưu", "保存前的匿名化结果", "ผลการไม่ระบุตัวตนก่อนบันทึก", "Hasil anonimisasi sebelum disimpan", "Anonymized result before saving"],
+  ["아직 저장되거나 공개되지 않았어요.", "Nội dung chưa được lưu hoặc công khai.", "尚未保存或公开。", "ยังไม่ได้บันทึกหรือเผยแพร่", "Belum disimpan atau dipublikasikan.", "This has not been saved or published."],
+  ["익명화된 내용을 내 로컬 경험 기록에 저장하는 데 동의합니다.", "Tôi đồng ý lưu nội dung đã ẩn danh vào hồ sơ trải nghiệm cục bộ.", "我同意将匿名化内容保存到本地经历记录。", "ฉันยินยอมให้บันทึกเนื้อหาที่ไม่ระบุตัวตนไว้ในบันทึกประสบการณ์ภายในเครื่อง", "Saya setuju menyimpan isi anonim ke catatan pengalaman lokal.", "I agree to save the anonymized content in my local experience records."],
+  ["내 경험으로 저장하기", "Lưu vào trải nghiệm của tôi", "保存为我的经历", "บันทึกเป็นประสบการณ์ของฉัน", "Simpan sebagai pengalaman saya", "Save to my experiences"],
+  ["저장된 내 경험", "Trải nghiệm tôi đã lưu", "我保存的经历", "ประสบการณ์ที่ฉันบันทึก", "Pengalaman saya yang tersimpan", "My saved experiences"],
+  ["저장된 경험을 불러오는 중...", "Đang tải trải nghiệm đã lưu...", "正在加载已保存的经历……", "กำลังโหลดประสบการณ์ที่บันทึกไว้...", "Memuat pengalaman tersimpan...", "Loading saved experiences..."],
+  ["아직 저장한 경험이 없어요.", "Chưa có trải nghiệm nào được lưu.", "还没有保存的经历。", "ยังไม่มีประสบการณ์ที่บันทึกไว้", "Belum ada pengalaman tersimpan.", "There are no saved experiences yet."],
   ["내 경험도 누군가의 다음 말이 될 수 있어요", "Trải nghiệm của tôi cũng có thể giúp người khác biết nên nói gì tiếp theo", "我的经历也能帮助别人说出下一句话", "ประสบการณ์ของฉันก็ช่วยให้คนอื่นรู้ว่าจะพูดอะไรต่อ", "Pengalaman saya juga dapat membantu ucapan orang berikutnya", "My experience can help someone else know what to say next"],
   ["사용 과정은 개인 기록으로만 정리됩니다. 공동 경험 공유는 사용자가 내용을 확인하고 명시적으로 동의한 경우에만 진행돼요.", "Quá trình sử dụng chỉ được lưu trong hồ sơ cá nhân. Chỉ chia sẻ trải nghiệm khi người dùng kiểm tra nội dung và đồng ý rõ ràng.", "使用过程仅保存在个人记录中。只有用户确认内容并明确同意后才会分享共同经历。", "กระบวนการใช้งานจะเก็บเป็นบันทึกส่วนตัวเท่านั้น จะแชร์ประสบการณ์เมื่อผู้ใช้ตรวจสอบและยินยอมอย่างชัดเจน", "Proses penggunaan hanya disimpan sebagai catatan pribadi. Pengalaman dibagikan hanya setelah pengguna memeriksa dan menyetujuinya secara jelas.", "Your activity remains in your private records. An experience is shared only after you review it and explicitly consent."],
   ["공유할 경험 초안", "Bản nháp trải nghiệm để chia sẻ", "待分享的经历草稿", "ร่างประสบการณ์ที่จะแชร์", "Draf pengalaman untuk dibagikan", "Experience draft to share"],
@@ -221,10 +327,39 @@ const ROWS = [
   ["“말로 들은 내용도 메시지로 다시 확인하세요.”", "“Hãy xác nhận lại bằng tin nhắn cả những điều bạn chỉ nghe bằng lời nói.”", "“口头听到的内容也要通过消息再次确认。”", "“สิ่งที่ได้ยินด้วยวาจาก็ควรยืนยันอีกครั้งทางข้อความ”", "“Konfirmasikan kembali lewat pesan juga untuk hal yang disampaikan secara lisan.”", "“Confirm anything said verbally again in a message.”"],
 ];
 
+const HOME_CONDITIONS = [
+  ["시급", "lương theo giờ", "时薪", "ค่าจ้างรายชั่วโมง", "upah per jam", "hourly wage"],
+  ["주휴수당", "phụ cấp nghỉ hằng tuần", "周休津贴", "ค่าจ้างวันหยุดประจำสัปดาห์", "tunjangan hari libur mingguan", "weekly holiday pay"],
+  ["근무시간", "giờ làm việc", "工作时间", "เวลาทำงาน", "jam kerja", "working hours"],
+  ["주 근무시간", "giờ làm việc hằng tuần", "每周工时", "ชั่วโมงทำงานต่อสัปดาห์", "jam kerja mingguan", "weekly working hours"],
+  ["급여일", "ngày trả lương", "发薪日", "วันจ่ายเงินเดือน", "tanggal gajian", "payday"],
+  ["총급여", "tổng lương", "总工资", "ค่าจ้างรวม", "gaji kotor", "gross pay"],
+  ["실수령액", "lương thực nhận", "实发工资", "ค่าจ้างสุทธิ", "gaji bersih", "net pay"],
+];
+HOME_CONDITIONS.forEach((condition) => {
+  const [ko, vi, zh, th, id, en] = condition;
+  ROWS.push(
+    [`${ko} 기록을 확인하고 있어요`, `Đang kiểm tra hồ sơ ${vi}`, `正在查看${zh}记录`, `กำลังตรวจสอบบันทึก${th}`, `Sedang memeriksa catatan ${id}`, `Reviewing ${en} records`],
+    [`${ko} 기록 차이`, `Khác biệt trong hồ sơ ${vi}`, `${zh}记录差异`, `ความแตกต่างของบันทึก${th}`, `Perbedaan catatan ${id}`, `${en} record difference`],
+  );
+});
+
 const TABLE = new Map(ROWS.map((row) => [row[0], row]));
 const originals = new WeakMap();
 const attributeOriginals = new WeakMap();
 const PATTERNS = [
+  {
+    source: /^(\d+)개의 자료가 저장되어 있습니다\.$/,
+    values: ["$1개의 자료가 저장되어 있습니다.", "Đã lưu $1 tài liệu.", "已保存 $1 份资料。", "บันทึกเอกสารแล้ว $1 รายการ", "$1 dokumen telah disimpan.", "$1 records saved."],
+  },
+  {
+    source: /^(\d+)개의 기록에서 근로조건을 추출했습니다\.$/,
+    values: ["$1개의 기록에서 근로조건을 추출했습니다.", "Đã trích xuất điều kiện làm việc từ $1 hồ sơ.", "已从 $1 份记录中提取工作条件。", "แยกเงื่อนไขการทำงานจาก $1 บันทึกแล้ว", "Ketentuan kerja diekstrak dari $1 catatan.", "Work terms extracted from $1 records."],
+  },
+  {
+    source: /^(\d+) \/ 4단계 · 단계를 누르면 이동$/,
+    values: ["$1 / 4단계 · 단계를 누르면 이동", "$1 / 4 bước · Nhấn một bước để di chuyển", "$1 / 4 步 · 点击步骤前往", "$1 / 4 ขั้นตอน · กดขั้นตอนเพื่อไปต่อ", "$1 / 4 langkah · Tekan langkah untuk membuka", "$1 / 4 steps · Select a step to open"],
+  },
   {
     source: /^찾은 조건 ([\d,]+)개$/,
     values: ["찾은 조건 $1개", "Đã tìm thấy $1 điều kiện", "找到 $1 个条件", "พบ $1 เงื่อนไข", "Ditemukan $1 ketentuan", "$1 conditions found"],
@@ -243,6 +378,45 @@ const PATTERNS = [
   },
 ];
 
+HOME_CONDITIONS.forEach((condition) => {
+  const [ko, vi, zh, th, id, en] = condition;
+  PATTERNS.unshift({
+    source: new RegExp(`^(\\d+)개의 자료에서 서로 다른 조건 ${ko}을 발견했습니다\\.$`),
+    values: [
+      `$1개의 자료에서 서로 다른 조건 ${ko}을 발견했습니다.`,
+      `Đã tìm thấy điểm khác biệt về ${vi} trong $1 tài liệu.`,
+      `在 $1 份资料中发现了${zh}差异。`,
+      `พบความแตกต่างเรื่อง${th}ในเอกสาร $1 รายการ`,
+      `Ditemukan perbedaan ${id} dalam $1 dokumen.`,
+      `Found differing ${en} terms across $1 records.`,
+    ],
+  });
+  PATTERNS.unshift(
+    {
+      source: new RegExp(`^${ko} 조건이 기록 사이에서 다릅니다\\. 적용 기준을 확인해 보세요\\.$`),
+      values: [
+        `${ko} 조건이 기록 사이에서 다릅니다. 적용 기준을 확인해 보세요.`,
+        `Điều kiện ${vi} khác nhau giữa các hồ sơ. Hãy kiểm tra tiêu chuẩn áp dụng.`,
+        `记录中的${zh}条件不同，请确认适用标准。`,
+        `เงื่อนไข${th}ในบันทึกต่างกัน โปรดตรวจสอบเกณฑ์ที่ใช้`,
+        `Ketentuan ${id} berbeda antarcatatan. Periksa standar yang berlaku.`,
+        `The ${en} terms differ across records. Check which standard applies.`,
+      ],
+    },
+    {
+      source: new RegExp(`^${ko} 조건이 기록 사이에서 같습니다\\.$`),
+      values: [
+        `${ko} 조건이 기록 사이에서 같습니다.`,
+        `Điều kiện ${vi} giống nhau giữa các hồ sơ.`,
+        `记录中的${zh}条件一致。`,
+        `เงื่อนไข${th}ในบันทึกตรงกัน`,
+        `Ketentuan ${id} sama antarcatatan.`,
+        `The ${en} terms match across records.`,
+      ],
+    },
+  );
+});
+
 function language() {
   const value = document.querySelector("#site-language")?.value
     || sessionStorage.getItem("site_display_language_v2") || "ko";
@@ -251,7 +425,10 @@ function language() {
 
 function translateNode(node, index) {
   if (node.parentElement?.closest("[translate='no'], .notranslate")) return;
-  if (!originals.has(node)) originals.set(node, node.nodeValue);
+  const currentKey = node.nodeValue.trim();
+  const currentIsKoreanSource = TABLE.has(currentKey)
+    || PATTERNS.some(({ source }) => source.test(currentKey));
+  if (!originals.has(node) || currentIsKoreanSource) originals.set(node, node.nodeValue);
   const source = originals.get(node);
   const key = source.trim();
   const row = TABLE.get(key);

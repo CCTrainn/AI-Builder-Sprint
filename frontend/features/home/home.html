@@ -3,91 +3,90 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="현재 근로 기록 상태와 다음 행동을 확인합니다">
   <title>홈 | 근로권리 동반자</title>
   <link rel="stylesheet" href="../../shared/tokens.css">
   <link rel="stylesheet" href="../../shared/common.css">
-  <link rel="stylesheet" href="./home.css">
-  <link rel="stylesheet" href="../../shared/sidebar.css">
+  <link rel="stylesheet" href="../../shared/sidebar.css?v=20260803-3">
+  <link rel="stylesheet" href="../../shared/polish.css">
+  <link rel="stylesheet" href="./home.css?v=20260803-6">
 </head>
 <body class="has-app-sidebar" data-page="home">
   <div id="appSidebar" class="app-sidebar-root"></div>
 
-  <div class="ambient-light" aria-hidden="true">
-    <span class="ambient-light__orb ambient-light__orb--blue"></span>
-    <span class="ambient-light__orb ambient-light__orb--violet"></span>
-    <span class="ambient-light__orb ambient-light__orb--cyan"></span>
-  </div>
-
   <main class="home-page">
-    <header class="home-header">
-      <h1>오늘도 근무 기록을 살펴볼까요?</h1>
+    <header class="home-intro">
+      <div class="home-brand" aria-label="근로권리 동반자">
+        <img class="home-brand__logo home-brand__logo--light" src="../../shared/logo-black.png" alt="">
+        <img class="home-brand__logo home-brand__logo--dark" src="../../shared/logo-white.png" alt="">
+      </div>
+      <p class="home-eyebrow">MY WORK RECORD</p>
+      <h1 id="home-title">내 근로 기록을 확인하고 있어요</h1>
+      <p id="home-description">모아둔 자료에서 현재 상태를 불러오는 중입니다.</p>
     </header>
 
-    <section class="quick-menu" aria-labelledby="quick-menu-title">
-      <h2 id="quick-menu-title" class="visually-hidden">주요 기능</h2>
-      <nav class="quick-menu__list" aria-label="주요 기능">
-        <a class="quick-menu__item" href="../records/records.html">
-          <span class="quick-menu__icon quick-menu__icon--blue">
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-          </span>
-          <span class="quick-menu__copy">
-            <strong>자료 추가하기</strong>
-            <span>새로운 근무자료 모으기</span>
-          </span>
-          <span class="quick-menu__arrow" aria-hidden="true">↗</span>
-        </a>
-
-        <a class="quick-menu__item" href="../comparison/comparison.html">
-          <span class="quick-menu__icon quick-menu__icon--violet">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale-icon lucide-scale"><path d="M12 3v18"/><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M7 21h10"/></svg>
-          </span>
-          <span class="quick-menu__copy">
-            <strong>기록 비교하기</strong>
-            <span>달라진 조건 확인하기</span>
-          </span>
-          <span class="quick-menu__arrow" aria-hidden="true">↗</span>
-        </a>
-
-        <a class="quick-menu__item" href="../conversation/conversation.html">
-          <span class="quick-menu__icon quick-menu__icon--cyan">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-messages-square-icon lucide-messages-square"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg>
-          </span>
-          <span class="quick-menu__copy">
-            <strong>대화 도우미</strong>
-            <span>확인할 문장 준비하기</span>
-          </span>
-          <span class="quick-menu__arrow" aria-hidden="true">↗</span>
-        </a>
-
-        <a class="quick-menu__item" href="../record_box/record-box.html">
-          <span class="quick-menu__icon quick-menu__icon--indigo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-icon lucide-book-open"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg>
-          </span>
-          <span class="quick-menu__copy">
-            <strong>내 기록</strong>
-            <span>모아둔 근로 기록 보기</span>
-          </span>
-          <span class="quick-menu__arrow" aria-hidden="true">↗</span>
-        </a>
-
-        <a class="quick-menu__item quick-menu__item--community" href="../community/community.html">
-          <span class="quick-menu__icon quick-menu__icon--teal">
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="m7 7 3 3m4 0 3-3m-7 7-3 3m7-3 3 3"/>
-            </svg>
-          </span>
-          <span class="quick-menu__copy">
-            <strong>공동 경험</strong>
-            <span>비슷한 경험과 다음 행동 보기</span>
-          </span>
-          <span class="quick-menu__arrow" aria-hidden="true">↗</span>
-        </a>
-      </nav>
+    <section class="focus-card" aria-labelledby="focus-title">
+      <div class="focus-card__status">
+        <span id="focus-label">추천 다음 단계</span>
+        <strong id="focus-title">기록을 확인하는 중...</strong>
+        <p id="focus-description">잠시만 기다려 주세요.</p>
+      </div>
+      <a id="focus-action" class="focus-card__action" href="../records/records.html">자료 추가하기 <span aria-hidden="true">→</span></a>
     </section>
+
+    <nav class="page-shortcuts" aria-label="전체 기능 바로가기">
+      <div class="page-shortcuts__heading"><strong>전체 기능 바로가기</strong><span>원하는 페이지로 바로 이동하세요</span></div>
+      <div class="page-shortcuts__links">
+        <a href="../records/records.html"><span>자료 모으기</span><small>계약서·명세서 추가</small><b aria-hidden="true">→</b></a>
+        <a href="../comparison/comparison.html"><span>조건 비교</span><small>달라진 기록 확인</small><b aria-hidden="true">→</b></a>
+        <a href="../conversation/conversation.html"><span>대꾸 AI</span><small>확인 문장·답변 분석</small><b aria-hidden="true">→</b></a>
+        <a href="../record_box/record-box.html"><span>내 기록</span><small>전체 기록 다시 보기</small><b aria-hidden="true">→</b></a>
+        <a href="../community/community.html"><span>공동 경험</span><small>비슷한 경험 확인</small><b aria-hidden="true">→</b></a>
+      </div>
+    </nav>
+
+    <section class="case-summary" aria-labelledby="case-summary-title">
+      <div class="section-heading">
+        <div>
+          <p class="home-eyebrow">CURRENT STATUS</p>
+          <h2 id="case-summary-title">현재 상황</h2>
+        </div>
+        <a id="detail-link" href="../comparison/comparison.html">자세히 보기 →</a>
+      </div>
+      <div class="condition-card">
+        <div>
+          <span id="condition-name">기록 요약</span>
+          <strong id="condition-summary">자료를 불러오는 중입니다.</strong>
+        </div>
+        <dl class="condition-values" id="condition-values" hidden>
+          <div><dt>약속·계약</dt><dd id="promised-value">-</dd></div>
+          <div><dt>실제 기록</dt><dd id="actual-value">-</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="progress-section" aria-labelledby="progress-title">
+      <div class="section-heading">
+        <div>
+          <p class="home-eyebrow">PROGRESS</p>
+          <h2 id="progress-title">전체 진행</h2>
+        </div>
+        <span id="progress-count">0 / 4단계 · 단계를 누르면 이동</span>
+      </div>
+      <ol class="progress-list">
+        <li data-step="records"><span>1</span><div><strong>자료 수집</strong><small>근로자료를 모아요</small></div><b>대기</b></li>
+        <li data-step="comparison"><span>2</span><div><strong>기록 비교</strong><small>달라진 조건을 확인해요</small></div><b>대기</b></li>
+        <li data-step="conversation"><span>3</span><div><strong>확인 대화</strong><small>고용주에게 확인하고 답변을 남겨요</small></div><b>대기</b></li>
+        <li data-step="experience"><span>4</span><div><strong>경험 정리</strong><small>내 경험을 확인하고 공유해요</small></div><b>대기</b></li>
+      </ol>
+    </section>
+
+    <nav class="home-secondary" aria-label="보조 메뉴">
+      <a href="../record_box/record-box.html"><span>모아둔 기록</span><strong>내 기록 보기 →</strong></a>
+      <a href="../community/community.html"><span>비슷한 경험</span><strong>공동 경험 보기 →</strong></a>
+    </nav>
   </main>
-  <script type="module" src="../../shared/app.js"></script>
-  <script type="module" src="./home.js"></script>
+  <script type="module" src="../../shared/app.js?v=20260803-16"></script>
+  <script type="module" src="./home.js?v=20260803-3"></script>
 </body>
 </html>

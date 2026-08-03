@@ -15,6 +15,35 @@
   --compare-purple-bg: #f4f0ff;
   --compare-missing: #475467;
   --compare-missing-bg: #f2f4f7;
+  --compare-raised: #ffffff;
+  --compare-subtle: #fafbfc;
+  --compare-inset: #f8f9fc;
+}
+
+[data-theme="dark"] .comparison-page {
+  --compare-text: #edf3fc;
+  --compare-muted: #aebbd0;
+  --compare-line: #3a4960;
+  --compare-surface: #1b2638;
+  --compare-raised: #202d41;
+  --compare-subtle: #263449;
+  --compare-inset: #172235;
+  --compare-blue-soft: #203a67;
+  --compare-success: #7ee2b8;
+  --compare-success-bg: #173b32;
+  --compare-warning: #ffd083;
+  --compare-warning-bg: #45351c;
+  --compare-purple: #c4adff;
+  --compare-purple-bg: #342a52;
+  --compare-missing: #c2ccda;
+  --compare-missing-bg: #2b3749;
+}
+
+[data-theme="dark"] body[data-page="comparison"] {
+  background:
+    radial-gradient(circle at 8% -10%, rgb(124 91 207 / 18%), transparent 31%),
+    radial-gradient(circle at 92% 0%, rgb(64 116 191 / 20%), transparent 34%),
+    #121a28;
 }
 
 body {
@@ -239,7 +268,7 @@ button {
 
 .results-section {
   padding: 26px;
-  background: rgb(255 255 255 / 90%);
+  background: var(--compare-surface);
   border: 1px solid var(--compare-line);
   border-radius: 24px;
   box-shadow: 0 16px 46px rgb(42 57 89 / 7%);
@@ -277,7 +306,7 @@ button {
   color: var(--compare-muted);
   font-size: 12px;
   font-weight: 700;
-  background: #fff;
+  background: var(--compare-raised);
   border: 1px solid var(--compare-line);
   border-radius: 10px;
   cursor: pointer;
@@ -302,7 +331,7 @@ button {
   padding: 11px 14px;
   color: var(--compare-muted);
   font-size: 11px;
-  background: #f8f9fc;
+  background: var(--compare-inset);
   border-radius: 10px;
 }
 
@@ -338,7 +367,7 @@ button {
 
 .comparison-card {
   overflow: hidden;
-  background: #fff;
+  background: var(--compare-raised);
   border: 1px solid var(--compare-line);
   border-radius: 18px;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
@@ -409,9 +438,22 @@ button {
 }
 
 .status-badge--different {
-  color: var(--compare-warning);
-  background: var(--compare-warning-bg);
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#9a3412;
+  background:#ffedd5;
+  border:1px solid #fdba74;
+  box-shadow:0 4px 12px rgb(194 65 12 / 10%);
 }
+
+.status-badge--different::before{display:grid;width:16px;height:16px;place-items:center;border-radius:50%;background:#ea580c;color:#fff;font-size:10px;font-weight:900;content:"!"}
+.comparison-card--different{border:2px solid #fb923c;background:linear-gradient(90deg,#fff8f1 0,#fff 22%);box-shadow:0 12px 32px rgb(194 65 12 / 10%)}
+.comparison-card--different:hover{border-color:#ea580c;box-shadow:0 16px 38px rgb(194 65 12 / 15%)}
+.comparison-card--different .comparison-card__header{border-bottom:1px solid #ffedd5}
+.comparison-card--different .condition-icon{color:#c2410c;background:#ffedd5}
+.summary-metrics div:first-child{background:#fff7ed}.summary-metrics div:first-child strong{color:#c2410c}.summary-metrics div:first-child span{color:#9a3412;font-weight:800}
+.status-tab[data-filter="different"]{color:#9a3412;background:#fff7ed;border-color:#fed7aa}.status-tab[data-filter="different"]:hover,.status-tab[data-filter="different"].is-active{color:#9a3412;background:#ffedd5;border-color:#fb923c}
 
 .status-badge--needs_confirmation {
   color: var(--compare-purple);
@@ -442,7 +484,7 @@ button {
 .value-cell {
   min-width: 0;
   padding: 13px 14px;
-  background: #fafbfc;
+  background: var(--compare-subtle);
   border-top: 3px solid var(--cell-color);
 }
 
@@ -504,7 +546,7 @@ button {
 .rights-check {
   margin-top: 14px;
   padding: 14px;
-  background: #f8fafc;
+  background: var(--compare-inset);
   border: 1px solid #dbe3ee;
   border-left: 4px solid #64748b;
   border-radius: 12px;
@@ -568,7 +610,7 @@ button {
   gap: 3px;
   padding: 10px;
   margin-top: 10px;
-  background: #fff;
+  background: var(--compare-raised);
   border: 1px solid #e2e8f0;
   border-radius: 9px;
 }
@@ -604,7 +646,7 @@ button {
 .confirmation-block {
   margin-top: 14px;
   padding: 13px 14px;
-  background: #f8f9fc;
+  background: var(--compare-inset);
   border-radius: 12px;
 }
 
@@ -629,7 +671,7 @@ button {
   padding: 5px 8px;
   color: #4f5a6d;
   font-size: 11px;
-  background: #fff;
+  background: var(--compare-raised);
   border: 1px solid var(--compare-line);
   border-radius: 999px;
 }
@@ -898,4 +940,119 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* 다크 모드에서도 비교 결과의 정보 위계와 상태색을 유지한다. */
+[data-theme="dark"] .comparison-page .results-section {
+  color: var(--compare-text);
+  background: var(--compare-surface);
+  border-color: var(--compare-line);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 18%);
+}
+
+[data-theme="dark"] .comparison-page .summary-metrics {
+  background: #223047;
+  border-color: #41516a;
+}
+
+[data-theme="dark"] .comparison-page .summary-metrics div {
+  border-color: #41516a;
+}
+
+[data-theme="dark"] .comparison-page .summary-metrics div:first-child {
+  background: #422b22;
+}
+
+[data-theme="dark"] .comparison-page .summary-metrics div:first-child :is(strong, span) {
+  color: #ffb58a;
+}
+
+[data-theme="dark"] .comparison-page .comparison-legend,
+[data-theme="dark"] .comparison-page .status-tab {
+  color: var(--compare-muted);
+  background: var(--compare-inset);
+  border-color: var(--compare-line);
+}
+
+[data-theme="dark"] .comparison-page .status-tab:hover,
+[data-theme="dark"] .comparison-page .status-tab.is-active {
+  color: #b9d1ff;
+  background: #203a67;
+  border-color: #4f78ba;
+}
+
+[data-theme="dark"] .comparison-page .status-tab[data-filter="different"],
+[data-theme="dark"] .comparison-page .status-tab[data-filter="different"].is-active {
+  color: #ffbd91;
+  background: #422b22;
+  border-color: #a65f38;
+}
+
+[data-theme="dark"] .comparison-page .comparison-card {
+  color: var(--compare-text);
+  background: var(--compare-raised);
+  border-color: var(--compare-line);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 14%);
+}
+
+[data-theme="dark"] .comparison-page .comparison-card--different {
+  background: linear-gradient(90deg, #392820 0, var(--compare-raised) 25%);
+  border-color: #a8613c;
+}
+
+[data-theme="dark"] .comparison-page .comparison-card--different .comparison-card__header {
+  border-color: #64412e;
+}
+
+[data-theme="dark"] .comparison-page .value-track {
+  background: var(--compare-line);
+  border-color: var(--compare-line);
+}
+
+[data-theme="dark"] .comparison-page .value-cell {
+  background: var(--compare-subtle);
+}
+
+[data-theme="dark"] .comparison-page :is(.comparison-summary-text, .rights-check > p, .rights-missing, .rights-basis) {
+  color: #c7d2e3;
+}
+
+[data-theme="dark"] .comparison-page .rights-check {
+  background: var(--compare-inset);
+  border-color: #46566e;
+  border-left-color: #7d8ca1;
+}
+
+[data-theme="dark"] .comparison-page .rights-check--standard_mismatch {
+  background: #3b2528;
+  border-left-color: #ef7770;
+}
+
+[data-theme="dark"] .comparison-page .rights-check--needs_confirmation {
+  background: #40331f;
+  border-left-color: #e0a64f;
+}
+
+[data-theme="dark"] .comparison-page .rights-check--no_mismatch_detected {
+  background: #1d392f;
+  border-left-color: #52bd91;
+}
+
+[data-theme="dark"] .comparison-page :is(.pay-calculation, .confirmation-list li) {
+  color: #d5deeb;
+  background: var(--compare-raised);
+  border-color: #46566e;
+}
+
+[data-theme="dark"] .comparison-page .confirmation-block {
+  background: var(--compare-inset);
+}
+
+[data-theme="dark"] .comparison-page .rights-check__heading span {
+  color: #cbd5e1;
+  background: #2b384c;
+}
+
+[data-theme="dark"] .comparison-page .page-header h1 {
+  color: #fff;
 }
