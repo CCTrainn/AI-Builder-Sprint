@@ -389,6 +389,46 @@ def test_bank_deposit_extracts_transaction_fields() -> None:
     assert ("deposit_amount", 877000) in values
 
 
+def test_employer_message_extracts_changed_schedule_and_delayed_pay_date() -> None:
+    schedule = extract_conditions(
+        "8월 15일부터 근무시간을 08:00~20:00로 바꿀게. 토요일도 09:00~15:00 근무해 줘.",
+        document_type="employer_message",
+    )
+    pay_delay = extract_conditions(
+        "이번 달 급여는 자금 사정 때문에 9월 18일에 입금할게. 계약서에는 매월 10일이라고 되어 있어.",
+        document_type="employer_message",
+    )
+
+    assert {item.type: item.value for item in schedule}["working_hours"] == "08:00-20:00"
+    assert {item.type: item.value for item in pay_delay}["pay_date"] == 18
+
+
+def test_attendance_extracts_compact_ocr_summary() -> None:
+    conditions = extract_conditions(
+        "2026년 8월 출퇴근 기록\n기간\n근무일\n실제 근무시간\n휴게\n연장시간\n"
+        "8/1~8/7\n6일\n08:00~20:00\n1시간\n8시간\n총 근로시간: 220시간 "
+        "연장·야간·휴일근로: 28시간",
+        document_type="attendance",
+    )
+    values = {item.type: item.value for item in conditions}
+
+    assert values["working_hours"] == "08:00-20:00"
+    assert values["total_working_hours"] == 220
+    assert values["overtime_hours"] == 28
+
+
+def test_bank_deposit_extracts_labeled_ocr_fields() -> None:
+    conditions = extract_conditions(
+        "급여 입금내역 1,880,000원 입금 입금일 2026년 9월 18일 "
+        "계약상 급여 지급일 2026년 9월 10일 입금자 근무 사업장",
+        document_type="bank_deposit",
+    )
+    values = {item.type: item.value for item in conditions}
+
+    assert values["deposit_date"] == "2026-09-18"
+    assert values["deposit_amount"] == 1880000
+
+
 def test_attendance_extracts_mobile_timecard_rows() -> None:
     text = """7/6 (월)
 18:00 - 22:00
