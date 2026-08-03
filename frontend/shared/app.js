@@ -1,4 +1,4 @@
-import { mountThemeToggle } from "./theme.js?v=20260803-2";
+import { mountThemeToggle } from "./theme.js?v=20260803-4";
 
 const sidebarRoot = document.querySelector("#appSidebar");
 const DISPLAY_LANGUAGES = [
@@ -165,7 +165,7 @@ function renderSidebar() {
 
 renderSidebar();
 mountThemeToggle();
-import("./site-i18n.js?v=20260803-9");
+import("./site-i18n.js?v=20260803-12");
 
 const siteLanguage = document.querySelector("#site-language");
 const languageMenuToggle = document.querySelector("#language-menu-toggle");

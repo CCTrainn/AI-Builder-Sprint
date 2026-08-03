@@ -154,6 +154,55 @@
   background: #27364b;
 }
 
+/* 홈: home.css의 밝은 카드 색상을 다크 테마에서 명시적으로 덮는다. */
+[data-theme="dark"] .home-page {
+  --home-ink: #edf3fc;
+  --home-muted: #aab6c8;
+  --home-line: #344258;
+  --home-soft: #172033;
+}
+
+[data-theme="dark"] .home-page :is(.focus-card, .case-summary, .progress-section, .page-shortcuts, .home-secondary a) {
+  color: #edf3fc;
+  background: #111a2b;
+  border-color: #344258;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+
+[data-theme="dark"] .home-page :is(.condition-card, .condition-values div, .page-shortcuts__links a, .progress-list li > span, .progress-list li > div) {
+  color: #dce6f5;
+  background: #172033;
+  border-color: #344258;
+}
+
+[data-theme="dark"] .home-page .page-shortcuts__links a:hover,
+[data-theme="dark"] .home-page .progress-list li[role="link"]:hover {
+  background: #1b273a;
+  border-color: #46658f;
+}
+
+[data-theme="dark"] .home-page .focus-card__action {
+  color: #b9d0ff;
+  background: #172b50;
+  border-color: #315a9e;
+}
+
+[data-theme="dark"] .home-page .progress-list li:not(:last-child)::after {
+  background: #344258;
+}
+
+[data-theme="dark"] .home-page .progress-list li.is-complete > span {
+  color: #fff;
+  background: #12b76a;
+  border-color: #12b76a;
+}
+
+[data-theme="dark"] .home-page .progress-list li.is-current > span {
+  color: #9bbcff;
+  background: #172b50;
+  border-color: #315a9e;
+}
+
 [data-theme="dark"] .language-menu {
   background: #151e2f;
   border-color: #344258;

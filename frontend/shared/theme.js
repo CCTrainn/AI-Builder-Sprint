@@ -10,7 +10,7 @@ function ensureThemeStylesheet() {
   const stylesheet = document.createElement("link");
   stylesheet.id = "app-theme-stylesheet";
   stylesheet.rel = "stylesheet";
-  stylesheet.href = new URL("./theme.css?v=20260803-1", import.meta.url).href;
+  stylesheet.href = new URL("./theme.css?v=20260803-3", import.meta.url).href;
   document.head.append(stylesheet);
 }
 
