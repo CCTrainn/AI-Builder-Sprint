@@ -23,6 +23,7 @@ let restoredMessages = [];
 let visibleHistoryCount = 20;
 let activeConversationId = null;
 let translationRequestSequence = 0;
+let latestAnalysis = null;
 
 const labels = {
   hourly_wage: "시급",
@@ -39,12 +40,34 @@ const languageLabels = {
   id: "Bahasa Indonesia",
   en: "English",
 };
+const officialBasisLabels = {
+  ko: "공식 기준 근거",
+  vi: "Căn cứ chính thức",
+  "zh-CN": "官方依据",
+  th: "หลักเกณฑ์ทางการ",
+  id: "Dasar resmi",
+  en: "Official basis",
+};
 
 async function request(path, options = {}) {
   const response = await fetch(`${apiBase}${path}`, options);
   const body = await response.json().catch(() => null);
   if (!response.ok || !body?.success) throw new Error(body?.error?.message || "잠시 후 다시 시도해 주세요.");
   return body.data;
+}
+
+async function translateUiText(text) {
+  if (!text || userLanguage.startsWith("ko")) return text || "";
+  try {
+    const result = await request("/conversations/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, user_language: userLanguage }),
+    });
+    return result.translated_text || text;
+  } catch {
+    return text;
+  }
 }
 
 function button(text, onClick, className = "coach-choice") {
@@ -408,6 +431,7 @@ document.addEventListener("userlanguagechange", async (event) => {
       updateVisibleTranslation(suggestionResult.translated_text);
     }
     employerBubbles.forEach((item, index) => updateEmployerTranslation(item, employerResults[index]?.translated_text));
+    if (latestAnalysis) await showAnalysis(latestAnalysis);
   } catch (error) {
     if (requestSequence !== translationRequestSequence) return;
     coachFeedback.textContent = `번역을 갱신하지 못했어요. ${error.message}`;
@@ -500,7 +524,8 @@ async function analyzeReply(input) {
   }
 }
 
-function showAnalysis(analysis) {
+async function showAnalysis(analysis) {
+  latestAnalysis = analysis;
   const unanswered = analysis.unanswered_items || [];
   suggestion = { korean_text: analysis.follow_up_korean, translated_text: analysis.translated_follow_up, basis: [] };
   const context = analysis.safety_mode
@@ -511,19 +536,25 @@ function showAnalysis(analysis) {
   showSuggestion(analysis.follow_up_korean, context, "다음 조치를 이어가세요.");
   const action = analysis.next_action;
   if (!action) return;
+  const [actionTitle, actionDescription, officialBasis, ...translatedCommitments] = await Promise.all([
+    translateUiText(action.title),
+    translateUiText(action.description),
+    translateUiText(analysis.official_basis_title || "국가법령정보센터 확인 결과"),
+    ...(analysis.commitments || []).map((item) => translateUiText(item.action)),
+  ]);
   const card = document.createElement("section");
   card.className = "coach-next-action";
   const label = document.createElement("span");
   label.textContent = "현재 진행 상태";
   const title = document.createElement("strong");
-  title.textContent = action.title;
+  title.textContent = actionTitle;
   const description = document.createElement("p");
-  description.textContent = action.description;
+  description.textContent = actionDescription;
   card.append(label, title, description);
   if (analysis.rights_assertion_mode) {
     const rights = document.createElement("p");
     rights.className = "coach-next-action__rights";
-    rights.textContent = `공식 기준 근거: ${analysis.official_basis_title || "국가법령정보센터 확인 결과"}`;
+    rights.textContent = `${officialBasisLabels[userLanguage] || officialBasisLabels.ko}: ${officialBasis}`;
     card.append(rights);
     if (analysis.official_basis_url) {
       const source = document.createElement("a");
@@ -541,10 +572,10 @@ function showAnalysis(analysis) {
     due.textContent = `다시 확인할 시점: ${action.due_date}`;
     card.append(due);
   }
-  (analysis.commitments || []).forEach((commitment) => {
+  (analysis.commitments || []).forEach((commitment, index) => {
     const item = document.createElement("p");
     item.className = "coach-next-action__commitment";
-    item.textContent = `사장님의 약속: ${commitment.action}${commitment.due_date ? ` · ${commitment.due_date}` : ""}`;
+    item.textContent = `사장님의 약속: ${translatedCommitments[index] || commitment.action}${commitment.due_date ? ` · ${commitment.due_date}` : ""}`;
     card.append(item);
   });
   const actionButtons = document.createElement("div");
