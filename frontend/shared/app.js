@@ -1,3 +1,5 @@
+import { mountThemeToggle } from "./theme.js?v=20260803-1";
+
 const sidebarRoot = document.querySelector("#appSidebar");
 const DISPLAY_LANGUAGES = [
   { value: "ko", label: "Korean" },
@@ -137,6 +139,7 @@ function renderSidebar() {
 }
 
 renderSidebar();
+mountThemeToggle();
 import("./site-i18n.js?v=20260802-6");
 
 const siteLanguage = document.querySelector("#site-language");

@@ -1,0 +1,498 @@
+[data-theme="dark"] {
+  --color-navy: #e8eef9;
+  --color-bg: #0b1120;
+  --color-surface: #151e2f;
+  --color-text: #e8eef9;
+  --color-muted: #9aa8bd;
+  --color-line: #2a374b;
+  --sidebar-text: #e8eef9;
+  --sidebar-muted: #9aa8bd;
+  --sidebar-line: #29364a;
+  --sidebar-surface: rgb(15 23 42 / 96%);
+  --home-text: #e8eef9;
+  --home-muted: #9aa8bd;
+  --home-line: rgb(75 91 116 / 62%);
+  --home-background: #0b1120;
+  --records-text: #e8eef9;
+  --records-muted: #9aa8bd;
+  --records-line: #2a374b;
+  --records-surface: #151e2f;
+  --records-bg: #0b1120;
+  --records-blue-soft: #172b50;
+  --records-warning-bg: #382e13;
+  --records-danger-bg: #3b2024;
+  --records-success-bg: #12372b;
+  --compare-text: #e8eef9;
+  --compare-muted: #9aa8bd;
+  --compare-line: #2a374b;
+  --compare-surface: #151e2f;
+  --compare-bg: #0b1120;
+  --compare-blue-soft: #172b50;
+  --compare-success-bg: #12372b;
+  --compare-warning-bg: #382e13;
+  --compare-purple-bg: #2d2447;
+  --compare-missing-bg: #263143;
+  --conversation-navy: #e8eef9;
+  --conversation-teal-soft: #172b50;
+  --conversation-blue-soft: #17243d;
+  --conversation-amber-soft: #382e13;
+  --record-navy: #e8eef9;
+  --record-teal-soft: #172b50;
+  --record-blue-soft: #17243d;
+  --record-amber-soft: #382e13;
+  --community-ink: #e8eef9;
+  --community-bg: #0b1120;
+  --community-line: #2a374b;
+}
+
+[data-theme="dark"] body {
+  background: #0b1120;
+  color: #e8eef9;
+}
+
+[data-theme="dark"] body::selection {
+  color: #fff;
+  background: #2563eb;
+}
+
+[data-theme="dark"] :where(h1, h2, h3, h4, label) {
+  color: #e8eef9;
+}
+
+[data-theme="dark"] body :where(input, select, textarea) {
+  color: #dce6f5;
+  background-color: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] body :where(input, textarea)::placeholder {
+  color: #7f8da3;
+}
+
+.theme-toggle {
+  position: fixed;
+  z-index: 220;
+  bottom: 20px;
+  left: calc(var(--sidebar-width) - 104px);
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--sidebar-muted);
+  background: #f3f6fa;
+  border: 1px solid var(--sidebar-line);
+  border-radius: 11px;
+  cursor: pointer;
+  place-items: center;
+  transition: color 0.2s, background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  color: var(--sidebar-blue);
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.theme-toggle:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 28%);
+  outline-offset: 3px;
+}
+
+.theme-toggle svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.theme-toggle svg[hidden] {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle,
+[data-theme="dark"] .language-menu__toggle {
+  color: #b4c0d3;
+  background: #1b273a;
+  border-color: #344258;
+}
+
+[data-theme="dark"] .theme-toggle:hover,
+[data-theme="dark"] .theme-toggle:focus-visible,
+[data-theme="dark"] .language-menu__toggle:hover,
+[data-theme="dark"] .language-menu__toggle:focus-visible,
+[data-theme="dark"] .language-menu__toggle[aria-expanded="true"] {
+  color: #7dacff;
+  background: #172b50;
+  border-color: #315a9e;
+}
+
+[data-theme="dark"] .app-sidebar {
+  box-shadow: 8px 0 36px rgb(0 0 0 / 24%);
+}
+
+[data-theme="dark"] .app-sidebar__item {
+  color: #aab6c8;
+}
+
+[data-theme="dark"] .app-sidebar__item:hover {
+  color: #edf3fc;
+  background: #1b273a;
+}
+
+[data-theme="dark"] .app-sidebar__item.is-active {
+  color: #8bb6ff;
+  background: #172b50;
+  border-color: #284c84;
+}
+
+[data-theme="dark"] .app-sidebar__avatar {
+  color: #dce6f5;
+  background: #27364b;
+}
+
+[data-theme="dark"] .language-menu {
+  background: #151e2f;
+  border-color: #344258;
+  box-shadow: 0 16px 42px rgb(0 0 0 / 36%);
+}
+
+[data-theme="dark"] .language-menu__item {
+  color: #b4c0d3;
+}
+
+[data-theme="dark"] .language-menu__item:hover,
+[data-theme="dark"] .language-menu__item:focus-visible {
+  color: #edf3fc;
+  background: #1b273a;
+}
+
+[data-theme="dark"] .language-menu__item.is-selected {
+  color: #8bb6ff;
+  background: #172b50;
+}
+
+/* 홈 */
+[data-theme="dark"] .ambient-light {
+  opacity: 0.72;
+}
+
+[data-theme="dark"] .ambient-light::after {
+  background: linear-gradient(
+    180deg,
+    rgb(11 17 32 / 92%) 0%,
+    rgb(11 17 32 / 74%) 58%,
+    rgb(11 17 32 / 48%) 100%
+  );
+}
+
+[data-theme="dark"] .quick-menu__item {
+  background: linear-gradient(145deg, rgb(27 39 58 / 92%), rgb(18 28 45 / 84%));
+  border-color: rgb(69 84 107 / 72%);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 18%);
+}
+
+[data-theme="dark"] .quick-menu__item:hover {
+  border-color: #496891;
+  box-shadow: 0 22px 52px rgb(0 0 0 / 30%);
+}
+
+[data-theme="dark"] .quick-menu__arrow {
+  color: #aab6c8;
+  background: rgb(29 42 63 / 90%);
+  border-color: #3a4960;
+}
+
+/* 자료, 비교, 대화, 기록함의 기본 카드 */
+[data-theme="dark"] :is(
+  .record-summary article,
+  .upload-card,
+  .timeline-card,
+  .record-dialog,
+  .summary-metrics,
+  .results-section,
+  .comparison-card,
+  .message-workspace,
+  .reply-analysis,
+  .analysis-panel,
+  .conversation-history,
+  .summary-grid,
+  .record-content,
+  .record-empty
+) {
+  background: #151e2f;
+  border-color: #2a374b;
+  box-shadow: 0 16px 46px rgb(0 0 0 / 18%);
+}
+
+[data-theme="dark"] :is(
+  .secondary-button,
+  .retry-button,
+  .copy-button,
+  .copy-record-button,
+  .danger-button,
+  .icon-button
+) {
+  color: #c7d2e3;
+  background: #1a2537;
+  border-color: #344258;
+}
+
+[data-theme="dark"] :is(
+  .secondary-button,
+  .retry-button,
+  .copy-button,
+  .copy-record-button,
+  .danger-button,
+  .icon-button
+):hover {
+  background: #223047;
+  border-color: #496078;
+}
+
+[data-theme="dark"] :is(
+  .dropzone,
+  .state-panel,
+  .record-item,
+  .record-cell,
+  .pay-calculation,
+  .confirmation-list li,
+  .interpretation-note,
+  .notice,
+  .basis-block li,
+  .reply-input-card textarea,
+  .history-item,
+  #sent-message-text
+) {
+  color: #c4cfdf;
+  background-color: #111a2b;
+  border-color: #2f3d52;
+}
+
+[data-theme="dark"] .dropzone:hover,
+[data-theme="dark"] .dropzone.is-dragging {
+  background: #172b50;
+  border-color: #4c82d8;
+}
+
+[data-theme="dark"] .record-item::before,
+[data-theme="dark"] .summary-icon,
+[data-theme="dark"] .rights-check__heading span {
+  background: #17243d;
+}
+
+[data-theme="dark"] .record-cell {
+  background: #111a2b;
+}
+
+[data-theme="dark"] :is(.form-field select, .form-field input, .timeline-filters select) {
+  color: #dce6f5;
+  background: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] :is(.comparison-value, .confirmation-list li span, .interpretation-note p) {
+  color: #c4cfdf;
+}
+
+[data-theme="dark"] :is(.toast, .record-dialog::backdrop) {
+  --theme-overlay: rgb(2 6 23 / 72%);
+}
+
+[data-theme="dark"] .record-dialog::backdrop {
+  background: var(--theme-overlay);
+}
+
+/* 기록 비교 */
+[data-theme="dark"] .comparison-summary {
+  background:
+    radial-gradient(circle at 100% 0%, rgb(44 70 112 / 42%), transparent 34%),
+    linear-gradient(135deg, #17243a, #1d2039 115%);
+  border-color: #30425e;
+  box-shadow: 0 16px 44px rgb(0 0 0 / 22%);
+}
+
+[data-theme="dark"] .summary-icon {
+  background: #172b50;
+  border-color: #31558c;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .summary-metrics {
+  background: rgb(11 17 32 / 64%);
+  border-color: #35445b;
+}
+
+[data-theme="dark"] .summary-metrics div {
+  border-color: #35445b;
+}
+
+[data-theme="dark"] :is(.status-tab, .comparison-legend) {
+  color: #aab6c8;
+  background: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] .status-tab:hover {
+  color: #edf3fc;
+  background: #1b273a;
+}
+
+[data-theme="dark"] .status-tab.is-active {
+  color: #8bb6ff;
+  background: #172b50;
+  border-color: #315a9e;
+}
+
+/* 확인 대화 */
+[data-theme="dark"] .issue-card {
+  color: #dce6f5;
+  background:
+    radial-gradient(circle at 100% 0%, rgb(54 80 122 / 38%), transparent 38%),
+    linear-gradient(145deg, #17243a, #211f3a 120%);
+  border-color: #30425e;
+}
+
+[data-theme="dark"] :is(.wage-comparison, .wage-comparison div + div) {
+  border-color: #344258;
+}
+
+[data-theme="dark"] :is(.wage-comparison dt, .check-items p, .tone-selector small) {
+  color: #9aa8bd;
+}
+
+[data-theme="dark"] .check-items li {
+  color: #c4cfdf;
+  border-color: #40516a;
+}
+
+[data-theme="dark"] .tone-selector span {
+  color: #dce6f5;
+  background: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] .tone-selector input:checked + span {
+  background: #203a67;
+  border-color: #4d8df7;
+}
+
+[data-theme="dark"] :is(.korean-message, .translated-message, .sent-message-card) {
+  color: #c7d2e3;
+  background: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] :is(.message-block p, .sent-message-guide) {
+  color: #c4cfdf;
+}
+
+[data-theme="dark"] #sent-message-text {
+  color: #dce6f5;
+  background: #0c1423;
+  border-color: #40516a;
+}
+
+[data-theme="dark"] :is(.similar-experience-hint, .reply-input-card, .analysis-card, .history-item) {
+  color: #c4cfdf;
+  background: #111a2b;
+  border-color: #344258;
+}
+
+/* 공동 경험 */
+[data-theme="dark"] :is(
+  .graph-layout,
+  .experience-card,
+  .preview-card,
+  .impact-graph,
+  .list-item
+) {
+  color: #dce6f5;
+  background-color: #151e2f;
+  border-color: #2a374b;
+}
+
+[data-theme="dark"] :is(.similar-notice, .primary-action, .share-preview) {
+  color: #e8eef9;
+  background: #111a2b;
+}
+
+[data-theme="dark"] :is(
+  .header-actions button,
+  .graph-toolbar button,
+  .panel-title button,
+  .filter-group select
+) {
+  color: #bdc9da;
+  background: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] :is(
+  .privacy-mini,
+  .connection-summary,
+  .anonymize-result,
+  .impact-stats div
+) {
+  background: #111a2b;
+}
+
+[data-theme="dark"] .graph-view {
+  background-color: #0f1727;
+  background-image: radial-gradient(#35445b 1px, transparent 1px);
+}
+
+[data-theme="dark"] .graph-hint {
+  color: #9aa8bd;
+  background: rgb(21 30 47 / 94%);
+  border-color: #344258;
+}
+
+[data-theme="dark"] .graph-node text {
+  fill: #cbd7e8;
+}
+
+[data-theme="dark"] .graph-node circle {
+  stroke: #151e2f;
+}
+
+[data-theme="dark"] .preview-card textarea {
+  color: #c7d2e3;
+  background: #0f1727;
+  border-color: #344258;
+}
+
+@media (max-width: 1040px) and (min-width: 721px) {
+  .theme-toggle {
+    bottom: 58px;
+    left: 2px;
+  }
+}
+
+@media (max-width: 720px) {
+  .theme-toggle {
+    top: 12px;
+    right: 60px;
+    bottom: auto;
+    left: auto;
+    width: 40px;
+    height: 40px;
+    background: rgb(255 255 255 / 94%);
+    box-shadow: 0 8px 24px rgb(55 70 104 / 10%);
+  }
+
+  [data-theme="dark"] .theme-toggle,
+  [data-theme="dark"] .language-menu__toggle,
+  [data-theme="dark"] .app-sidebar {
+    background: rgb(15 23 42 / 96%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle {
+    transition: none;
+  }
+}
