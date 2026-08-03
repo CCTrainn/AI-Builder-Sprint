@@ -46,9 +46,8 @@ body.has-app-sidebar {
 
 .app-sidebar__brand-logo {
   display: block;
-  width: 130px;
+  width: 96px;
   height: auto;
-  transform: translateX(-5px);
 }
 
 .app-sidebar__brand-logo--dark {
@@ -123,13 +122,27 @@ body.has-app-sidebar {
   display: none;
 }
 
-.app-sidebar__workspace {
-  display: flex;
-  align-items: center;
+.app-sidebar__footer {
+  display: grid;
   gap: 10px;
   margin-top: auto;
-  padding: 14px 10px 2px;
+  padding-top: 14px;
   border-top: 1px solid var(--sidebar-line);
+}
+
+.app-sidebar__workspace {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+}
+
+.app-sidebar__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 2px;
 }
 
 .app-sidebar__language-picker {
@@ -137,7 +150,11 @@ body.has-app-sidebar {
   flex: none;
   width: 36px;
   height: 36px;
-  margin-left: auto;
+}
+
+.app-sidebar__controls .theme-toggle {
+  position: static;
+  flex: none;
 }
 
 .app-sidebar__language-picker #site-language[hidden] {
@@ -320,7 +337,7 @@ body.has-app-sidebar {
   }
 
   .app-sidebar__brand-logo {
-    width: 44px;
+    width: 36px;
   }
 
   .app-sidebar__label,
@@ -345,6 +362,10 @@ body.has-app-sidebar {
     left: -11px;
   }
 
+  .app-sidebar__footer {
+    width: 100%;
+  }
+
   .app-sidebar__workspace {
     justify-content: center;
     width: 100%;
@@ -352,10 +373,15 @@ body.has-app-sidebar {
     padding-left: 0;
   }
 
+  .app-sidebar__controls {
+    padding: 0;
+    flex-direction: column;
+  }
+
   .app-sidebar__language-picker {
-    position: absolute;
-    right: 4px;
-    bottom: 58px;
+    position: relative;
+    right: auto;
+    bottom: auto;
   }
 
   .language-menu {
@@ -372,6 +398,14 @@ body.has-app-sidebar {
     position: fixed;
     top: 12px;
     right: 12px;
+  }
+
+  .app-sidebar__controls .theme-toggle {
+    position: fixed;
+    top: 12px;
+    right: 60px;
+    bottom: auto;
+    left: auto;
   }
 
   .language-menu__toggle {
@@ -411,6 +445,19 @@ body.has-app-sidebar {
   .app-sidebar__brand,
   .app-sidebar__workspace {
     display: none;
+  }
+
+  .app-sidebar__footer {
+    display: block;
+    width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .app-sidebar__controls {
+    display: block;
+    padding: 0;
   }
 
   .app-sidebar__nav {

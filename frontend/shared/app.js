@@ -1,4 +1,4 @@
-import { mountThemeToggle } from "./theme.js?v=20260803-1";
+import { mountThemeToggle } from "./theme.js?v=20260803-2";
 
 const sidebarRoot = document.querySelector("#appSidebar");
 const DISPLAY_LANGUAGES = [
@@ -127,25 +127,29 @@ function renderSidebar() {
         ${navigation}
       </nav>
 
-      <div class="app-sidebar__workspace">
-        <span class="app-sidebar__avatar" aria-hidden="true">${avatarText}</span>
-        <span class="app-sidebar__workspace-copy">
-          ${accountContent}
-        </span>
-        <div class="app-sidebar__language-picker">
-          <button id="language-menu-toggle" class="language-menu__toggle" type="button"
-            aria-label="Select language" aria-haspopup="listbox" aria-expanded="false">
-          <svg aria-hidden="true" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
-          </svg>
-          </button>
-          <select id="site-language" aria-label="Site display language" tabindex="-1" hidden>
-            ${languageOptions(displayLanguage)}
-          </select>
-          <div id="language-menu" class="language-menu" role="listbox" aria-label="Select language" hidden>
-            <strong>Language</strong>
-            ${languageMenuItems(displayLanguage)}
+      <div class="app-sidebar__footer">
+        <div class="app-sidebar__workspace">
+          <span class="app-sidebar__avatar" aria-hidden="true">${avatarText}</span>
+          <span class="app-sidebar__workspace-copy">
+            ${accountContent}
+          </span>
+        </div>
+        <div class="app-sidebar__controls" aria-label="화면 설정">
+          <div class="app-sidebar__language-picker">
+            <button id="language-menu-toggle" class="language-menu__toggle" type="button"
+              aria-label="Select language" aria-haspopup="listbox" aria-expanded="false">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path>
+            </svg>
+            </button>
+            <select id="site-language" aria-label="Site display language" tabindex="-1" hidden>
+              ${languageOptions(displayLanguage)}
+            </select>
+            <div id="language-menu" class="language-menu" role="listbox" aria-label="Select language" hidden>
+              <strong>Language</strong>
+              ${languageMenuItems(displayLanguage)}
+            </div>
           </div>
         </div>
       </div>
