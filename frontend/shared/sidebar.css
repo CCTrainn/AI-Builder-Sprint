@@ -38,41 +38,29 @@ body.has-app-sidebar {
 .app-sidebar__brand {
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin: 0 7px 32px;
+  justify-content: center;
+  margin: 0 0 32px;
   color: var(--sidebar-text);
   text-decoration: none;
 }
 
-.app-sidebar__brand-mark {
-  display: grid;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 800;
-  background: linear-gradient(145deg, #4f8df7, #2563eb);
-  border-radius: 13px;
-  box-shadow: 0 9px 22px rgb(37 99 235 / 22%);
-  place-items: center;
-}
-
-.app-sidebar__brand-copy,
-.app-sidebar__brand-copy strong,
-.app-sidebar__brand-copy small {
+.app-sidebar__brand-logo {
   display: block;
+  width: 130px;
+  height: auto;
+  transform: translateX(-5px);
 }
 
-.app-sidebar__brand-copy strong {
-  font-size: 15px;
-  line-height: 1.2;
+.app-sidebar__brand-logo--dark {
+  display: none;
 }
 
-.app-sidebar__brand-copy small {
-  margin-top: 2px;
-  color: var(--sidebar-muted);
-  font-size: 11px;
+[data-theme="dark"] .app-sidebar__brand-logo--light {
+  display: none;
+}
+
+[data-theme="dark"] .app-sidebar__brand-logo--dark {
+  display: block;
 }
 
 .app-sidebar__nav {
@@ -331,7 +319,10 @@ body.has-app-sidebar {
     margin-left: 0;
   }
 
-  .app-sidebar__brand-copy,
+  .app-sidebar__brand-logo {
+    width: 44px;
+  }
+
   .app-sidebar__label,
   .app-sidebar__workspace-copy {
     display: none;

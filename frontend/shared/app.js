@@ -117,10 +117,10 @@ function renderSidebar() {
   sidebarRoot.innerHTML = `
     <aside class="app-sidebar" aria-label="앱 사이드바">
       <a class="app-sidebar__brand" href="../home/home.html" aria-label="근로권리 동반자 홈">
-        <span class="app-sidebar__brand-mark" aria-hidden="true">로고</span>
-        <span class="app-sidebar__brand-copy">
-          <strong>ㄱㄹㄱㄹ</strong>
-        </span>
+        <img class="app-sidebar__brand-logo app-sidebar__brand-logo--light"
+          src="../../shared/logo-black.png" alt="" aria-hidden="true">
+        <img class="app-sidebar__brand-logo app-sidebar__brand-logo--dark"
+          src="../../shared/logo-white.png" alt="" aria-hidden="true">
       </a>
 
       <nav class="app-sidebar__nav" aria-label="주요 메뉴">
