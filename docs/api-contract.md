@@ -61,7 +61,62 @@
 }
 ```
 
-## 3. 근로자료 비교
+`processing_status` 허용값:
+
+```text
+uploaded
+processing
+completed
+failed
+```
+
+## 3. 사업장별 근로자료 목록
+
+`GET /records?workplace_id={workplace_id}`
+
+홈의 근로자료 현황과 근로 기록함에서 사용한다. 최신 `recorded_at` 순서로
+반환하며 `condition_count`는 해당 자료에서 추출한 조건 개수다.
+
+```json
+{
+  "success": true,
+  "data": {
+    "workplace_id": "work_001",
+    "total": 2,
+    "records": [
+      {
+        "record_id": "rec_payslip",
+        "record_type": "payslip",
+        "file_name": "payslip.pdf",
+        "recorded_at": "2026-07-30",
+        "processing_status": "completed",
+        "condition_count": 9,
+        "created_at": "2026-07-30T01:25:43+00:00"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+## 4. 근로자료 삭제
+
+`DELETE /records/{record_id}`
+
+Storage의 원본 파일과 DB 기록, 연결된 추출 조건을 함께 삭제한다.
+
+```json
+{
+  "success": true,
+  "data": {
+    "record_id": "rec_001",
+    "deleted": true
+  },
+  "error": null
+}
+```
+
+## 5. 근로자료 비교
 
 `POST /workplaces/{workplace_id}/compare`
 
@@ -105,6 +160,9 @@
 }
 ```
 
+비교 결과는 DB에 저장된다. 같은 사업장의 같은 `condition`을 다시 비교하면
+기존 결과를 갱신하므로 `comparison_id`가 유지된다.
+
 `status` 허용값:
 
 ```text
@@ -114,7 +172,49 @@ missing
 needs_confirmation
 ```
 
-## 4. 확인 문장 생성
+## 6. 비교 결과 상세 조회
+
+`GET /comparisons/{comparison_id}`
+
+확인 대화 백엔드가 추천 문장과 근거를 만들 때 사용한다.
+
+```json
+{
+  "success": true,
+  "data": {
+    "workplace_id": "work_001",
+    "comparison": {
+      "comparison_id": "cmp_001",
+      "condition": "hourly_wage",
+      "promised": null,
+      "contracted": {
+        "value": 12000,
+        "unit": "KRW",
+        "record_id": "rec_contract"
+      },
+      "actual": {
+        "value": 10500,
+        "unit": "KRW",
+        "record_id": "rec_payslip"
+      },
+      "status": "different",
+      "summary": "시급 조건이 기록 사이에서 다릅니다. 적용 기준을 확인해 보세요.",
+      "confirmation_items": [
+        "어느 기록의 조건이 현재 적용되는지",
+        "조건이 달라진 시점과 이유"
+      ],
+      "legal_reference": {
+        "title": "최저임금법 제6조 (최저임금의 효력)",
+        "article": "공식 조문 본문",
+        "source_url": "https://www.law.go.kr/"
+      }
+    }
+  },
+  "error": null
+}
+```
+
+## 7. 확인 문장 생성
 
 `POST /conversations/message`
 
@@ -151,7 +251,7 @@ clear
 firm
 ```
 
-## 5. 고용주 답변 분석
+## 8. 고용주 답변 분석
 
 `POST /conversations/reply-analysis`
 
@@ -195,4 +295,3 @@ unclear
 new_condition
 more_evidence_needed
 ```
-
