@@ -623,3 +623,7 @@ button {
   background: #40351f;
   border-color: #65522e;
 }
+
+[data-theme="dark"] .record-box-page .page-header h1 {
+  color: #fff;
+}

@@ -1052,3 +1052,7 @@ button {
   color: #cbd5e1;
   background: #2b384c;
 }
+
+[data-theme="dark"] .comparison-page .page-header h1 {
+  color: #fff;
+}
