@@ -18,6 +18,15 @@ from app.schemas.conversations import ConfirmationMessageData, ConversationTone
 UPSTAGE_CHAT_URL = "https://api.upstage.ai/v1/chat/completions"
 UPSTAGE_MODEL = "solar-pro3"
 
+SUPPORTED_TRANSLATION_LANGUAGES = {
+    "vi": "베트남어(Tiếng Việt)",
+    "zh-cn": "중국어 간체(简体中文)",
+    "zh": "중국어 간체(简体中文)",
+    "th": "태국어(ภาษาไทย)",
+    "id": "인도네시아어(Bahasa Indonesia)",
+    "en": "영어(English)",
+}
+
 CONDITION_LABELS = {
     "hourly_wage": "시급",
     "working_hours": "근무시간",
@@ -148,41 +157,60 @@ async def translate_confirmation_text(
     *,
     client: httpx.AsyncClient | None = None,
 ) -> str:
-    if user_language.lower().startswith("ko"):
+    normalized_language = user_language.strip().lower().replace("_", "-")
+    if normalized_language.startswith("ko"):
         return korean_text
+    target_language = SUPPORTED_TRANSLATION_LANGUAGES.get(normalized_language)
+    if target_language is None:
+        raise TranslationError(f"지원하지 않는 번역 언어입니다: {user_language}")
     settings = get_settings()
     api_key = settings.llm_api_key.strip() or settings.upstage_api_key.strip()
     if not api_key:
         return korean_text
-    payload = {
-        "model": UPSTAGE_MODEL,
-        "messages": [
-            {"role": "system", "content": TRANSLATION_SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": json.dumps(
-                    {"번역할 언어": user_language, "한국어 원문": korean_text},
-                    ensure_ascii=False,
-                ),
-            },
-        ],
-        "temperature": 0.1,
-        "max_tokens": 500,
-        "stream": False,
-    }
     request_client = client or httpx.AsyncClient(timeout=20.0)
     try:
-        response = await request_client.post(
-            UPSTAGE_CHAT_URL,
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json=payload,
-        )
-        if response.status_code != 200:
-            raise TranslationError(f"번역 API 응답 오류: {response.status_code}")
-        text = response.json()["choices"][0]["message"]["content"].strip()
-        if not text:
-            raise TranslationError("번역 LLM이 빈 문장을 반환했습니다.")
-        return text
+        for attempt in range(2):
+            payload = {
+                "model": UPSTAGE_MODEL,
+                "messages": [
+                    {"role": "system", "content": TRANSLATION_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": json.dumps(
+                            {
+                                "목표 언어": target_language,
+                                "목표 언어 코드": normalized_language,
+                                "번역할 한국어 원문": korean_text,
+                                "재시도": attempt == 1,
+                            },
+                            ensure_ascii=False,
+                        ),
+                    },
+                ],
+                "temperature": 0.0,
+                "max_tokens": 500,
+                "stream": False,
+            }
+            response = await request_client.post(
+                UPSTAGE_CHAT_URL,
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json=payload,
+            )
+            if response.status_code != 200:
+                if attempt == 0:
+                    continue
+                raise TranslationError(f"번역 API 응답 오류: {response.status_code}")
+            text = response.json()["choices"][0]["message"]["content"].strip()
+            text = re.sub(r"^```(?:\w+)?\s*|\s*```$", "", text).strip().strip('"')
+            text = re.sub(
+                r"^(?:번역(?:문| 결과)?|Translation|Translated text)\s*[:：]\s*",
+                "",
+                text,
+                flags=re.IGNORECASE,
+            ).strip()
+            if text and text != korean_text and not text.startswith("한국어 원문"):
+                return text
+        raise TranslationError("번역 LLM이 목표 언어 번역문을 반환하지 않았습니다.")
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
         raise TranslationError("번역 LLM 호출에 실패했습니다.") from exc
     finally:

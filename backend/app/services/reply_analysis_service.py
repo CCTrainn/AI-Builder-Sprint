@@ -102,7 +102,7 @@ TACTIC_PATTERNS = {
         re.compile(
             r"해고|자르|비자.*(취소|문제)|신고해|신고하고\s*싶으면|가만.*안|죽여|"
             r"찾아가|불이익|보복|근무.{0,12}빼|스케줄.{0,12}(빼|없)|일\s*못\s*할|"
-            r"계약.{0,12}(끝|해지)|그만두게"
+            r"계약.{0,12}(끝|해지)|그만두게|같이\s*일하기\s*(어렵|힘들)|계속\s*일하기\s*(어렵|힘들)"
         ),
         "질문을 중단시키거나 위축시킬 수 있는 표현이 있어 안전을 먼저 확인해야 합니다.",
     ),
@@ -446,7 +446,8 @@ async def _llm_contextual_follow_up_raw(
                 ),
             },
         ],
-        "temperature": 0.85,
+        # 데모와 실사용에서 해결 단계가 안정적으로 유지되도록 표현 편차를 줄인다.
+        "temperature": 0.45,
         "max_tokens": 300,
         "stream": False,
     }
@@ -524,7 +525,9 @@ async def _llm_contextual_follow_up(
                 "<think", "</think>",
             )
         )
-        invalid = invalid or len(text) > 240
+        invalid = invalid or len(text) > 180
+        invalid = invalid or bool(re.match(r"\s*사장님(?:[,.!?\s]|$)", text))
+        invalid = invalid or text.count("\n") > 1
         invalid = invalid or bool(
             re.search(r"(?:^|\n)\s*(?:사장님[,.]?\s*)?(?:안녕|감사)", text)
         )
@@ -596,6 +599,8 @@ async def _llm_contextual_follow_up(
             "working_hours": "계약과 다른 근무시간의 변경 및 추가 근무 처리",
         }.get(comparison.condition, "현재 기록과 다른 조건의 시정")
         return f"{refusal_subject}을 거부하신 답변은 기록으로 보관하겠습니다. 관련 자료를 정리해 공식 상담 절차를 확인하겠습니다."
+    if any("정확한 이행 날짜" in item for item in unanswered_items):
+        return "차액을 지급할 정확한 날짜와 금액, 지급 방식, 수정된 급여명세서를 언제 받을 수 있는지 구체적으로 알려주세요."
     if comparison.condition == "working_hours":
         contracted = comparison.contracted.value if comparison.contracted else "계약 시간"
         actual = comparison.actual.value if comparison.actual else "실제 근무시간"
@@ -777,7 +782,10 @@ async def analyze_employer_reply(
             )
         else:
             missing_parts = []
-            if not commitment.due_date:
+            if not commitment.due_date or re.search(
+                r"오늘|어제|내일|모레|이번\s*주|다음\s*주|이번\s*달|다음\s*달",
+                commitment.due_date,
+            ):
                 missing_parts.append("정확한 이행 날짜")
             if not commitment.amount and comparison.condition in {"pay_date", "weekly_holiday_pay"}:
                 missing_parts.append("지급 금액")
@@ -787,7 +795,10 @@ async def analyze_employer_reply(
                 "고용주의 조치 약속을 다시 처음부터 묻지 말고 "
                 + ("·".join(missing_parts) + "을 확정" if missing_parts else "약속 후 실제 반영 여부를 확인")
             )
-    follow_up_targets = list(dict.fromkeys(commitment_targets + unanswered)) or [
+    # 고용주가 시정 조치를 약속한 뒤에는 과거 이유를 되묻지 않는다. 빠진 약속
+    # 정보나 실제 이행 확인만 전달해 대화가 해결 단계에서 뒤로 돌아가지 않게 한다.
+    target_candidates = commitment_targets if commitments else unanswered
+    follow_up_targets = list(dict.fromkeys(target_candidates)) or [
         "답변에서 말한 조치가 실제 급여·근무 기록에 반영되는지 확인할 기준이나 남길 기록",
         "이미 답변받은 날짜와 이유는 다시 묻지 말고 실제 이행 여부를 확인할 다음 단계",
     ]
