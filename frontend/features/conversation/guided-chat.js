@@ -22,6 +22,7 @@ let pendingGreetingBubble = null;
 let restoredMessages = [];
 let visibleHistoryCount = 20;
 let activeConversationId = null;
+let translationRequestSequence = 0;
 
 const labels = {
   hourly_wage: "시급",
@@ -84,7 +85,10 @@ function buildTranslationCard(translatedText) {
 function updateVisibleTranslation(translatedText) {
   const current = coachContent.querySelector(".coach-translation");
   const next = buildTranslationCard(translatedText);
-  if (current && next) current.replaceWith(next);
+  if (current && next) {
+    current.querySelector("span").textContent = next.querySelector("span").textContent;
+    current.querySelector("p").textContent = next.querySelector("p").textContent;
+  }
   else if (current) current.remove();
   else if (next) coachContent.querySelector(".coach-draft")?.after(next);
 }
@@ -347,6 +351,7 @@ function showSuggestion(text, contextText = "", titleText = "") {
 }
 
 document.addEventListener("userlanguagechange", async (event) => {
+  const requestSequence = ++translationRequestSequence;
   userLanguage = event.detail.language;
   if (!suggestion?.korean_text) return;
   if (userLanguage.startsWith("ko")) {
@@ -355,15 +360,23 @@ document.addEventListener("userlanguagechange", async (event) => {
     return;
   }
   try {
+    const currentCard = coachContent.querySelector(".coach-translation");
+    if (currentCard) currentCard.setAttribute("aria-busy", "true");
     const result = await request("/conversations/translate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: suggestion.korean_text, user_language: userLanguage }),
     });
+    if (requestSequence !== translationRequestSequence) return;
     suggestion.translated_text = result.translated_text;
     updateVisibleTranslation(result.translated_text);
   } catch (error) {
+    if (requestSequence !== translationRequestSequence) return;
     coachFeedback.textContent = `번역을 갱신하지 못했어요. ${error.message}`;
+  } finally {
+    if (requestSequence === translationRequestSequence) {
+      coachContent.querySelector(".coach-translation")?.removeAttribute("aria-busy");
+    }
   }
 });
 
