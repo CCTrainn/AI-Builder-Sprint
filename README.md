@@ -1,156 +1,286 @@
-# AI Builder Sprint 2026
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./frontend/shared/logo-white.png">
+    <img src="./frontend/shared/logo-black.png" alt="근로권리 동반자" width="320">
+  </picture>
+</p>
 
-> 총 168시간, AI와 함께 만드는 도전
+<p align="center">
+  외국인 유학생과 이주노동자가 흩어진 근로자료를 모으고,<br>
+  기록의 차이를 발견해 실제 확인 대화와 다음 행동까지 이어가도록 돕는 서비스
+</p>
 
-## 대회 소개
+# 근로권리 동반자
 
-**AI Builder Sprint 2026**은 부산대학교 **APPTIVE**가 주최하고, **Upstage**, 부산대학교 **Anchor 사업단** 및 부산대학교 **AI융합교육원**이 후원하는 해커톤입니다. 참가자들은 자유로운 기술 스택을 바탕으로 실제로 동작하는 서비스를 직접 코드로 구현합니다.
+근로권리 동반자는 채용공고, 근로계약서, 근무기록, 급여명세서, 입금내역과
+고용주 대화를 한곳에 모아 기록 사이에서 달라진 근로조건을 찾는 웹 서비스입니다.
 
-| 항목 | 내용 |
+AI는 위법 여부를 확정하거나 고용주를 자동 신고하지 않습니다. 대신
+`기록이 다름`, `확인 필요`, `답변되지 않음`을 구분하고, 사용자가 자신의
+기록을 근거로 고용주에게 물어볼 문장과 후속 행동을 준비하도록 돕습니다.
+
+## 주요 기능
+
+- **자료 모으기**: PDF·JPG·PNG 업로드, Upstage Document Parse OCR, 문서 유형별 근로조건 추출
+- **기록 비교하기**: 계약·약속·실제 기록을 시점별로 비교하고 달라진 시급, 근무시간, 급여일, 주휴수당 등을 표시
+- **공식 기준 확인**: 법제처 국가법령정보 공동활용 API에서 관련 조문 조회
+- **대꾸 AI**: 기록을 근거로 확인 문장을 생성하고, 고용주 답변의 회피·거부·약속·협박성 표현을 분석
+- **다국어 지원**: 한국어, 베트남어, 중국어, 태국어, 인도네시아어, 영어 화면 및 대화 번역
+- **근로 기록함**: 실제로 주고받은 문장, 답변 분석, 미답변 항목과 후속 조치를 보관
+- **공동 경험**: 해결 과정을 자동으로 익명화해 사용자가 확인·확정한 한 건의 경험만 공유
+- **화면 설정**: 반응형 레이아웃과 라이트·다크 모드
+
+## 서비스 흐름
+
+```text
+근로자료 업로드
+→ OCR 및 조건 추출
+→ 계약·약속·실제 기록 비교
+→ 관련 공식 법령 조회
+→ 대꾸 AI 확인 문장 생성
+→ 고용주 답변 분석
+→ 지급·수정 약속과 실제 반영 확인
+→ 근로 기록함 보관
+→ 익명 공동 경험 확정 및 공유
+```
+
+## 기술 구성
+
+| 구분 | 구성 |
 | --- | --- |
-| 주제 | AI를 통해 인간다움을 더욱 잘 드러낼 수 있는 서비스 개발 |
-| 팀 구성 | 2~4인 1팀 |
-| 개발 방식 | 코드 기반 앱 개발 필수 (노코드/로우코드 단독 사용 불가) |
+| 프론트엔드 | HTML, CSS, Vanilla JavaScript |
+| 백엔드 | Python 3.11+, FastAPI, Uvicorn |
+| 데이터베이스 | SQLite (`backend/local_data/work-rights.db`) |
+| 원본 파일 | 백엔드 전용 로컬 저장소 (`backend/local_data/uploads/`) |
+| OCR | Upstage Document Parse |
+| LLM | Upstage Solar Pro 3 (`solar-pro3`) |
+| 공식 법령 | 법제처 국가법령정보 공동활용 Open API |
+| 테스트 | pytest |
 
-### 진행 흐름
+FastAPI가 `/api/v1` API와 `frontend/` 정적 파일을 같은 출처에서 함께 제공합니다.
+별도의 Node.js 빌드 과정은 없습니다.
 
-1. **팀 단위 참가 신청** — 팀원 정보, 프로젝트 아이디어, 활용 예정 AI 기술·API 제출
-2. **참가팀 선발** (20~50팀) — 아이디어 참신성·실현 가능성·AI 활용 계획 기반 서류 심사
-3. **예선 개발 기간** (7.27 ~ 8.3, 약 1주일) — API 크레딧 발급, 아이디어 구체화 및 개발
-4. **결과물 제출 및 1차 심사** — 데모 영상/배포 링크, 코드 저장소, 발표 자료, AI 활용 증빙 제출
-5. **본선 발표 및 질의응답** (8.7) — 팀당 7분 발표 + 5분 Q&A, 심사 후 수상팀 확정
+## 로컬 기동 실행 가이드
 
-### 기술 스택 및 규칙
-
-- 사용 API·모델은 자유이며, **Upstage API**(Solar LLM, Document Parse, Information Extract) 활용 시 심사 가점
-- Claude, GPT, Gemini 등 타사 모델 병행 사용 가능 (제약 없음)
-- 프레임워크/언어 자유 (Python, JavaScript, React, Flutter 등)
-- 결과물은 데모 가능한 동작하는 앱 (웹앱, 모바일앱, CLI 도구 등 형태 무관)
-- 코딩 에이전트(Claude Code, Codex 등) 활용 시 `.claude/`, `AGENTS.md` 등 관련 설정·지침 파일을 저장소에 포함해야 심사에 반영됩니다
-
-### 심사 기준
-
-| 기준 | 배점 |
-| --- | --- |
-| 창의성 | 20점 |
-| AI 활용도 | 20점 |
-| 완성도 | 20점 |
-| 실용성 | 20점 |
-| 발표력 (본선) | 20점 |
-| Upstage API 활용 가점 | +5점 |
-| 지역사회 기여도 가점 | +5점 |
-
-### 시상 내역
-
-- 대상 1팀: 100만원 + 상품
-- 최우수상 1팀: 50만원 + 상품
-- 우수상 1팀: 상품
-- 본선 참가 10팀: Upstage 굿즈 + 참가 인증서
-
-## Git Fork 하는 방법
-
-참가팀은 이 저장소를 팀 대표의 GitHub 계정으로 **Fork**한 뒤, 해당 Fork 저장소에서 프로젝트를 개발하고 최종 결과물을 제출합니다.
-
-### 1. 저장소 Fork하기
-
-1. [AI-Builder-Sprint 저장소](https://github.com/ApptiveDev/AI-Builder-Sprint)에 접속합니다.
-2. 우측 상단의 **Fork** 버튼을 클릭합니다.
-  <img width="1888" height="1131" alt="스크린샷 2026-07-27 오전 12 31 16" src="https://github.com/user-attachments/assets/2f0f7f80-6c92-4ba5-87c5-89ed6107eeab" />
-
-3. 본인(또는 팀 대표) GitHub 계정으로 저장소가 복사됩니다. (`https://github.com/<내-계정>/AI-Builder-Sprint`)
-
-### 2. Fork한 저장소 로컬로 클론하기
+### 1. 저장소 받기
 
 ```bash
-git clone https://github.com/<내-계정>/AI-Builder-Sprint.git
+git clone https://github.com/CCTrainn/AI-Builder-Sprint.git
 cd AI-Builder-Sprint
 ```
 
-### 3. 개발 진행 및 커밋
+### 2. Python 가상환경 및 의존성 설치
 
-```bash
-git checkout -b develop
-# 코드 작성 및 수정
-git add .
-git commit -m "feat: 프로젝트 초기 구현"
-git push origin develop
+Python 3.11 이상이 필요합니다.
+
+Windows PowerShell:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e .
 ```
 
-포크된 저장소 내에서 개발을 진행해주시면 됩니다.
-
-### 4. 결과물 제출
-
-- **팀별로 Fork한 본인 저장소 URL을 제출 양식에 기재합니다.**
-- 제출 마감 전까지 코드, 데모 영상/배포 링크, 발표 자료를 함께 준비해 제출해주세요.
-- 코딩 에이전트를 활용한 경우 `.claude/`, `AGENTS.md` 등 설정 파일도 반드시 저장소에 포함해주세요.
-
-
-## 문의
-
-- 대회 관련 문의: 해커톤 문의 오픈채팅방
-- 주최: 부산대학교 APPTIVE, 정보컴퓨터공학부 동아리연합회 / 후원: Upstage, 부산대 Anchor 사업단, 부산대 AI융합교육원
-
----
-
-## CCTrainn 프로젝트
-
-외국인 노동자가 채용공고, 근로계약서, 근무기록, 급여명세서, 입금내역과
-고용주 대화를 평소에 모아두면 기록 사이에서 달라진 조건을 찾아주고,
-고용주에게 확인할 문장과 근거를 제공하는 근로자료 관리 서비스입니다.
-
-### 핵심 흐름
-
-```text
-근로자료 수집
--> OCR 및 조건 추출
--> 시점별 기록 비교
--> 관련 공식 법령 조회
--> 쉬운 설명
--> 고용주에게 확인할 문장
--> 답변 분석
--> 근로 기록함에 보관
-```
-
-### 기술 구성
-
-- 프론트엔드: HTML, CSS, JavaScript
-- 백엔드: Python 3.11+, FastAPI
-- DB: Supabase PostgreSQL
-- 파일 저장: Supabase Storage private bucket
-- OCR: Upstage Document Parse 또는 팀이 확정한 단일 OCR
-- 법령 정보: 법제처 국가법령정보 공동활용 Open API
-
-### 폴더 구성
-
-```text
-backend/   FastAPI, Python 서비스, 백엔드 테스트와 환경변수 예시
-frontend/  실제 서비스 화면의 HTML, CSS, JavaScript
-docs/      API, DB, 역할 분담과 개발 계획
-wireframe/ 화면 흐름을 확인하는 클릭형 시안
-output/    데모용 계약서, 임금명세서와 시나리오
-scripts/   데모 자료 생성 보조 파일
-```
-
-백엔드 명령은 `backend` 폴더에서 실행합니다.
+macOS/Linux:
 
 ```bash
 cd backend
-python -m uvicorn app.main:app --reload
-python -m pytest
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
 ```
 
-### 팀 개발 시작
+### 3. 환경변수 설정
 
-팀원은 [AGENTS.md](./AGENTS.md)와
-[역할별 시작 문서](./docs/role-start.md)를 먼저 읽습니다.
-각자 최신 `develop` 브랜치에서 자신의 `feature/역할-이름` 브랜치를 만든 뒤,
-담당 폴더 안에서만 작업합니다.
+`backend/.env.example`을 복사해 `backend/.env`를 만듭니다.
+
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+macOS/Linux:
 
 ```bash
-git switch develop
-git pull origin develop
-git switch -c feature/역할-이름
+cp .env.example .env
 ```
 
-공동 경험·증거 커뮤니티는 현재 MVP 범위가 아니며, 개인정보 보호와 공유
-방식을 별도로 기획한 뒤에만 추가합니다.
+그다음 `.env`에 필요한 API 키를 입력합니다. `.env`는 절대 Git에 커밋하지 마세요.
+
+### 4. 서버 실행
+
+`backend` 디렉터리에서 실행합니다.
+
+```bash
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+브라우저에서 다음 주소로 접속합니다.
+
+```text
+홈: http://127.0.0.1:8000/features/home/home.html
+상태 확인: http://127.0.0.1:8000/api/v1/health
+API 문서: http://127.0.0.1:8000/docs
+```
+
+첫 실행 시 다음 경로가 자동 생성됩니다.
+
+```text
+backend/local_data/work-rights.db
+backend/local_data/uploads/
+```
+
+### 5. 테스트 실행
+
+```bash
+cd backend
+python -m pytest -q
+```
+
+## 환경변수 정보
+
+환경변수는 `backend/.env`에서 관리합니다.
+
+| 변수 | 필수 여부 | 기본값 | 설명 |
+| --- | --- | --- | --- |
+| `APP_NAME` | 선택 | `Work Rights Companion API` | FastAPI 애플리케이션 이름 |
+| `APP_ENV` | 선택 | `local` | 실행 환경 표시값 |
+| `UPSTAGE_API_KEY` | 실사용 필수 | 없음 | Document Parse OCR 호출에 사용하며, 별도 LLM 키가 없으면 Solar 호출에도 사용 |
+| `LLM_API_KEY` | 선택 | 없음 | Solar LLM 전용 키. 비어 있으면 `UPSTAGE_API_KEY`를 사용 |
+| `LAW_API_OC` | 선택 | 없음 | 법제처 공동활용 API의 OC 값. 없으면 내장 조문 제목과 공식 링크로 대체 |
+| `MAX_UPLOAD_BYTES` | 선택 | `10485760` | 업로드 파일 최대 크기. 기본 10MB |
+| `LOCAL_DATA_DIR` | 선택 | `local_data` | SQLite DB와 업로드 폴더의 상위 경로 |
+| `LOCAL_DB_NAME` | 선택 | `work-rights.db` | SQLite 파일명 |
+| `LOCAL_UPLOAD_DIR_NAME` | 선택 | `uploads` | 원본 파일 저장 폴더명 |
+
+예시:
+
+```dotenv
+APP_NAME=Work Rights Companion API
+APP_ENV=local
+UPSTAGE_API_KEY=your_upstage_api_key
+LLM_API_KEY=
+LAW_API_OC=your_law_api_oc
+MAX_UPLOAD_BYTES=10485760
+LOCAL_DATA_DIR=local_data
+LOCAL_DB_NAME=work-rights.db
+LOCAL_UPLOAD_DIR_NAME=uploads
+```
+
+키가 없을 때의 동작:
+
+- `UPSTAGE_API_KEY`가 없으면 새 PDF·이미지의 OCR 처리를 완료할 수 없습니다.
+- `LLM_API_KEY`와 `UPSTAGE_API_KEY`가 모두 없으면 대꾸 AI 생성·답변 분석·번역을 사용할 수 없습니다.
+- `LAW_API_OC`가 없거나 법령 API 호출에 실패하면 관련 법령 제목과 국가법령정보센터 링크를 제공합니다.
+
+## 실행 및 배포 환경
+
+### 현재 실행 구조
+
+- 단일 FastAPI 프로세스가 API와 프론트 정적 파일을 함께 제공합니다.
+- 데이터와 업로드 파일은 서버 로컬 디스크에 저장됩니다.
+- 현재 저장소에는 Docker, Vercel, Render 등 특정 플랫폼 전용 배포 설정이 포함되어 있지 않습니다.
+- 로컬 MVP는 외부 PostgreSQL이나 Supabase 없이 실행됩니다.
+
+### 배포 명령 예시
+
+배포 서비스의 작업 디렉터리를 `backend`로 설정한 뒤 다음 명령으로 실행할 수 있습니다.
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+```
+
+배포 환경에는 위 환경변수를 비밀 값으로 등록하고 `.env` 파일을 업로드하지 마세요.
+
+### 배포 시 주의사항
+
+- `backend/local_data`를 **영속 디스크**에 연결해야 재배포·재시작 후에도 DB와 업로드 파일이 유지됩니다.
+- 영속 디스크가 없는 서버리스·임시 파일 시스템에서는 저장한 기록과 대화가 사라질 수 있습니다.
+- 현재 SQLite 구성은 단일 인스턴스 데모에 적합합니다. 여러 서버 인스턴스를 동시에 운영하려면 공유 PostgreSQL과 private object storage로 이전해야 합니다.
+- 원본 근로자료에는 개인정보가 포함될 수 있으므로 업로드 폴더를 정적 파일 경로로 공개하지 마세요.
+- HTTPS, 접근 제어, 백업, 보존 기간과 삭제 정책을 운영 환경에 맞게 별도로 설정해야 합니다.
+
+## 빈 사이트에서 데모 데이터 적재하기
+
+배포 직후에는 사용자 근로자료가 없는 빈 화면이 정상입니다. 저장소의 `output/pdf/`에
+실제 개인정보를 사용하지 않은 시연용 PDF가 포함되어 있으므로, 아래 파일을 화면에서
+직접 업로드해 전체 흐름을 시연할 수 있습니다.
+
+| 순서 | 파일 | 자료 종류 | 권장 날짜 | 확인 가능한 내용 |
+| --- | --- | --- | --- | --- |
+| 1 | `output/pdf/대모근로계약서.pdf` | 근로계약서 | `2026-07-01` | 계약 시급 12,000원, 근무시간, 휴게시간 |
+| 2 | `output/pdf/대모임금명세서.pdf` | 급여명세서 | `2026-07-31` | 적용 시급 10,500원, 82시간, 지급액 861,000원 |
+| 3 | `output/pdf/01_알바_채용공고_가온식당.pdf` | 채용공고 | `2026-06-20` | 채용 당시 제시 조건 |
+| 4 | `output/pdf/02_근무표_출퇴근기록_가온식당.pdf` | 출퇴근 기록 | `2026-07-31` | 실제 근무시간 비교 |
+| 5 | `output/pdf/03_은행거래내역_급여입금.pdf` | 입금내역 | `2026-08-10` | 명세 금액과 실제 입금 기록 비교 |
+
+가장 짧은 데모는 근로계약서와 급여명세서 두 개만 업로드하면 됩니다.
+
+```text
+계약서 시급 12,000원
+→ 급여명세서 적용 시급 10,500원
+→ 기록이 다름
+→ 대꾸 AI로 적용 기준과 처리 계획 확인
+→ 고용주 답변과 해결 결과 저장
+→ 익명 공동 경험 확정 및 공유
+```
+
+파일은 `PDF`, `JPG`, `JPEG`, `PNG` 형식을 지원하며 기본 최대 크기는 10MB입니다.
+데모 시나리오 설명은 `output/대모시나리오1.txt`에서 확인할 수 있습니다.
+
+배포된 사이트에는 저장소 파일 선택기가 자동으로 나타나지 않습니다. 저장소에서 데모 PDF를
+미리 내려받은 뒤, 사이트의 **자료 모으기 → 근무자료 추가**에서 직접 선택해 업로드하세요.
+
+기존 데이터와 섞이지 않는 촬영을 원하면 첫 접속 URL에 새로운 사업장 ID를 지정할 수 있습니다.
+
+```text
+http://127.0.0.1:8000/features/records/records.html?workplace_id=demo-video-final
+```
+
+## 프로젝트 구조
+
+```text
+backend/        FastAPI API, 서비스, SQLite 저장 계층, 테스트
+frontend/       HTML, CSS, JavaScript 화면
+demo-scenarios/ 추가 데모 문서와 시나리오
+docs/           API 계약, 데이터 구조, 팀 개발 문서
+output/         시연용 PDF와 대모 시나리오
+scripts/        데모 자료 생성 보조 스크립트
+```
+
+## 개인정보와 서비스 범위
+
+- 원본 파일과 대화는 공동 경험에 자동 공개되지 않습니다.
+- 공동 경험은 사용자가 내용을 확인하고 명시적으로 확정·공유한 경우에만 게시됩니다.
+- 이름, 전화번호, 날짜, 금액과 사업장을 식별할 수 있는 표현은 공유 전에 익명화 검사를 거칩니다.
+- 본 서비스는 기록 정리와 확인 대화를 돕는 도구이며 법률 자문이나 위법 여부 확정 서비스가 아닙니다.
+
+## API 응답 형식
+
+기본 API 응답은 다음 구조를 사용합니다.
+
+```json
+{
+  "success": true,
+  "data": {},
+  "error": null
+}
+```
+
+세부 요청·응답 예시는 [`docs/api-contract.md`](./docs/api-contract.md)를 참고하세요.
+
+## 팀 개발
+
+협업 규칙과 역할별 파일 소유권은 [`AGENTS.md`](./AGENTS.md), 작업 흐름은
+[`docs/team-plan.md`](./docs/team-plan.md)에서 확인할 수 있습니다.
+
+기능 개발은 `feature/*` 브랜치에서 진행하고 `develop` 브랜치로 Pull Request를 생성합니다.
+
+## 라이선스 및 대회
+
+AI Builder Sprint 2026 출품 프로젝트입니다. 대회 제출 및 외부 공개 전 사용한 API,
+폰트, 이미지와 데모 자료의 라이선스를 최종 확인해 주세요.

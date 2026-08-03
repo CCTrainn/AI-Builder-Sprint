@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="현재 근로 기록 상태와 다음 행동을 확인합니다">
+  <title>홈 | 근로권리 동반자</title>
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/common.css">
+  <link rel="stylesheet" href="../../shared/sidebar.css?v=20260803-3">
+  <link rel="stylesheet" href="../../shared/polish.css">
+  <link rel="stylesheet" href="./home.css?v=20260803-6">
+</head>
+<body class="has-app-sidebar" data-page="home">
+  <div id="appSidebar" class="app-sidebar-root"></div>
+
+  <main class="home-page">
+    <header class="home-intro">
+      <div class="home-brand" aria-label="근로권리 동반자">
+        <img class="home-brand__logo home-brand__logo--light" src="../../shared/logo-black.png" alt="">
+        <img class="home-brand__logo home-brand__logo--dark" src="../../shared/logo-white.png" alt="">
+      </div>
+      <p class="home-eyebrow">MY WORK RECORD</p>
+      <h1 id="home-title">내 근로 기록을 확인하고 있어요</h1>
+      <p id="home-description">모아둔 자료에서 현재 상태를 불러오는 중입니다.</p>
+    </header>
+
+    <section class="focus-card" aria-labelledby="focus-title">
+      <div class="focus-card__status">
+        <span id="focus-label">추천 다음 단계</span>
+        <strong id="focus-title">기록을 확인하는 중...</strong>
+        <p id="focus-description">잠시만 기다려 주세요.</p>
+      </div>
+      <a id="focus-action" class="focus-card__action" href="../records/records.html">자료 추가하기 <span aria-hidden="true">→</span></a>
+    </section>
+
+    <nav class="page-shortcuts" aria-label="전체 기능 바로가기">
+      <div class="page-shortcuts__heading"><strong>전체 기능 바로가기</strong><span>원하는 페이지로 바로 이동하세요</span></div>
+      <div class="page-shortcuts__links">
+        <a href="../records/records.html"><span>자료 모으기</span><small>계약서·명세서 추가</small><b aria-hidden="true">→</b></a>
+        <a href="../comparison/comparison.html"><span>조건 비교</span><small>달라진 기록 확인</small><b aria-hidden="true">→</b></a>
+        <a href="../conversation/conversation.html"><span>대꾸 AI</span><small>확인 문장·답변 분석</small><b aria-hidden="true">→</b></a>
+        <a href="../record_box/record-box.html"><span>내 기록</span><small>전체 기록 다시 보기</small><b aria-hidden="true">→</b></a>
+        <a href="../community/community.html"><span>공동 경험</span><small>비슷한 경험 확인</small><b aria-hidden="true">→</b></a>
+      </div>
+    </nav>
+
+    <section class="case-summary" aria-labelledby="case-summary-title">
+      <div class="section-heading">
+        <div>
+          <p class="home-eyebrow">CURRENT STATUS</p>
+          <h2 id="case-summary-title">현재 상황</h2>
+        </div>
+        <a id="detail-link" href="../comparison/comparison.html">자세히 보기 →</a>
+      </div>
+      <div class="condition-card">
+        <div>
+          <span id="condition-name">기록 요약</span>
+          <strong id="condition-summary">자료를 불러오는 중입니다.</strong>
+        </div>
+        <dl class="condition-values" id="condition-values" hidden>
+          <div><dt>약속·계약</dt><dd id="promised-value">-</dd></div>
+          <div><dt>실제 기록</dt><dd id="actual-value">-</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="progress-section" aria-labelledby="progress-title">
+      <div class="section-heading">
+        <div>
+          <p class="home-eyebrow">PROGRESS</p>
+          <h2 id="progress-title">전체 진행</h2>
+        </div>
+        <span id="progress-count">0 / 4단계 · 단계를 누르면 이동</span>
+      </div>
+      <ol class="progress-list">
+        <li data-step="records"><span>1</span><div><strong>자료 수집</strong><small>근로자료를 모아요</small></div><b>대기</b></li>
+        <li data-step="comparison"><span>2</span><div><strong>기록 비교</strong><small>달라진 조건을 확인해요</small></div><b>대기</b></li>
+        <li data-step="conversation"><span>3</span><div><strong>확인 대화</strong><small>고용주에게 확인하고 답변을 남겨요</small></div><b>대기</b></li>
+        <li data-step="experience"><span>4</span><div><strong>경험 정리</strong><small>내 경험을 확인하고 공유해요</small></div><b>대기</b></li>
+      </ol>
+    </section>
+
+    <nav class="home-secondary" aria-label="보조 메뉴">
+      <a href="../record_box/record-box.html"><span>모아둔 기록</span><strong>내 기록 보기 →</strong></a>
+      <a href="../community/community.html"><span>비슷한 경험</span><strong>공동 경험 보기 →</strong></a>
+    </nav>
+  </main>
+  <script type="module" src="../../shared/app.js?v=20260803-16"></script>
+  <script type="module" src="./home.js?v=20260803-3"></script>
+</body>
+</html>

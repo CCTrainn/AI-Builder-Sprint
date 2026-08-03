@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+"""FastAPI 서버 상태 확인 API."""
 
-from app.db.session import get_db
+from fastapi import APIRouter
 
 router = APIRouter(tags=["health"])
 
 
 @router.get("/health")
-def health(db: Session = Depends(get_db)) -> dict[str, str]:
-    db.execute(text("SELECT 1"))
-    return {"status": "ok"}
-
+def health() -> dict[str, object]:
+    return {
+        "success": True,
+        "data": {
+            "status": "ok",
+        },
+        "error": None,
+    }
