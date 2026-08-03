@@ -140,7 +140,7 @@ function renderSidebar() {
 
 renderSidebar();
 mountThemeToggle();
-import("./site-i18n.js?v=20260803-3");
+import("./site-i18n.js?v=20260803-9");
 
 const siteLanguage = document.querySelector("#site-language");
 const languageMenuToggle = document.querySelector("#language-menu-toggle");
