@@ -451,6 +451,101 @@
   border-color: #344258;
 }
 
+/* 대꾸 AI의 실제 채팅형 UI */
+[data-theme="dark"] .conversation-page :is(.page-header h1, .guided-chat__header strong, .daekku-coach__head p) {
+  color: #edf3fc;
+}
+
+[data-theme="dark"] .conversation-page :is(.page-description, .notice, .guided-chat__header span, .guided-chat__empty) {
+  color: #aab6c8;
+}
+
+[data-theme="dark"] .conversation-page :is(.status-badge, .notice) {
+  background: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] .guided-chat {
+  color: #dce6f5;
+  background: #111a2b;
+  border-color: #344258;
+  box-shadow: 0 18px 46px rgb(0 0 0 / 24%);
+}
+
+[data-theme="dark"] :is(.guided-chat__header, .daekku-coach) {
+  background: #111a2b;
+  border-color: #344258;
+}
+
+[data-theme="dark"] .guided-chat__thread {
+  background: #0c1423;
+}
+
+[data-theme="dark"] .chat-bubble span,
+[data-theme="dark"] .chat-bubble__action,
+[data-theme="dark"] .coach-details,
+[data-theme="dark"] .coach-loading,
+[data-theme="dark"] .coach-edit-guide {
+  color: #9aa8bd;
+}
+
+[data-theme="dark"] .chat-bubble p {
+  color: #dce6f5;
+  background: #1b273a;
+  border: 1px solid #344258;
+}
+
+[data-theme="dark"] .chat-bubble--me p {
+  color: #edf3fc;
+  background: #203a67;
+  border-color: #315a9e;
+}
+
+[data-theme="dark"] :is(.coach-choice, .coach-secondary, .chat-history-more) {
+  color: #dce6f5;
+  background: #1b273a;
+  border-color: #40516a;
+}
+
+[data-theme="dark"] :is(.coach-choice, .coach-secondary, .chat-history-more):hover {
+  color: #9bbcff;
+  background: #172b50;
+  border-color: #4d8df7;
+}
+
+[data-theme="dark"] :is(.coach-suggestion, .coach-analysis) {
+  color: #c7d2e3;
+  background: #172033;
+  border-color: #344258;
+}
+
+[data-theme="dark"] .daekku-coach :is(textarea, .coach-draft) {
+  color: #edf3fc;
+  background: #0c1423;
+  border-color: #40516a;
+}
+
+[data-theme="dark"] .coach-next-action {
+  color: #dce6f5;
+  background: #17243d;
+  border-color: #315a9e;
+}
+
+[data-theme="dark"] .coach-next-action > :is(strong, p),
+[data-theme="dark"] .coach-next-action :is(.coach-next-action__date, .coach-next-action__commitment) {
+  color: #dce6f5;
+}
+
+[data-theme="dark"] .coach-next-action :is(.coach-next-action__rights, .coach-next-action__guide, .coach-next-action__source),
+[data-theme="dark"] .daekku-coach__head strong {
+  color: #8bb6ff;
+}
+
+[data-theme="dark"] .guided-chat__clear:hover:not(:disabled) {
+  color: #ffb4ad;
+  background: #3b2024;
+}
+
 /* 공동 경험 */
 [data-theme="dark"] :is(
   .graph-layout,
