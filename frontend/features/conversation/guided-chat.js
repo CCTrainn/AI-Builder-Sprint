@@ -93,15 +93,37 @@ function updateVisibleTranslation(translatedText) {
   else if (next) coachContent.querySelector(".coach-draft")?.after(next);
 }
 
-function addBubble(side, speaker, text, messageId = null, sender = null) {
+function updateEmployerTranslation(item, translatedText) {
+  const current = item.querySelector(".chat-bubble__translation");
+  if (userLanguage.startsWith("ko") || !translatedText || translatedText.trim() === item.dataset.originalText?.trim()) {
+    current?.remove();
+    return;
+  }
+  const translation = current || document.createElement("div");
+  translation.className = "chat-bubble__translation";
+  if (!current) {
+    const label = document.createElement("strong");
+    const text = document.createElement("p");
+    translation.append(label, text);
+    item.querySelector(".chat-bubble__text")?.after(translation);
+  }
+  translation.querySelector("strong").textContent = `${languageLabels[userLanguage] || userLanguage} · 답변 해석`;
+  translation.querySelector("p").textContent = translatedText;
+}
+
+function addBubble(side, speaker, text, messageId = null, sender = null, translatedText = null) {
   emptyState.hidden = true;
   const item = document.createElement("article");
   item.className = `chat-bubble chat-bubble--${side}`;
+  item.dataset.sender = sender || side;
+  item.dataset.originalText = text;
   const name = document.createElement("span");
   name.textContent = speaker;
   const content = document.createElement("p");
+  content.className = "chat-bubble__text";
   content.textContent = text;
   item.append(name, content);
+  if ((sender || side) === "employer") updateEmployerTranslation(item, translatedText);
   if (messageId) attachBubbleControls(item, content, messageId, sender || side);
   thread.append(item);
   if (messageId && activeConversationId) clearConversationButton.disabled = false;
@@ -151,6 +173,7 @@ function renderRestoredMessages() {
       message.original_text,
       message.message_id,
       message.sender,
+      message.translated_text,
     );
   });
 }
@@ -180,8 +203,14 @@ function attachBubbleControls(item, content, messageId, sender) {
             }),
           });
           content.textContent = edited.trim();
+          item.dataset.originalText = edited.trim();
+          updateEmployerTranslation(item, analysis.translated_reply);
           const stored = restoredMessages.find((message) => message.message_id === messageId);
-          if (stored) stored.original_text = edited.trim();
+          if (stored) {
+            stored.original_text = edited.trim();
+            stored.translated_text = analysis.translated_reply;
+            stored.analysis = analysis;
+          }
           showAnalysis(analysis);
         } else {
           await request(`/conversations/messages/${encodeURIComponent(messageId)}`, {
@@ -353,23 +382,32 @@ function showSuggestion(text, contextText = "", titleText = "") {
 document.addEventListener("userlanguagechange", async (event) => {
   const requestSequence = ++translationRequestSequence;
   userLanguage = event.detail.language;
-  if (!suggestion?.korean_text) return;
   if (userLanguage.startsWith("ko")) {
-    suggestion.translated_text = suggestion.korean_text;
+    if (suggestion?.korean_text) suggestion.translated_text = suggestion.korean_text;
     updateVisibleTranslation("");
+    thread.querySelectorAll('.chat-bubble[data-sender="employer"]').forEach((item) => updateEmployerTranslation(item, ""));
     return;
   }
   try {
     const currentCard = coachContent.querySelector(".coach-translation");
     if (currentCard) currentCard.setAttribute("aria-busy", "true");
-    const result = await request("/conversations/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: suggestion.korean_text, user_language: userLanguage }),
-    });
+    const employerBubbles = [...thread.querySelectorAll('.chat-bubble[data-sender="employer"]')];
+    employerBubbles.forEach((item) => item.querySelector(".chat-bubble__translation")?.setAttribute("aria-busy", "true"));
+    const translate = (text) => request("/conversations/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, user_language: userLanguage }),
+      });
+    const [suggestionResult, ...employerResults] = await Promise.all([
+      suggestion?.korean_text ? translate(suggestion.korean_text) : Promise.resolve(null),
+      ...employerBubbles.map((item) => translate(item.dataset.originalText)),
+    ]);
     if (requestSequence !== translationRequestSequence) return;
-    suggestion.translated_text = result.translated_text;
-    updateVisibleTranslation(result.translated_text);
+    if (suggestionResult) {
+      suggestion.translated_text = suggestionResult.translated_text;
+      updateVisibleTranslation(suggestionResult.translated_text);
+    }
+    employerBubbles.forEach((item, index) => updateEmployerTranslation(item, employerResults[index]?.translated_text));
   } catch (error) {
     if (requestSequence !== translationRequestSequence) return;
     coachFeedback.textContent = `번역을 갱신하지 못했어요. ${error.message}`;
@@ -441,6 +479,7 @@ async function analyzeReply(input) {
     });
     activeConversationId = analysis.conversation_id;
     clearConversationButton.disabled = false;
+    updateEmployerTranslation(employerBubble, analysis.translated_reply);
     attachBubbleControls(
       employerBubble,
       employerBubble.querySelector("p"),
@@ -451,6 +490,7 @@ async function analyzeReply(input) {
       message_id: analysis.reply_id,
       sender: "employer",
       original_text: replyText,
+      translated_text: analysis.translated_reply,
       analysis,
     });
     showAnalysis(analysis);
