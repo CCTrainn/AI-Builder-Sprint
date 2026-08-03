@@ -33,6 +33,15 @@ function languageMenuItems(selected) {
   `).join("");
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"]/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+  })[character]);
+}
+
 const NAV_ITEMS = [
   {
     id: "home",
@@ -98,6 +107,12 @@ function renderSidebar() {
       </a>
     `;
   }).join("");
+  const userEmail = window.localStorage.getItem("cctrainn_email");
+  const shortName = userEmail ? userEmail.split("@")[0] : "";
+  const accountContent = userEmail
+    ? `<strong>${escapeHtml(shortName)}</strong><button id="logout-btn" type="button">로그아웃</button>`
+    : '<a href="../auth/login.html">로그인 / 회원가입</a>';
+  const avatarText = userEmail ? escapeHtml(shortName.charAt(0).toUpperCase()) : "?";
 
   sidebarRoot.innerHTML = `
     <aside class="app-sidebar" aria-label="앱 사이드바">
@@ -113,9 +128,9 @@ function renderSidebar() {
       </nav>
 
       <div class="app-sidebar__workspace">
-        <span class="app-sidebar__avatar" aria-hidden="true">프사</span>
+        <span class="app-sidebar__avatar" aria-hidden="true">${avatarText}</span>
         <span class="app-sidebar__workspace-copy">
-          <strong>이름</strong>
+          ${accountContent}
         </span>
         <div class="app-sidebar__language-picker">
           <button id="language-menu-toggle" class="language-menu__toggle" type="button"
@@ -136,6 +151,12 @@ function renderSidebar() {
       </div>
     </aside>
   `;
+
+  document.querySelector("#logout-btn")?.addEventListener("click", () => {
+    window.localStorage.removeItem("cctrainn_token");
+    window.localStorage.removeItem("cctrainn_email");
+    window.location.reload();
+  });
 }
 
 renderSidebar();

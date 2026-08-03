@@ -278,6 +278,26 @@ body.has-app-sidebar {
   font-size: 12px;
 }
 
+.app-sidebar__workspace-copy a,
+.app-sidebar__workspace-copy button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sidebar-text);
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.app-sidebar__workspace-copy button {
+  margin-top: 3px;
+  color: var(--sidebar-muted);
+  font-size: 9px;
+}
+
 .app-sidebar__workspace-copy small {
   margin-top: 3px;
   overflow: hidden;
