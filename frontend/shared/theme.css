@@ -623,63 +623,22 @@
   border-color: #344258;
 }
 
-/* 모든 화면의 콘텐츠 표면이 밝은 카드로 되돌아가지 않도록 하는 공통 안전망. */
-[data-theme="dark"] body :is(
-  .login-container,
-  .signup-container,
-  .demo-tip,
-  .case-summary,
-  .progress-section,
-  .page-shortcuts,
-  .condition-values > div,
-  .record-summary article,
-  .upload-card,
-  .timeline-card,
-  .record-item,
-  .record-dialog,
-  .summary-metrics,
-  .results-section,
-  .comparison-card,
-  .rights-check,
-  .pay-calculation,
-  .confirmation-list li,
-  .summary-grid article,
-  .record-content,
-  .record-empty,
-  .timeline-item > article,
-  .analysis-columns section,
-  .evidence-strip > div,
-  .guided-chat,
-  .daekku-coach,
-  .conversation-layout,
-  .message-workspace,
-  .reply-analysis,
-  .conversation-history,
-  .experience-card,
-  .preview-card,
-  .saved-experiences li
-) {
+/* 인증 화면은 자체 인라인 스타일 대신 공통 다크 팔레트를 따른다. */
+[data-theme="dark"] :is(.login-container, .signup-container) {
   color: #e8eef9;
-  background-color: #151e2f;
-  border-color: #344258;
+  background: #1b2638;
+  border: 1px solid #344258;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 22%);
 }
 
-[data-theme="dark"] body :is(
-  .login-container,
-  .signup-container,
-  .demo-tip,
-  .record-item,
-  .comparison-card,
-  .rights-check,
-  .record-content,
-  .record-empty,
-  .timeline-item > article,
-  .analysis-columns section,
-  .guided-chat,
-  .experience-card,
-  .preview-card
-) :where(p, li, small, dt, dd, blockquote) {
+[data-theme="dark"] :is(.login-container, .signup-container) > p {
+  color: #bac6d8;
+}
+
+[data-theme="dark"] :is(.login-container, .signup-container) .demo-tip {
   color: #c7d2e3;
+  background: #243146;
+  border: 1px solid #3a4a61;
 }
 
 @media (max-width: 1040px) and (min-width: 721px) {

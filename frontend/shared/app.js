@@ -1,4 +1,4 @@
-import { mountThemeToggle } from "./theme.js?v=20260803-6";
+import { mountThemeToggle } from "./theme.js?v=20260803-7";
 
 const sidebarRoot = document.querySelector("#appSidebar");
 const DISPLAY_LANGUAGES = [
