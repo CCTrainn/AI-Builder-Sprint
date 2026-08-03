@@ -194,8 +194,9 @@ body.has-app-sidebar {
 
 .language-menu {
   position: absolute;
-  right: 0;
+  right: auto;
   bottom: calc(100% + 10px);
+  left: 0;
   display: grid;
   width: 210px;
   gap: 3px;
@@ -385,7 +386,8 @@ body.has-app-sidebar {
   }
 
   .language-menu {
-    right: -2px;
+    right: auto;
+    left: -2px;
   }
 }
 
@@ -420,6 +422,7 @@ body.has-app-sidebar {
     top: 58px;
     right: 12px;
     bottom: auto;
+    left: auto;
   }
 
   body.has-app-sidebar > main:not(.home-page) {
