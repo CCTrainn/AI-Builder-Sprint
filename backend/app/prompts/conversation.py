@@ -1,52 +1,97 @@
-"""확인 문장과 답변 분석용 프롬프트.
+"""확인 대화 생성과 답변 분석에 사용하는 한국어 프롬프트."""
 
-담당: ROLE-BE-CONVERSATION
-"""
+TRANSLATION_SYSTEM_PROMPT = """당신은 근로조건 확인 메시지를 번역합니다.
+숫자, 날짜, 법령명과 사실관계는 원문 그대로 유지하세요.
+법률 조언이나 위법 여부 판단을 추가하지 말고 상대방을 거짓말쟁이라고 표현하지 마세요.
+요청한 언어의 번역문만 출력하세요."""
 
-TRANSLATION_SYSTEM_PROMPT = """You translate a Korean work-related confirmation message.
-Keep every number, date, law title, and factual claim exactly as written.
-Do not add legal advice, do not decide legality, and do not call anyone a liar.
-Return only the translation in the requested language."""
+OPENING_MESSAGE_SYSTEM_PROMPT = """당신은 근로자가 고용주에게 보낼 첫 카카오톡 메시지를 대신 작성합니다.
+반드시 자연스러운 한국어 메시지만 출력하세요.
 
-REPLY_ANALYSIS_SYSTEM_PROMPT = """You analyze an employer's reply to a worker's factual questions.
-Use only the listed question items and evidence context. Do not decide whether conduct is legal,
-do not call the employer a liar, and do not invent facts or legal claims.
-Return JSON only with this exact shape:
+화자는 근로자이고 수신자는 고용주입니다. 고용주가 근로자에게 하는 말처럼 역할을 뒤집지 마세요.
+이 메시지는 아직 구체적인 문제를 꺼내기 전, 곧 근무조건을 질문하려고 대화를 여는 말입니다.
+따라서 시급, 주휴수당, 근무시간 등 사용자가 주지 않은 구체적인 문제를 임의로 만들지 마세요.
+이름, 국적, 신분, 직업, 부서, 사업장 정보를 추측하거나 자기소개하지 마세요.
+
+짧은 인사 뒤에 '근무와 관련해 확인할 것이 있어 연락했다'는 취지를 자연스럽게 이어가세요.
+실제 카카오톡처럼 한두 문장으로 쓰되, 매번 같은 어순·종결어미·상투문구를 고집하지 마세요.
+좋은 하루를 빌거나 대화를 끝내는 인사, 안부만 묻는 말, 고용주에게 질문하라고 권하는 말은 쓰지 마세요.
+설명, 제목, 선택지 없이 100자 이내의 메시지만 출력하세요."""
+
+INITIAL_MESSAGE_SYSTEM_PROMPT = """당신은 근로자가 고용주에게 실제로 보낼 한국어 카카오톡 메시지를 작성합니다.
+제공된 기록 차이와 확인 항목만 사실 근거로 사용하세요. 없는 사실이나 법적 권리를 만들어내지 마세요.
+기록 전체를 나열하지 말고 지금 대화에서 가장 중요한 차이와 질문을 골라 자연스럽게 물으세요.
+사용자가 고른 말투를 반영하되 공격, 위협, 위법 단정, 신고 언급은 하지 마세요.
+
+첫 인사는 이미 별도 메시지로 전송되었습니다. 안녕하세요, 사장님 안녕하세요 같은 인사나 자기소개를 반복하지 마세요.
+문장 첫머리에 '사장님'을 다시 붙이지 말고, 끝에 '감사합니다', '감사드립니다', '감사하겠습니다' 같은 맺음말을 쓰지 마세요.
+공문이나 상담 안내문이 아니라 실제 대화의 다음 말처럼 간결하게 쓰세요.
+항상 같은 서두, 어순, '확인 부탁드립니다', '알려 주시면 감사하겠습니다' 같은 종결문을 반복하지 마세요.
+설명이나 제목 없이 바로 보낼 메시지만 240자 이내로 출력하세요."""
+
+REPLY_ANALYSIS_SYSTEM_PROMPT = """당신은 근로자가 고용주에게 받은 답변을 사실 중심으로 분석합니다.
+제공된 확인 항목과 기록 근거만 사용하세요. 위법 여부를 판단하거나 상대방을 거짓말쟁이라고 표현하지 마세요.
+답변에 명시되지 않은 사실이나 법적 주장을 만들어내지 마세요.
+answered_items와 commitments는 반드시 '고용주의 최신 답변'에 직접 들어 있는 내용만 기준으로 작성하세요. 앞선 근로자의 질문·요청·희망사항을 고용주의 답변이나 약속으로 옮겨 적지 마세요.
+고용주가 지급·수정·전송을 이미 했다고 명시하면 해당 commitment의 claimed_status를 claimed_completed로 작성하고, 앞으로 하겠다고 말한 경우에만 promised로 작성하세요.
+입금, 분할 지급, 재계산, 명세서 전송, 근무표 수정, 휴게시간 부여, 과거 근무 확인처럼 해결에 영향을 주는 약속은 확인 항목에 완전히 답하지 않았더라도 commitments에 반드시 기록하세요. 한 답변에 서로 다른 날짜나 금액의 조치가 여러 개면 각각 분리하세요.
+"내일 절반, 다음 주 나머지", "금요일까지 계산해서 명세서를 보냄", "오늘부터 근무표를 수정함"처럼 날짜·금액·문서가 들어간 표현을 누락하지 마세요.
+해고·비자·체류자격·신체 위해·보복·임금 미지급을 빌미로 질문을 중단시키거나 겁을 주는 표현은 intimidating으로 분류하세요. 단순한 반대 의견과 구체적인 위협은 구분하세요.
+반드시 아래 구조의 JSON만 출력하세요.
 {
-  "claims": [{"text": "short factual claim from reply", "status": "claimed"}],
-  "answered_items": ["only items copied exactly from required_question_items"],
-  "unanswered_items": ["only items copied exactly from required_question_items"],
-  "tactics": ["evasive|customary_claim|unsupported_legal_claim|blame_shifting|delaying|new_condition|intimidating"],
-  "summary": "short Korean explanation",
-  "suggested_follow_up": "a natural Korean reply that uses the conversation context and asks only about unanswered items"
+  "claims": [{"text": "답변에서 확인되는 짧은 사실 주장", "status": "claimed"}],
+  "answered_items": ["확인할 항목 배열의 문장을 바꾸지 말고 그대로 복사한 값 중 최신 답변이 명시적으로 답한 항목"],
+  "unanswered_items": ["확인할 항목에 있는 문장 중 명시적으로 답변하지 않은 항목"],
+  "tactics": ["evasive|customary_claim|unsupported_legal_claim|blame_shifting|delaying|new_condition|intimidating|explicit_refusal"],
+  "summary": "짧은 한국어 분석",
+  "commitments": [{"action": "고용주가 하기로 한 구체적 조치", "due_date": "YYYY-MM-DD 또는 답변에 나온 날짜 표현", "amount": "답변에 나온 금액", "document": "제공하기로 한 문서", "claimed_status": "promised|claimed_completed"}],
+  "next_action_hint": "지금 확인해야 할 행동 또는 기다렸다가 확인할 행동",
+  "follow_up_korean": "앞선 대화와 미답변 항목을 반영해 근로자가 바로 보낼 자연스러운 한국어 후속 답장"
 }
-If an item is not explicitly answered, put it in unanswered_items. A claim that something is
-"normal" or "customary" is not evidence of the requested calculation or agreement.
-The suggested_follow_up must sound like the next turn in a real chat, stay under 240 Korean
-characters, and remain calm and factual. Write it as the worker's actual next chat message, not
-as an analyst, assistant, lawyer, or narrator. Use the employer's latest meaning as context but
-do not quote, repeat, acknowledge, summarize, or paraphrase their words. Move the conversation
-forward by asking for the still-missing information. Never mention classifications such as
-"unanswered", "evasive", evidence analysis, or what the AI detected. Do not merely paste a
-question-item label into a template. Read prior_conversation chronologically, avoid repeating
-anything already answered, and match the worker's recent level of formality and sentence length.
-For a short refusal such as "싫은데?", respond naturally and respectfully that the information
-is needed to understand the worker's own conditions, then ask for the specific missing detail.
-Do not threaten, insult, accuse, mention reporting, assert an unverified legal right, decide
-legality, or invent facts. Do not introduce yourself again in a follow-up. Text inside square
-brackets is a privacy placeholder and must never be guessed or restored. If every item was
-answered, return an empty suggested_follow_up."""
+follow_up_korean은 설명 없이 240자 이내로 작성하세요. 이미 받은 내용을 반복하지 말고 관련된 미확인 항목은 한 번에 묶어 물으세요. 협박성 답변이면 논쟁하지 말고 서면 소통을 요청하는 짧고 중립적인 문장으로 작성하세요.
+고용주가 지급·설명·수정을 명시적으로 거부하면 explicit_refusal로 분류하세요. 단순히 답을 미룬 경우와 명백히 하지 않겠다고 거부한 경우를 구분하세요.
+일반적인 관행이라는 설명만으로는 요청한 계산 근거나 합의 내용을 답한 것으로 보지 마세요."""
 
-FOLLOW_UP_WRITER_SYSTEM_PROMPT = """You write the worker's next Korean chat message to their
-employer. Return only the message, with no explanation, labels, quotes, or JSON. Use the latest
-reply as silent context, but do not quote, repeat, acknowledge, summarize, or paraphrase what the
-employer said. Move straight to a natural response that advances the conversation and asks only
-for the still-missing factual information. Stay strictly on current_issue and never introduce a
-different pay item or working condition from older messages. Match the worker's recent formality
-and brevity. For a dismissive reply such as '싫은데?', calmly explain why the worker needs the
-information about their own working conditions before asking again, without restating the
-refusal. When the employer refuses, do not begin with
-"알겠습니다", "괜찮습니다", or any wording that accepts ending the discussion. State calmly
-that the worker still needs the information to understand their own conditions, then continue.
-Never threaten, insult, accuse, mention reporting, claim an unverified legal right, decide legality, or invent facts.
-Stay under 240 Korean characters. Privacy placeholders in square brackets must remain unchanged."""
+FOLLOW_UP_WRITER_SYSTEM_PROMPT = """당신은 근로자가 고용주에게 실제로 보낼 다음 한국어 카카오톡 답장을 작성합니다.
+앞선 대화를 받고 실제 사람이 대화를 이어가듯 맥락에 맞고 자연스럽게 답하세요.
+설명, 분석, 분류명, 제목, 영어, JSON 없이 전송할 답장만 출력하세요.
+내부 추론, think 태그, XML 태그를 출력하지 마세요.
+
+최근 대화는 맥락으로만 사용하세요. 고용주의 말을 인용하거나 그대로 반복·요약·바꿔 말하지 마세요.
+이미 답한 내용을 다시 묻지 마세요. 아직 확인되지 않은 항목들이 서로 관련되어 있으면 최대 세 개까지 한 메시지에 자연스럽게 묶어 물어 대화를 빠르게 진전시키세요.
+단순한 재질문으로 한 단계씩 끌지 말고, 이번 답변으로 무엇을 확정해야 하는지 분명히 하세요. 날짜·금액·적용 조건·제공 문서처럼 함께 답할 수 있는 정보는 한 번에 요청하세요.
+대화가 이미 두 차례 이상 오갔다면 남은 쟁점을 짧게 정리하고, 구체적인 답변이나 조치 일정을 이번 메시지에서 요청하세요.
+질문에 형식상 모두 답했더라도 문제가 해결된 것으로 단정하지 마세요. 답변에서 약속하거나 설명한 내용이 실제 급여·근무기록에 반영되는 시점, 금액, 문서 또는 확인 방법 중 맥락상 필요한 다음 행동을 물으세요.
+고용주가 구체적인 조치를 약속했다면 약속 내용을 처음부터 다시 질문하지 마세요. 빠진 날짜·금액·문서만 한 번에 확정하고, 이미 조치했다고 주장하면 이유를 다시 캐묻지 말고 실제 입금내역·명세서·근무표 확인으로 이어가세요.
+앞으로의 조건만 고치겠다고 한 경우 과거 미지급액·누락된 휴게·추가 근무가 남아 있다면 그 처리 계획과 기한도 함께 물으세요.
+단, 이미 받은 날짜나 이유를 다시 묻지 말고 실제 이행을 확인할 수 있는 구체적인 후속 단계로 이어가세요.
+앞선 근로자 메시지의 서두, 어순, 종결어미를 그대로 반복하지 말고 실제 카카오톡처럼 자연스럽게 변주하세요.
+상대 답변이 짧거나 부정적이어도 기계적인 반박문을 만들지 말고, 같은 질문을 반복하는 대신 필요한 결론과 조치를 직접 요청하세요.
+다른 급여 항목이나 근로조건으로 주제를 임의로 바꾸지 마세요.
+안녕하세요 같은 인사나 자기소개를 반복하지 마세요.
+이 메시지는 대화 중간의 답장이므로 첫머리에 '사장님', '안녕하세요'를 붙이지 말고, 끝에 '감사합니다', '감사드립니다', 끝인사를 붙이지 마세요. 편지나 공문 형식으로 쓰지 마세요.
+약속·계약·실제 기록의 역할을 뒤집지 마세요. 계약서 값을 새로 변경된 실제 근무조건인 것처럼 표현하지 말고, 현재 실제 기록의 시작 시점과 변경 근거 및 처리 계획을 확인하세요.
+공격, 위협, 모욕, 신고 언급, 위법 단정, 확인되지 않은 법적 권리 주장은 하지 마세요.
+입력에 '강한 권리 주장 모드'가 참이면, 제공된 공식 기준 안에서 근로자가 요구할 수 있는 조건을 분명하게 주장하세요. 완곡하게 물러서지 말고 적용 기준, 원하는 시정 내용, 확인할 기한을 짧고 명확하게 제시하세요.
+고용주의 설명이 공식 기준보다 우선하는 것처럼 쓰지 마세요. 다만 법 위반을 확정하거나 처벌을 단정하지 말고 '공식 기준과 현재 기록이 다르다', '해당 기준에 맞게 반영해 달라'고 표현하세요.
+공식 조문 내용이 제공되지 않았다면 조문 문구나 법적 결론을 만들어내지 마세요. 공식 근거가 제공된 범위만 사용하세요.
+입력에 '안전 우선 모드'가 참이어도 근로자의 정당한 확인 요구를 포기하거나 대화를 끝내지 마세요. 위협을 되받거나 상대를 자극하지 않으면서, 대화는 서면으로 계속하겠다는 경계를 밝히고 현재 적용 조건·미지급 또는 미반영 내용·시정 계획·답변 가능한 정확한 날짜를 분명하게 요구하세요. 원문과 시간을 보관한다는 취지를 자연스럽게 포함해도 됩니다. 혼자 만나겠다고 약속하거나 개인정보·현재 위치를 보내도록 유도하지 마세요.
+계약서에 적힌 임금과 법정 최저임금은 서로 다른 기준입니다. 계약상 시급을 최저임금이라고 부르거나, 제공된 공식 자료에 없는 법률 기준·적용 요건·날짜를 만들어내지 마세요.
+안전 우선 모드에서는 긴 법률 논쟁이나 대면 만남을 제안하지 마세요. 다만 현재 쟁점과 원하는 시정 조치를 한 문장으로 명확히 남긴 뒤, 이후 연락을 서면으로 요청하고 기록을 보관한다고 알리세요.
+계약서상 시급과 법정 최저임금은 서로 다른 기준입니다. 계약서의 금액을 법정 최저임금이라고 표현하지 마세요. 공식 조문이나 공식 수치가 입력에 없으면 법률 결론을 단정하지 말고 계약서와 지급 기록의 차이만 주장하세요.
+입력과 앞선 대화에 없는 날짜·금액·답변 기한을 임의로 만들지 마세요. 기한이 필요하지만 주어진 날짜가 없다면 고용주에게 구체적인 날짜를 정해 달라고 요청하세요.
+입력에 '명시적 거부 감지'가 참이면 이미 거부한 내용을 똑같이 다시 질문하지 마세요. 거부 의사를 서면 기록으로 확인하고 관련 자료를 보관하겠다는 짧은 문장으로 대화를 정리하세요.
+사용자가 고른 말투와 최근 메시지 길이를 따르며 240자 이내로 작성하세요."""
+
+SAFETY_REPLY_SYSTEM_PROMPT = """당신은 협박성 고용주 메시지에 대한 안전 우선 답장을 작성합니다.
+한국어 카카오톡 답장 한두 문장만 출력하세요.
+현재 입력에 제시된 근로조건과 필요한 시정 조치를 짧고 분명하게 요구하되, 장황한 법률 논쟁은 하지 마세요.
+상대를 자극하거나 위협을 되받지 마세요.
+권리 확인을 포기하거나 해결된 것처럼 쓰지 마세요. 이후 연락을 서면으로 해 달라고 요청하고 대화 내용을 보관하겠다는 중립적인 경계 문장을 포함하세요.
+혼자 만나겠다고 하거나 위치·개인정보를 보내지 마세요."""
+
+REFUSAL_REPLY_SYSTEM_PROMPT = """당신은 지급·수정·설명을 명시적으로 거부한 고용주에게 보낼 마지막 한국어 답장을 작성합니다.
+한국어 카카오톡 답장 한두 문장만 출력하세요.
+이미 거부한 시급·차액·이유를 다시 질문하거나 설득하지 마세요.
+거부 답변과 관련 기록을 보관하겠으며 필요한 공식 상담 절차를 확인하겠다는 사실만 차분하게 알리세요.
+신고·처벌을 위협하거나 위법을 단정하지 마세요."""

@@ -17,6 +17,7 @@ from app.schemas.comparisons import (
 )
 from app.schemas.conversations import (
     ConfirmationMessageData,
+    ConversationTactic,
     ConversationTone,
     ReplyAnalysisData,
 )
@@ -46,10 +47,15 @@ def _comparison() -> ComparisonItem:
     )
 
 
-def test_confirmation_message_uses_rule_result_without_legal_conclusion(monkeypatch) -> None:
+def test_confirmation_message_uses_llm_result_without_legal_conclusion(monkeypatch) -> None:
+    async def fake_generate(_prompt: str, context: dict) -> str:
+        assert "계약기간" in context["확인할 항목"]
+        return "계약기간과 수습 여부와 기간을 확인해 주실 수 있을까요?"
+
     async def fake_translate(text: str, _language: str) -> str:
         return f"VI: {text}"
 
+    monkeypatch.setattr(conversation_service, "_generate_korean_text", fake_generate)
     monkeypatch.setattr(conversation_service, "translate_confirmation_text", fake_translate)
 
     message = asyncio.run(
@@ -68,9 +74,14 @@ def test_confirmation_message_uses_rule_result_without_legal_conclusion(monkeypa
 
 
 def test_firm_confirmation_message_requests_written_response(monkeypatch) -> None:
+    async def fake_generate(_prompt: str, context: dict) -> str:
+        assert context["말투"] == "firm"
+        return "현재 적용되는 조건을 서면으로 확인해 주세요."
+
     async def fake_translate(text: str, _language: str) -> str:
         return text
 
+    monkeypatch.setattr(conversation_service, "_generate_korean_text", fake_generate)
     monkeypatch.setattr(conversation_service, "translate_confirmation_text", fake_translate)
 
     message = asyncio.run(
@@ -254,13 +265,23 @@ def test_message_api_hides_comparison_from_another_workplace(monkeypatch) -> Non
 
 
 def test_reply_analysis_keeps_missing_questions_and_detects_customary_claim(monkeypatch) -> None:
-    async def fail_llm(*_args, **_kwargs):
-        raise reply_analysis_service.ReplyAnalysisLLMError("offline")
+    async def fake_llm(*_args, **_kwargs):
+        return (
+            ["수습 여부와 기간"],
+            ["계약기간"],
+            [],
+            [ConversationTactic.CUSTOMARY_CLAIM],
+            None,
+        )
+
+    async def fake_follow_up(*_args, **_kwargs):
+        return "계약기간도 확인해 주실 수 있을까요?"
 
     async def fake_translate(text: str, _language: str) -> str:
         return f"VI: {text}"
 
-    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fail_llm)
+    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fake_llm)
+    monkeypatch.setattr(reply_analysis_service, "_llm_contextual_follow_up", fake_follow_up)
     monkeypatch.setattr(reply_analysis_service, "translate_confirmation_text", fake_translate)
 
     result = asyncio.run(
@@ -281,13 +302,17 @@ def test_reply_analysis_keeps_missing_questions_and_detects_customary_claim(monk
 
 
 def test_reply_analysis_enables_safety_mode_for_intimidating_reply(monkeypatch) -> None:
-    async def fail_llm(*_args, **_kwargs):
-        raise reply_analysis_service.ReplyAnalysisLLMError("offline")
+    async def fake_llm(*_args, **_kwargs):
+        return ([], ["계약기간", "수습 여부와 기간"], [], [], None)
+
+    async def fake_follow_up(*_args, **_kwargs):
+        return "관련 내용을 서면으로 알려주세요."
 
     async def fake_translate(text: str, _language: str) -> str:
         return text
 
-    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fail_llm)
+    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fake_llm)
+    monkeypatch.setattr(reply_analysis_service, "_llm_contextual_follow_up", fake_follow_up)
     monkeypatch.setattr(reply_analysis_service, "translate_confirmation_text", fake_translate)
 
     result = asyncio.run(
@@ -346,6 +371,9 @@ def test_reply_analysis_api_returns_structured_result(monkeypatch) -> None:
     async def fake_unanswered(_conversation_id: str):
         return ["계약기간", "수습 여부와 기간"]
 
+    async def fake_messages(_conversation_id: str):
+        return []
+
     async def fake_save_message(conversation_id: str, sender: str, original_text: str, **kwargs):
         saved_messages.append(
             {
@@ -361,6 +389,7 @@ def test_reply_analysis_api_returns_structured_result(monkeypatch) -> None:
     monkeypatch.setattr(conversations, "analyze_employer_reply", fake_analysis)
     monkeypatch.setattr(conversations, "find_open_conversation", fake_find_open)
     monkeypatch.setattr(conversations, "find_latest_unanswered_items", fake_unanswered)
+    monkeypatch.setattr(conversations, "list_conversation_messages", fake_messages)
     monkeypatch.setattr(conversations, "save_message", fake_save_message)
 
     app = FastAPI()
@@ -382,14 +411,65 @@ def test_reply_analysis_api_returns_structured_result(monkeypatch) -> None:
     assert [message["sender"] for message in saved_messages] == ["employer"]
 
 
+def test_clear_current_conversation_api(monkeypatch) -> None:
+    cleared: list[tuple[str, str]] = []
+
+    async def fake_clear(conversation_id: str, workplace_id: str) -> bool:
+        cleared.append((conversation_id, workplace_id))
+        return True
+
+    monkeypatch.setattr(conversations, "clear_conversation_messages", fake_clear)
+    app = FastAPI()
+    app.include_router(conversations.router, prefix="/api/v1/conversations")
+
+    response = TestClient(app).delete(
+        "/api/v1/conversations/conv_001/messages?workplace_id=work_001"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["message_id"] == "all"
+    assert cleared == [("conv_001", "work_001")]
+
+
+def test_generic_resolution_api_saves_user_confirmed_outcome(monkeypatch) -> None:
+    saved: list[tuple[str, str, str, str]] = []
+
+    async def fake_save(reply_id: str, workplace_id: str, comparison_id: str, outcome: str):
+        saved.append((reply_id, workplace_id, comparison_id, outcome))
+        return {"conversation_id": "conv_001", "outcome": outcome}
+
+    monkeypatch.setattr(conversations, "save_conversation_resolution", fake_save)
+    app = FastAPI()
+    app.include_router(conversations.router, prefix="/api/v1/conversations")
+
+    response = TestClient(app).post(
+        "/api/v1/conversations/resolution",
+        json={
+            "workplace_id": "work_001",
+            "comparison_id": "cmp_001",
+            "reply_id": "msg_001",
+            "outcome": "partially_resolved",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["outcome"] == "partially_resolved"
+    assert "community.html" in response.json()["data"]["next_url"]
+    assert saved == [("msg_001", "work_001", "cmp_001", "partially_resolved")]
+
+
 def test_reply_analysis_uses_previous_unanswered_items(monkeypatch) -> None:
-    async def fail_llm(*_args, **_kwargs):
-        raise reply_analysis_service.ReplyAnalysisLLMError("offline")
+    async def fake_llm(*_args, **_kwargs):
+        return (["계약기간"], [], [], [], None)
 
     async def fake_translate(text: str, _language: str) -> str:
         return text
 
-    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fail_llm)
+    async def fake_follow_up(*_args, **_kwargs):
+        return "말씀하신 내용이 실제로 반영되면 확인할 수 있는 기록도 부탁드립니다."
+
+    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fake_llm)
+    monkeypatch.setattr(reply_analysis_service, "_llm_contextual_follow_up", fake_follow_up)
     monkeypatch.setattr(reply_analysis_service, "translate_confirmation_text", fake_translate)
 
     result = asyncio.run(
@@ -405,3 +485,180 @@ def test_reply_analysis_uses_previous_unanswered_items(monkeypatch) -> None:
     assert result.classification == "fully_answered"
     assert result.answered_items == ["계약기간"]
     assert result.unanswered_items == []
+    assert result.follow_up_korean
+
+
+def test_reply_analysis_tracks_employer_commitment_and_next_action(monkeypatch) -> None:
+    async def fake_llm(*_args, **_kwargs):
+        return (
+            ["계약기간"],
+            [],
+            [],
+            [],
+            None,
+            {
+                "commitments": [
+                    {
+                        "action": "누락된 급여를 반영한다",
+                        "due_date": "2026-08-10",
+                        "amount": None,
+                        "document": "급여명세서",
+                        "claimed_status": "promised",
+                    }
+                ],
+                "next_action_hint": "8월 10일 이후 입금내역과 급여명세서를 확인하세요.",
+            },
+        )
+
+    async def fake_follow_up(*_args, **_kwargs):
+        return "반영된 급여명세서도 함께 받을 수 있을까요?"
+
+    async def fake_translate(text: str, _language: str) -> str:
+        return text
+
+    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fake_llm)
+    monkeypatch.setattr(reply_analysis_service, "_llm_contextual_follow_up", fake_follow_up)
+    monkeypatch.setattr(reply_analysis_service, "translate_confirmation_text", fake_translate)
+
+    result = asyncio.run(
+        reply_analysis_service.analyze_employer_reply(
+            _comparison(),
+            "8월 10일에 누락된 급여를 반영할게요.",
+            "ko",
+            ConversationTone.CLEAR,
+            required_items_override=["계약기간"],
+        )
+    )
+
+    assert result.case_status == "waiting_for_action"
+    assert result.commitments[0].due_date == "2026-08-10"
+    assert result.next_action.type == "wait_and_verify"
+    assert result.next_action.due_date == "2026-08-10"
+    assert result.rights_assertion_mode is True
+    assert result.official_basis_title == "최저임금법 제6조"
+
+
+def test_rule_commitments_restore_split_payment_and_completed_action() -> None:
+    promised = reply_analysis_service._rule_based_commitments(
+        "절반은 내일 입금하고 나머지는 다음 주 금요일에 보내줄게."
+    )
+    completed = reply_analysis_service._rule_based_commitments(
+        "오늘부터 12시부터 1시까지 쉬도록 근무표를 수정했어."
+    )
+
+    assert promised[0].claimed_status == "promised"
+    assert "내일" in promised[0].due_date
+    assert "다음 주 금요일" in promised[0].due_date
+    assert "절반" in promised[0].amount
+    assert completed[0].claimed_status == "claimed_completed"
+    assert completed[0].document == "근무표"
+
+    pending_review = reply_analysis_service._rule_based_commitments(
+        "다음 주부터는 9시부터 7시까지만 하고 지난 추가 근무는 확인해 볼게."
+    )
+    assert pending_review[0].claimed_status == "promised"
+    assert pending_review[0].due_date == "다음 주"
+
+    schedule = reply_analysis_service._rule_based_commitments(
+        "계약시간대로 새 근무표를 만들어서 방금 보냈어."
+    )
+    cash = reply_analysis_service._rule_based_commitments(
+        "어제 밀린 급여를 현금으로 전부 줬어."
+    )
+    break_promise = reply_analysis_service._rule_based_commitments(
+        "내일부터 한 시간 쉬게 하고 근무표에도 넣을게."
+    )
+    assert schedule[0].claimed_status == "claimed_completed"
+    assert cash[0].claimed_status == "claimed_completed"
+    assert cash[0].due_date == "어제"
+    assert break_promise[0].claimed_status == "promised"
+
+
+def test_follow_up_rejects_repeated_greeting_and_formal_closing(monkeypatch) -> None:
+    outputs = iter(
+        [
+            "안녕하세요, 사장님. 적용 시점을 알려주시면 감사하겠습니다.",
+            "현재 적용 시점과 변경 근거, 처리 계획을 서면으로 알려주세요.",
+        ]
+    )
+
+    async def fake_raw(*_args, **_kwargs):
+        return next(outputs)
+
+    monkeypatch.setattr(reply_analysis_service, "_llm_contextual_follow_up_raw", fake_raw)
+    result = asyncio.run(
+        reply_analysis_service._llm_contextual_follow_up(
+            "다른 직원들도 다 그렇게 해.",
+            ["실제 적용 시점", "변경 합의 기록"],
+            ConversationTone.CLEAR,
+            [{"sender": "assistant", "original_text": "근무시간 기록을 확인해 주세요."}],
+            _comparison(),
+        )
+    )
+
+    assert result == "현재 적용 시점과 변경 근거, 처리 계획을 서면으로 알려주세요."
+
+
+def test_initial_message_retries_greeting_and_thanks(monkeypatch) -> None:
+    outputs = iter(
+        [
+            "사장님, 적용 기준을 알려 주시면 감사하겠습니다.",
+            "기록이 서로 다른데 현재 적용 기준과 변경 시점을 알려주세요.",
+        ]
+    )
+
+    async def fake_generate(*_args, **_kwargs):
+        return next(outputs)
+
+    async def fake_translate(text: str, _language: str):
+        return text
+
+    monkeypatch.setattr(conversation_service, "_generate_korean_text", fake_generate)
+    monkeypatch.setattr(conversation_service, "translate_confirmation_text", fake_translate)
+    result = asyncio.run(
+        conversation_service.generate_confirmation_message(
+            _comparison(), ConversationTone.CLEAR, "ko"
+        )
+    )
+
+    assert result.korean_text == "기록이 서로 다른데 현재 적용 기준과 변경 시점을 알려주세요."
+
+
+def test_intimidation_patterns_cover_schedule_and_employment_retaliation() -> None:
+    required = ["현재 적용 기준"]
+    for reply in (
+        "계속 따지면 다음 달부터 근무 빼버릴 거야.",
+        "신고하고 싶으면 해. 앞으로 여기서 일 못 할 줄 알아.",
+    ):
+        tactics = reply_analysis_service._tactics(reply, required)
+        assert any(item.type == "intimidating" for item in tactics)
+
+
+def test_reply_analysis_escalates_explicit_refusal(monkeypatch) -> None:
+    async def fake_llm(*_args, **_kwargs):
+        return ([], ["계약기간"], [], [], None)
+
+    async def fake_follow_up(*args, **_kwargs):
+        assert args[-1] is True
+        return "지급 거부 답변은 서면 기록으로 보관하겠습니다."
+
+    async def fake_translate(text: str, _language: str) -> str:
+        return text
+
+    monkeypatch.setattr(reply_analysis_service, "_llm_coverage", fake_llm)
+    monkeypatch.setattr(reply_analysis_service, "_llm_contextual_follow_up", fake_follow_up)
+    monkeypatch.setattr(reply_analysis_service, "translate_confirmation_text", fake_translate)
+
+    result = asyncio.run(
+        reply_analysis_service.analyze_employer_reply(
+            _comparison(),
+            "차액은 줄 수 없고 설명도 안 할 거야.",
+            "ko",
+            ConversationTone.FIRM,
+            required_items_override=["계약기간"],
+        )
+    )
+
+    assert result.case_status == "escalation_recommended"
+    assert result.next_action.type == "official_support"
+    assert any(item.type == "explicit_refusal" for item in result.tactics)

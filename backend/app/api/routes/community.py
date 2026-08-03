@@ -8,7 +8,7 @@ from app.db.tables_community import (
     list_user_experiences,
     share_user_experience,
 )
-from app.db.tables_conversations import list_workplace_messages
+from app.db.tables_conversations import find_latest_workplace_resolution, list_workplace_messages
 from app.db.tables_records import find_workplace_condition_rows
 from app.schemas.community import (
     AnonymizePreviewRequest,
@@ -39,9 +39,15 @@ CONDITION_TO_PROBLEM = {
     "weekly_holiday_pay": "weekly_holiday_pay",
     "working_hours": "working_hours_changed",
     "weekly_working_hours": "working_hours_changed",
+    "total_working_hours": "working_hours_changed",
+    "overtime_hours": "working_hours_changed",
+    "break_time": "break_time_difference",
     "pay_date": "delayed_payment",
     "gross_pay": "delayed_payment",
     "net_pay": "delayed_payment",
+    "probation": "contract_condition_changed",
+    "employment_period": "contract_condition_changed",
+    "work_days": "working_days_changed",
 }
 
 
@@ -60,6 +66,7 @@ async def make_experience_draft(
     priority = {"hourly_wage": 0, "weekly_holiday_pay": 1, "pay_date": 2}
     different.sort(key=lambda item: priority.get(item.condition, 99))
     messages = await list_workplace_messages(workplace_id)
+    resolution = await find_latest_workplace_resolution(workplace_id)
     if not different and not messages:
         response = ExperienceDraftResponse(
             success=False,
@@ -72,7 +79,14 @@ async def make_experience_draft(
         return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
 
     parts: list[str] = []
-    selected = different[0] if different else None
+    selected = next(
+        (
+            item
+            for item in comparisons
+            if resolution and item.comparison_id == resolution.get("comparison_id")
+        ),
+        different[0] if different else None,
+    )
     if selected:
         parts.append(selected.summary)
         for label, value in (
@@ -88,13 +102,20 @@ async def make_experience_draft(
         parts.append(f"고용주에게 ‘{sent['original_text']}’라고 확인했습니다.")
     if received:
         parts.append(f"고용주에게 ‘{received['original_text']}’라는 답을 받았습니다.")
-    parts.append("현재 기록을 더 확인하고 있습니다.")
+    outcome = resolution.get("outcome", "in_progress") if resolution else "in_progress"
+    ending = {
+        "resolved": "실제 기록을 확인해 해결된 것으로 확정했습니다.",
+        "partially_resolved": "일부 조건은 반영됐지만 남은 내용이 있어 일부 해결로 확정했습니다.",
+        "unresolved": "아직 실제 기록에 반영되지 않아 미해결로 확인했습니다.",
+    }.get(outcome, "현재 기록을 더 확인하고 있습니다.")
+    parts.append(ending)
 
     return ExperienceDraftResponse(
         success=True,
         data=ExperienceDraftData(
             workplace_id=workplace_id,
             problem_type=CONDITION_TO_PROBLEM.get(selected.condition, "other") if selected else "other",
+            outcome=outcome,
             text=" ".join(parts),
             source_comparison_id=selected.comparison_id if selected else None,
         ),

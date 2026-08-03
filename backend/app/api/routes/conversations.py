@@ -10,12 +10,16 @@ from fastapi.responses import JSONResponse
 
 from app.db.tables_conversations import (
     ConversationDatabaseError,
+    clear_conversation_messages,
+    delete_message,
     find_latest_unanswered_items,
     find_open_conversation,
     get_or_create_conversation,
     list_conversation_messages,
     list_workplace_messages,
+    save_conversation_resolution,
     save_message,
+    update_message,
 )
 from app.db.tables_records import RecordDatabaseError, find_comparison_detail
 from app.schemas.comparisons import ComparisonItem, LegalReference
@@ -25,18 +29,62 @@ from app.schemas.conversations import (
     ConversationHistoryData,
     ConversationHistoryItem,
     ConversationHistoryResponse,
+    OpeningMessageRequest,
+    MessageEditRequest,
+    MessageMutationData,
+    MessageMutationResponse,
     ReplyAnalysisRequest,
     ReplyAnalysisResponse,
+    ResolutionData,
+    ResolutionRequest,
+    ResolutionResponse,
     SentMessageData,
     SentMessageRequest,
     SentMessageResponse,
 )
 from app.schemas.records import ApiError
-from app.services.conversation_service import generate_confirmation_message
-from app.services.reply_analysis_service import analyze_employer_reply
+from app.services.conversation_service import (
+    MessageGenerationError,
+    TranslationError,
+    generate_confirmation_message,
+    generate_opening_message,
+)
+from app.services.reply_analysis_service import ReplyAnalysisLLMError, analyze_employer_reply
 
 router = APIRouter()
 WORKPLACE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,100}$")
+
+
+@router.post("/opening-message", response_model=ConfirmationMessageResponse)
+async def create_opening_message(
+    request: OpeningMessageRequest,
+) -> ConfirmationMessageResponse | JSONResponse:
+    if not WORKPLACE_ID_PATTERN.fullmatch(request.workplace_id):
+        response = ConfirmationMessageResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="INVALID_WORKPLACE_ID", message="사업장 정보 형식이 올바르지 않습니다."),
+        )
+        return JSONResponse(status_code=422, content=response.model_dump(mode="json"))
+    try:
+        korean_text = await generate_opening_message(request.tone)
+    except MessageGenerationError as error:
+        response = ConfirmationMessageResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="LLM_GENERATION_FAILED", message=str(error)),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+    return ConfirmationMessageResponse(
+        success=True,
+        data={
+            "message_id": "opening",
+            "korean_text": korean_text,
+            "translated_text": korean_text,
+            "basis": [],
+        },
+        error=None,
+    )
 
 
 def _comparison_from_row(row: dict) -> ComparisonItem:
@@ -91,11 +139,19 @@ async def create_confirmation_message(
         return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
 
     comparison = _comparison_from_row(row)
-    message = await generate_confirmation_message(
-        comparison,
-        request.tone,
-        request.user_language,
-    )
+    try:
+        message = await generate_confirmation_message(
+            comparison,
+            request.tone,
+            request.user_language,
+        )
+    except (MessageGenerationError, TranslationError) as error:
+        response = ConfirmationMessageResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="LLM_GENERATION_FAILED", message=str(error)),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
     return ConfirmationMessageResponse(success=True, data=message, error=None)
 
 
@@ -146,7 +202,7 @@ async def record_sent_message(
             request.original_text,
             translated_text=request.translated_text,
             analysis_json={
-                "message_type": "sent",
+                "message_type": request.message_type,
                 "comparison_id": request.comparison_id,
                 "condition_type": row["condition_type"],
                 "tone": request.tone.value,
@@ -219,6 +275,10 @@ async def analyze_reply(
             )
         prior_unanswered = await find_latest_unanswered_items(conversation["id"])
         prior_messages = await list_conversation_messages(conversation["id"])
+        if request.message_id:
+            prior_messages = [
+                item for item in prior_messages if item.get("id") != request.message_id
+            ]
         analysis = await analyze_employer_reply(
             comparison,
             request.reply_text,
@@ -228,13 +288,39 @@ async def analyze_reply(
             conversation_history=prior_messages,
         )
         analysis.conversation_id = conversation["id"]
-        await save_message(
-            analysis.conversation_id,
-            "employer",
-            request.reply_text,
-            translated_text=analysis.translated_reply,
-            analysis_json=analysis.model_dump(mode="json"),
+        stored_analysis = analysis.model_dump(mode="json")
+        stored_analysis["comparison_id"] = request.comparison_id
+        if request.message_id:
+            saved = await update_message(
+                request.message_id,
+                request.workplace_id,
+                request.reply_text,
+                translated_text=analysis.translated_reply,
+                analysis_json=stored_analysis,
+            )
+            if saved is None:
+                response = ReplyAnalysisResponse(
+                    success=False,
+                    data=None,
+                    error=ApiError(code="MESSAGE_NOT_FOUND", message="수정할 대화를 찾을 수 없습니다."),
+                )
+                return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
+        else:
+            saved = await save_message(
+                analysis.conversation_id,
+                "employer",
+                request.reply_text,
+                translated_text=analysis.translated_reply,
+                analysis_json=stored_analysis,
+            )
+        analysis.reply_id = saved["id"]
+    except ReplyAnalysisLLMError as error:
+        response = ReplyAnalysisResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="LLM_GENERATION_FAILED", message=str(error)),
         )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
     except ConversationDatabaseError:
         response = ReplyAnalysisResponse(
             success=False,
@@ -245,6 +331,130 @@ async def analyze_reply(
         )
         return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
     return ReplyAnalysisResponse(success=True, data=analysis, error=None)
+
+
+@router.post("/resolution", response_model=ResolutionResponse)
+async def confirm_conversation_resolution(
+    request: ResolutionRequest,
+) -> ResolutionResponse | JSONResponse:
+    """조건 종류와 무관하게 사용자가 실제 반영 결과를 확정한다."""
+
+    if not WORKPLACE_ID_PATTERN.fullmatch(request.workplace_id):
+        response = ResolutionResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="INVALID_WORKPLACE_ID", message="사업장 정보 형식이 올바르지 않습니다."),
+        )
+        return JSONResponse(status_code=422, content=response.model_dump(mode="json"))
+    try:
+        saved = await save_conversation_resolution(
+            request.reply_id,
+            request.workplace_id,
+            request.comparison_id,
+            request.outcome.value,
+        )
+    except ConversationDatabaseError:
+        saved = None
+    if saved is None:
+        response = ResolutionResponse(
+            success=False,
+            data=None,
+            error=ApiError(
+                code="RESOLUTION_SOURCE_NOT_FOUND",
+                message="현재 문제와 연결된 고용주 답변을 찾지 못했습니다. 답변을 다시 분석해 주세요.",
+            ),
+        )
+        return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
+    next_url = (
+        f"../community/community.html?from=completed&workplace_id={request.workplace_id}"
+        if request.outcome.value in {"resolved", "partially_resolved"}
+        else None
+    )
+    return ResolutionResponse(
+        success=True,
+        data=ResolutionData(
+            conversation_id=saved["conversation_id"],
+            comparison_id=request.comparison_id,
+            outcome=request.outcome,
+            next_url=next_url,
+        ),
+        error=None,
+    )
+
+
+@router.patch("/messages/{message_id}", response_model=MessageMutationResponse)
+async def edit_conversation_message(
+    message_id: str, request: MessageEditRequest
+) -> MessageMutationResponse | JSONResponse:
+    try:
+        updated = await update_message(message_id, request.workplace_id, request.original_text)
+    except ConversationDatabaseError:
+        updated = None
+    if updated is None:
+        response = MessageMutationResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="MESSAGE_NOT_FOUND", message="수정할 대화를 찾을 수 없습니다."),
+        )
+        return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
+    return MessageMutationResponse(
+        success=True,
+        data=MessageMutationData(message_id=message_id),
+        error=None,
+    )
+
+
+@router.delete("/messages/{message_id}", response_model=MessageMutationResponse)
+async def remove_conversation_message(
+    message_id: str, workplace_id: str
+) -> MessageMutationResponse | JSONResponse:
+    try:
+        deleted = await delete_message(message_id, workplace_id)
+    except ConversationDatabaseError:
+        deleted = False
+    if not deleted:
+        response = MessageMutationResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="MESSAGE_NOT_FOUND", message="삭제할 대화를 찾을 수 없습니다."),
+        )
+        return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
+    return MessageMutationResponse(
+        success=True,
+        data=MessageMutationData(message_id=message_id),
+        error=None,
+    )
+
+
+@router.delete("/{conversation_id}/messages", response_model=MessageMutationResponse)
+async def clear_current_conversation(
+    conversation_id: str, workplace_id: str
+) -> MessageMutationResponse | JSONResponse:
+    """현재 대화방의 메시지를 전부 지워 새 AI 맥락으로 시작한다."""
+
+    if not WORKPLACE_ID_PATTERN.fullmatch(workplace_id):
+        response = MessageMutationResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="INVALID_WORKPLACE_ID", message="사업장 정보 형식이 올바르지 않습니다."),
+        )
+        return JSONResponse(status_code=422, content=response.model_dump(mode="json"))
+    try:
+        cleared = await clear_conversation_messages(conversation_id, workplace_id)
+    except ConversationDatabaseError:
+        cleared = False
+    if not cleared:
+        response = MessageMutationResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="CONVERSATION_NOT_FOUND", message="삭제할 현재 대화를 찾을 수 없습니다."),
+        )
+        return JSONResponse(status_code=404, content=response.model_dump(mode="json"))
+    return MessageMutationResponse(
+        success=True,
+        data=MessageMutationData(message_id="all"),
+        error=None,
+    )
 
 
 @router.get("/{comparison_id}/history", response_model=ConversationHistoryResponse)
