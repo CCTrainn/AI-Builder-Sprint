@@ -8,11 +8,16 @@ const API_BASE = resolveApiBase();
 
 writeSessionValue("workplace_id", workplaceId);
 
+// ✨ DOM 요소 추가 선택 (언어 선택기 및 언어명 표시 태그)
+const languageSelect = document.querySelector("#language-select");
+const targetLangNames = document.querySelectorAll(".target-lang-name");
+
+// ✨ 하드코딩 제거: 드롭다운의 현재 값을 기본 언어로 설정
 const MESSAGE_REQUEST = {
   workplace_id: workplaceId,
   comparison_id: comparisonId,
   tone: "polite",
-  user_language: "vi",
+  user_language: languageSelect ? languageSelect.value : "vi",
 };
 
 const MOCK_RESPONSES = {
@@ -119,7 +124,6 @@ function writeSessionValue(key, value) {
   try {
     window.sessionStorage.setItem(key, value);
   } catch {
-    // URL 값만으로도 화면을 계속 사용할 수 있습니다.
   }
 }
 
@@ -176,6 +180,8 @@ function setLoading(isLoading) {
   document.querySelectorAll('input[name="tone"]').forEach((input) => {
     input.disabled = isLoading;
   });
+  // ✨ 언어 선택 드롭다운도 로딩 중 비활성화
+  if (languageSelect) languageSelect.disabled = isLoading;
 }
 
 function renderReplyAnalysis(analysis) {
@@ -249,7 +255,7 @@ async function loadMessage(tone) {
   actionFeedback.textContent = "";
   try {
     const message = useMockData
-      ? structuredClone(MOCK_RESPONSES[tone])
+      ? structuredClone(MOCK_RESPONSES[tone]) // 참고: Mock 데이터는 베트남어만 하드코딩되어 있습니다.
       : await fetchJson("/conversations/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -355,6 +361,30 @@ async function analyzeEmployerReply() {
     showAnalysisState("error");
     analysisBadge.textContent = "분석 실패";
   }
+}
+
+// ✨ 드롭다운 언어 변경 이벤트 리스너 추가
+if (languageSelect) {
+  languageSelect.addEventListener("change", (e) => {
+    const selectedLang = e.target.value;
+    MESSAGE_REQUEST.user_language = selectedLang; // 백엔드 요청 데이터 업데이트
+    
+    // UI 텍스트 업데이트 ("English (영어)" -> "English"만 추출)
+    const selectedText = e.target.options[e.target.selectedIndex].text;
+    const shortName = selectedText.split(" ")[0]; 
+    
+    targetLangNames.forEach(el => {
+      el.textContent = shortName;
+    });
+
+    // lang 속성 업데이트 (접근성/폰트용)
+    if(translatedText) translatedText.setAttribute("lang", selectedLang);
+    const translatedFollowUp = document.querySelector("#translated-follow-up");
+    if(translatedFollowUp) translatedFollowUp.setAttribute("lang", selectedLang);
+
+    // 언어가 바뀌었으니 백엔드에 새 번역 요청
+    loadMessage(selectedTone);
+  });
 }
 
 document.querySelectorAll('input[name="tone"]').forEach((input) => {

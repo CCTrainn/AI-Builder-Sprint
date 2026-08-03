@@ -62,7 +62,16 @@
             <p class="card-label">추천 확인 문장</p>
             <h2 id="message-title">어떤 말투로 물어볼까요?</h2>
           </div>
-          <span class="language-badge">한국어 → Tiếng Việt</span>
+          
+          <div class="language-selector">
+            <label for="language-select" class="sr-only">번역 언어 선택</label>
+            <select id="language-select" name="user_language" class="language-dropdown">
+              <option value="vi" selected>Tiếng Việt (베트남어)</option>
+              <option value="en">English (영어)</option>
+              <option value="zh">中文 (중국어)</option>
+              <option value="id">Bahasa Indonesia (인도네시아어)</option>
+            </select>
+          </div>
         </div>
 
         <fieldset class="tone-selector">
@@ -95,7 +104,7 @@
           </div>
 
           <div class="message-block translated-message">
-            <span>Tiếng Việt · 문장의 의미</span>
+            <span><span class="target-lang-name">Tiếng Việt</span> · 문장의 의미</span>
             <p id="translated-text" lang="vi"></p>
           </div>
 
@@ -198,7 +207,7 @@
               </div>
               <p id="follow-up-korean"></p>
               <div class="follow-up-translation">
-                <span>Tiếng Việt · 문장의 의미</span>
+                <span><span class="target-lang-name">Tiếng Việt</span> · 문장의 의미</span>
                 <p id="translated-follow-up" lang="vi"></p>
               </div>
             </section>
