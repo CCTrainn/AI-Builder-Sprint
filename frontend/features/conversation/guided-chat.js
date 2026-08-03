@@ -1,6 +1,6 @@
 const params = new URLSearchParams(window.location.search);
 const workplaceId = params.get("workplace_id") || sessionStorage.getItem("workplace_id") || "demo-e2e";
-const userLanguage = sessionStorage.getItem("user_language") || "ko";
+let userLanguage = sessionStorage.getItem("user_language") || "ko";
 const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
 const apiBase = isLocal
   ? `${window.location.protocol}//${window.location.hostname}:8000/api/v1`
@@ -29,6 +29,14 @@ const labels = {
   working_hours: "근무시간",
   break_time: "휴게시간",
   pay_date: "급여일",
+};
+const languageLabels = {
+  ko: "한국어",
+  vi: "Tiếng Việt",
+  "zh-CN": "中文",
+  th: "ไทย",
+  id: "Bahasa Indonesia",
+  en: "English",
 };
 
 async function request(path, options = {}) {
@@ -59,6 +67,26 @@ function setCoach(title, ...children) {
   coachTitle.textContent = title;
   coachContent.replaceChildren(...children);
   coachFeedback.textContent = "";
+}
+
+function buildTranslationCard(translatedText) {
+  if (userLanguage.startsWith("ko") || !translatedText) return null;
+  const card = document.createElement("section");
+  card.className = "coach-translation";
+  const label = document.createElement("span");
+  label.textContent = `${languageLabels[userLanguage] || userLanguage} · 추천문의 의미`;
+  const text = document.createElement("p");
+  text.textContent = translatedText;
+  card.append(label, text);
+  return card;
+}
+
+function updateVisibleTranslation(translatedText) {
+  const current = coachContent.querySelector(".coach-translation");
+  const next = buildTranslationCard(translatedText);
+  if (current && next) current.replaceWith(next);
+  else if (current) current.remove();
+  else if (next) coachContent.querySelector(".coach-draft")?.after(next);
 }
 
 function addBubble(side, speaker, text, messageId = null, sender = null) {
@@ -311,9 +339,33 @@ function showSuggestion(text, contextText = "", titleText = "") {
     list.append(item);
   });
   details.append(summary, list);
-  elements.push(editGuide, preview, actions, details);
+  const translation = buildTranslationCard(suggestion?.translated_text);
+  elements.push(editGuide, preview);
+  if (translation) elements.push(translation);
+  elements.push(actions, details);
   setCoach(titleText || (contextText ? "이어서 이렇게 답해보세요." : "이렇게 물어보는 건 어떨까요?"), ...elements);
 }
+
+document.addEventListener("userlanguagechange", async (event) => {
+  userLanguage = event.detail.language;
+  if (!suggestion?.korean_text) return;
+  if (userLanguage.startsWith("ko")) {
+    suggestion.translated_text = suggestion.korean_text;
+    updateVisibleTranslation("");
+    return;
+  }
+  try {
+    const result = await request("/conversations/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: suggestion.korean_text, user_language: userLanguage }),
+    });
+    suggestion.translated_text = result.translated_text;
+    updateVisibleTranslation(result.translated_text);
+  } catch (error) {
+    coachFeedback.textContent = `번역을 갱신하지 못했어요. ${error.message}`;
+  }
+});
 
 async function confirmSent(draftInput) {
   const finalText = draftInput.value.trim();

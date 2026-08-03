@@ -431,6 +431,24 @@ def test_clear_current_conversation_api(monkeypatch) -> None:
     assert cleared == [("conv_001", "work_001")]
 
 
+def test_translate_recommendation_uses_selected_language(monkeypatch) -> None:
+    async def fake_translate(text: str, language: str) -> str:
+        assert text == "근무시간 변경 기준을 알려주세요."
+        assert language == "vi"
+        return "Vui lòng cho tôi biết tiêu chuẩn thay đổi giờ làm việc."
+
+    monkeypatch.setattr(conversations, "translate_confirmation_text", fake_translate)
+    app = FastAPI()
+    app.include_router(conversations.router, prefix="/api/v1/conversations")
+    response = TestClient(app).post(
+        "/api/v1/conversations/translate",
+        json={"text": "근무시간 변경 기준을 알려주세요.", "user_language": "vi"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["translated_text"].startswith("Vui lòng")
+
+
 def test_generic_resolution_api_saves_user_confirmed_outcome(monkeypatch) -> None:
     saved: list[tuple[str, str, str, str]] = []
 

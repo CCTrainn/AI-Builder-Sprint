@@ -519,6 +519,20 @@
   border-color: #344258;
 }
 
+[data-theme="dark"] .coach-translation {
+  color: #dce6f5;
+  background: #17243d;
+  border-color: #315a9e;
+}
+
+[data-theme="dark"] .coach-translation span {
+  color: #8bb6ff;
+}
+
+[data-theme="dark"] .coach-translation p {
+  color: #dce6f5;
+}
+
 [data-theme="dark"] .daekku-coach :is(textarea, .coach-draft) {
   color: #edf3fc;
   background: #0c1423;

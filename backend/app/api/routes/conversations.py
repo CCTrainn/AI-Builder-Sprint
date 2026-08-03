@@ -41,6 +41,9 @@ from app.schemas.conversations import (
     SentMessageData,
     SentMessageRequest,
     SentMessageResponse,
+    TranslationData,
+    TranslationRequest,
+    TranslationResponse,
 )
 from app.schemas.records import ApiError
 from app.services.conversation_service import (
@@ -48,11 +51,30 @@ from app.services.conversation_service import (
     TranslationError,
     generate_confirmation_message,
     generate_opening_message,
+    translate_confirmation_text,
 )
 from app.services.reply_analysis_service import ReplyAnalysisLLMError, analyze_employer_reply
 
 router = APIRouter()
 WORKPLACE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,100}$")
+
+
+@router.post("/translate", response_model=TranslationResponse)
+async def translate_message(request: TranslationRequest) -> TranslationResponse | JSONResponse:
+    try:
+        translated_text = await translate_confirmation_text(request.text, request.user_language)
+    except TranslationError as error:
+        response = TranslationResponse(
+            success=False,
+            data=None,
+            error=ApiError(code="TRANSLATION_FAILED", message=str(error)),
+        )
+        return JSONResponse(status_code=502, content=response.model_dump(mode="json"))
+    return TranslationResponse(
+        success=True,
+        data=TranslationData(translated_text=translated_text),
+        error=None,
+    )
 
 
 @router.post("/opening-message", response_model=ConfirmationMessageResponse)

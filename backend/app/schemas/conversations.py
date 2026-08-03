@@ -42,6 +42,21 @@ class ConfirmationMessageResponse(BaseModel):
     error: ApiError | None
 
 
+class TranslationRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2_000)
+    user_language: str = Field(min_length=2, max_length=10)
+
+
+class TranslationData(BaseModel):
+    translated_text: str
+
+
+class TranslationResponse(BaseModel):
+    success: bool
+    data: TranslationData | None
+    error: ApiError | None
+
+
 class SentMessageRequest(BaseModel):
     workplace_id: str = Field(min_length=1, max_length=100)
     comparison_id: str = Field(min_length=1, max_length=100)
