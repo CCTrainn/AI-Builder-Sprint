@@ -1,12 +1,9 @@
-"""Supabase Storage 연동.
+"""Private local file storage for uploaded work records."""
 
-담당: ROLE-BE-RECORDS
-원본 파일은 private bucket에 저장한다.
-"""
-
-from pathlib import PurePosixPath
-
-import httpx
+import asyncio
+import os
+import tempfile
+from pathlib import Path, PurePosixPath
 
 from app.core.config import get_settings
 
@@ -14,11 +11,11 @@ BUCKET_NAME = "work-records"
 
 
 class StorageConfigurationError(RuntimeError):
-    """Supabase Storage 환경변수가 준비되지 않은 경우."""
+    """The configured local storage root is invalid."""
 
 
 class StorageUploadError(RuntimeError):
-    """Supabase Storage 작업이 실패한 경우."""
+    """A local file operation failed."""
 
 
 def build_storage_path(
@@ -28,7 +25,7 @@ def build_storage_path(
     record_id: str,
     extension: str,
 ) -> str:
-    """사용자 파일명과 무관한 ASCII Storage 경로를 만든다."""
+    """Build an ASCII relative path that never contains the user's filename."""
 
     safe_extension = extension.lower().lstrip(".")
     return str(
@@ -39,15 +36,45 @@ def build_storage_path(
     )
 
 
-def _storage_credentials() -> tuple[str, str]:
+def storage_root() -> Path:
     settings = get_settings()
-    url = settings.supabase_url.rstrip("/")
-    key = settings.supabase_service_role_key.strip()
-    if not url or not key:
-        raise StorageConfigurationError(
-            "SUPABASE_URL과 SUPABASE_SERVICE_ROLE_KEY를 backend/.env에 설정해 주세요."
-        )
-    return url, key
+    return (settings.local_data_dir / settings.local_upload_dir_name).resolve()
+
+
+def _object_path(storage_path: str) -> Path:
+    relative = PurePosixPath(storage_path)
+    if relative.is_absolute() or ".." in relative.parts or not relative.parts:
+        raise StorageConfigurationError("안전하지 않은 로컬 파일 경로입니다.")
+    root = storage_root()
+    target = root.joinpath(*relative.parts).resolve()
+    if not target.is_relative_to(root):
+        raise StorageConfigurationError("로컬 저장 폴더 밖의 경로는 사용할 수 없습니다.")
+    return target
+
+
+def _write_object(target: Path, file_bytes: bytes) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        raise StorageUploadError("같은 경로에 이미 원본 파일이 있습니다.")
+
+    temporary_path: Path | None = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(prefix=".upload-", dir=target.parent)
+        temporary_path = Path(temporary_name)
+        with os.fdopen(descriptor, "wb") as temporary_file:
+            temporary_file.write(file_bytes)
+            temporary_file.flush()
+            os.fsync(temporary_file.fileno())
+        os.replace(temporary_path, target)
+        temporary_path = None
+    except OSError as exc:
+        raise StorageUploadError("원본 파일을 로컬 폴더에 저장하지 못했습니다.") from exc
+    finally:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 async def upload_bytes(
@@ -56,52 +83,30 @@ async def upload_bytes(
     file_bytes: bytes,
     content_type: str,
 ) -> None:
-    """원본 파일을 private bucket에 저장한다."""
+    """Atomically save an original file under the private backend data directory."""
 
-    url, key = _storage_credentials()
-    endpoint = f"{url}/storage/v1/object/{BUCKET_NAME}/{storage_path}"
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": content_type,
-        "x-upsert": "false",
-    }
+    del content_type  # Kept in the interface for a future object-storage adapter.
+    target = _object_path(storage_path)
+    await asyncio.to_thread(_write_object, target, file_bytes)
 
+
+def _delete_object(target: Path) -> None:
+    root = storage_root()
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(endpoint, headers=headers, content=file_bytes)
-    except httpx.HTTPError as exc:
-        raise StorageUploadError("Storage 서버에 연결하지 못했습니다.") from exc
-
-    if response.status_code not in {200, 201}:
-        raise StorageUploadError(
-            f"Storage 업로드에 실패했습니다. status={response.status_code}"
-        )
+        target.unlink(missing_ok=True)
+        parent = target.parent
+        while parent != root and parent.is_relative_to(root):
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+    except OSError as exc:
+        raise StorageUploadError("로컬 원본 파일을 삭제하지 못했습니다.") from exc
 
 
 async def delete_object(*, storage_path: str) -> None:
-    """DB 저장 실패 시 업로드한 원본 파일을 정리한다."""
+    """Delete one known object and then remove only its empty parent folders."""
 
-    url, key = _storage_credentials()
-    endpoint = f"{url}/storage/v1/object/{BUCKET_NAME}"
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.request(
-                "DELETE",
-                endpoint,
-                headers=headers,
-                json={"prefixes": [storage_path]},
-            )
-    except httpx.HTTPError as exc:
-        raise StorageUploadError("Storage 서버에 연결하지 못했습니다.") from exc
-
-    if response.status_code not in {200, 204}:
-        raise StorageUploadError(
-            f"Storage 파일 정리에 실패했습니다. status={response.status_code}"
-        )
+    target = _object_path(storage_path)
+    await asyncio.to_thread(_delete_object, target)

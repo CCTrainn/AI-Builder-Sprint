@@ -2,10 +2,15 @@
 .venv/
 __pycache__/
 *.py[cod]
+*.egg-info/
 .pytest_cache/
 .ruff_cache/
 .codex/ROLE.md
 tmp/
+backend/local_data/
+*.db
+*.db-wal
+*.db-shm
 node_modules/
 .DS_Store
 Thumbs.db

@@ -21,7 +21,7 @@ from app.schemas.comparisons import (
     LegalReference,
 )
 from app.schemas.records import ApiError
-from app.services.comparison_service import compare_record_conditions
+from app.services.comparison_service import compare_record_conditions, evaluate_rights_check
 from app.services.law_api_service import get_law_reference
 
 router = APIRouter()
@@ -61,19 +61,16 @@ async def compare_workplace(workplace_id: str) -> ComparisonResponse | JSONRespo
     )
     for item, reference in zip(comparison_items, references, strict=True):
         item.legal_reference = LegalReference(
-            **reference
+            **reference,
+            rights_check=evaluate_rights_check(item, comparison_items),
         )
 
     comparison_rows = [
         {
             "id": item.comparison_id,
             "condition_type": item.condition,
-            "promised_record_id": (
-                item.promised.record_id if item.promised else None
-            ),
-            "contracted_record_id": (
-                item.contracted.record_id if item.contracted else None
-            ),
+            "promised_record_id": (item.promised.record_id if item.promised else None),
+            "contracted_record_id": (item.contracted.record_id if item.contracted else None),
             "actual_record_id": item.actual.record_id if item.actual else None,
             "status": item.status.value,
             "summary": item.summary,

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>기록 비교하기 | 근로권리 동반자</title>
+  <link rel="stylesheet" href="../../shared/tokens.css">
+  <link rel="stylesheet" href="../../shared/common.css">
+  <link rel="stylesheet" href="./comparison.css?v=20260803-3">
+  <link rel="stylesheet" href="../../shared/sidebar.css?v=20260803-3">
+  <link rel="stylesheet" href="../../shared/polish.css">
+</head>
+<body class="has-app-sidebar" data-page="comparison">
+  <div id="appSidebar" class="app-sidebar-root"></div>
+
+  <main class="comparison-page">
+    <header class="page-header">
+      <div>
+        <h1>기록 비교하기</h1>
+        <p class="page-description">채용공고, 근로계약서, 실제 근무·급여 기록에서 달라진 조건을 확인하세요.</p>
+      </div>
+
+      <div class="header-actions">
+        <a class="secondary-button" href="../records/records.html">자료 확인하기</a>
+        <button id="runComparisonButton" class="primary-button" type="button">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M20 6v5h-5M4 18v-5h5"/>
+            <path d="M18.4 9A7 7 0 0 0 6.3 6.3L4 11M5.6 15A7 7 0 0 0 17.7 17.7L20 13"/>
+          </svg>
+          다시 비교하기
+        </button>
+      </div>
+    </header>
+
+    <section class="comparison-summary" aria-labelledby="summary-title">
+      <div class="summary-copy">
+        <span class="summary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3v18"/>
+            <path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/>
+            <path d="m5 8 3 8a5 5 0 0 1-6 0l3-8ZM19 8l3 8a5 5 0 0 1-6 0l3-8ZM7 21h10"/>
+          </svg>
+        </span>
+        <div>
+          <p>최근 비교 결과</p>
+          <h2 id="summary-title">기록 사이의 조건을 확인했어요</h2>
+          <span id="summaryDescription">달라진 기록부터 차근차근 살펴보세요.</span>
+        </div>
+      </div>
+
+      <div class="summary-metrics" aria-label="비교 결과 개수">
+        <div>
+          <strong id="differentCount">0</strong>
+          <span>기록이 다름</span>
+        </div>
+        <div>
+          <strong id="confirmationCount">0</strong>
+          <span>확인 필요</span>
+        </div>
+        <div>
+          <strong id="missingCount">0</strong>
+          <span>자료 부족</span>
+        </div>
+        <div>
+          <strong id="sameCount">0</strong>
+          <span>기록이 같음</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-section" aria-labelledby="results-title">
+      <div class="results-header">
+        <div>
+          <p class="section-kicker">비교 결과</p>
+          <h2 id="results-title">조건별 기록</h2>
+        </div>
+
+        <div class="status-tabs" role="group" aria-label="비교 상태 필터">
+          <button class="status-tab is-active" type="button" data-filter="all" aria-pressed="true">전체</button>
+          <button class="status-tab" type="button" data-filter="different" aria-pressed="false">기록이 다름</button>
+          <button class="status-tab" type="button" data-filter="needs_confirmation" aria-pressed="false">확인 필요</button>
+          <button class="status-tab" type="button" data-filter="missing" aria-pressed="false">자료 부족</button>
+          <button class="status-tab" type="button" data-filter="same" aria-pressed="false">기록이 같음</button>
+        </div>
+      </div>
+
+      <div class="comparison-legend" aria-label="기록 구분">
+        <span><i class="legend-dot legend-dot--promised"></i>약속 기록</span>
+        <span><i class="legend-dot legend-dot--contracted"></i>계약 기록</span>
+        <span><i class="legend-dot legend-dot--actual"></i>실제 기록</span>
+      </div>
+
+      <div id="comparisonState" class="state-panel" aria-live="polite"></div>
+      <div id="comparisonList" class="comparison-list" aria-live="polite"></div>
+    </section>
+
+    <aside class="interpretation-note">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 11v5M12 8h.01"/>
+      </svg>
+      <p><strong>비교 결과는 기록을 정리한 정보입니다.</strong> 위법 여부를 확정하지 않으며, 공식 정보와 실제 적용 기준을 추가로 확인할 수 있어요.</p>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="../../shared/app.js?v=20260803-16"></script>
+  <script type="module" src="./comparison.js?v=20260803-1"></script>
+</body>
+</html>
